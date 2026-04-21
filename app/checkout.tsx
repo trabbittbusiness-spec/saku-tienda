@@ -1,0 +1,818 @@
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions } from 'react-native';
+import { ArrowLeft, Lock, MapPin, Plus, CreditCard, Banknote, ShieldCheck, ChevronRight, CheckCircle2, Store, Clock } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import LocationMapModal from '../components/LocationMapModal';
+import { useCart } from '../context/CartContext';
+
+export default function CheckoutScreen() {
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const { cart, cartTotal, clearCart } = useCart();
+  const isDesktop = width >= 1024;
+  
+  const [deliveryType, setDeliveryType] = useState('home'); // 'home' or 'store'
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'card'
+  const [cardDetails, setCardDetails] = useState({
+    number: '',
+    name: '',
+    expiry: '',
+    cvv: ''
+  });
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState({
+    main: 'Nueva Providencia 1515',
+    sub: 'Providencia, RM'
+  });
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [showNewCardForm, setShowNewCardForm] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState('visa-1');
+
+  const handlePayment = () => {
+    setIsSuccessModalOpen(true);
+  };
+
+  const shipping = 0;
+  const discount = 0;
+  const total = cartTotal + shipping - discount;
+
+  if (!isDesktop) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        {/* Header */}
+        <View style={{ 
+          height: 90, backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 40,
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <TouchableOpacity 
+            onPress={() => router.back()}
+            style={{ 
+              position: 'absolute', left: 20, top: 40, width: 44, height: 44, 
+              backgroundColor: '#F3F4F6', borderRadius: 12, justifyContent: 'center', alignItems: 'center' 
+            }}
+          >
+            <ArrowLeft size={20} color="#111827" />
+          </TouchableOpacity>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Checkout</Text>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: '#9CA3AF' }}>{cart.length} productos</Text>
+          </View>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+          {/* Delivery Type Tabs */}
+          <View style={{ backgroundColor: '#F3F4F6', borderRadius: 24, margin: 20, padding: 6, flexDirection: 'row' }}>
+            <TouchableOpacity 
+              onPress={() => setDeliveryType('home')}
+              style={{ 
+                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                paddingVertical: 14, borderRadius: 18, backgroundColor: deliveryType === 'home' ? '#FFFFFF' : 'transparent',
+                shadowColor: '#000', shadowOpacity: deliveryType === 'home' ? 0.05 : 0, shadowRadius: 10
+              }}
+            >
+              <Store size={18} color={deliveryType === 'home' ? '#111827' : '#9CA3AF'} />
+              <Text style={{ fontSize: 14, fontWeight: '800', color: deliveryType === 'home' ? '#111827' : '#9CA3AF' }}>Entrega</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => setDeliveryType('store')}
+              style={{ 
+                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                paddingVertical: 14, borderRadius: 18, backgroundColor: deliveryType === 'store' ? '#FFFFFF' : 'transparent',
+                shadowColor: '#000', shadowOpacity: deliveryType === 'store' ? 0.05 : 0, shadowRadius: 10
+              }}
+            >
+              <Store size={18} color={deliveryType === 'store' ? '#111827' : '#9CA3AF'} />
+              <Text style={{ fontSize: 14, fontWeight: '800', color: deliveryType === 'store' ? '#111827' : '#9CA3AF' }}>Recolección</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Delivery Address or Store Pickup Section */}
+          <View style={{ paddingHorizontal: 20 }}>
+            {deliveryType === 'home' ? (
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center' }}>
+                    <MapPin size={18} color="#F47321" />
+                  </View>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Dirección de Entrega</Text>
+                </View>
+
+                <TouchableOpacity style={{ 
+                  borderWidth: 2, borderColor: '#F47321', borderRadius: 24, padding: 16, backgroundColor: '#FFFFFF',
+                  flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 15
+                }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center' }}>
+                    <MapPin size={22} color="white" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Dirección</Text>
+                    <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500' }}>Nueva Providencia 1515, Providencia</Text>
+                  </View>
+                  <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>✓</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  onPress={() => setIsMapModalOpen(true)}
+                  style={{ 
+                    height: 60, borderWidth: 1, borderStyle: 'dashed', borderColor: '#D1D5DB', borderRadius: 20,
+                    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 30
+                  }}
+                >
+                  <Plus size={18} color="#F47321" strokeWidth={3} />
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: '#F47321' }}>Agregar nueva dirección</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View>
+                {/* Pickup Banner */}
+                <View style={{ backgroundColor: '#EEF2FF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 25 }}>
+                  <MapPin size={20} color="#6366F1" />
+                  <Text style={{ flex: 1, fontSize: 13, color: '#6366F1', fontWeight: '700' }}>Retira tu pedido sin costo adicional en la sucursal que prefieras.</Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Sucursales disponibles</Text>
+                </View>
+
+                <TouchableOpacity style={{ 
+                  borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 24, padding: 20, backgroundColor: '#FFFFFF',
+                  marginBottom: 30
+                }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Saku Providencia</Text>
+                      <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600', marginTop: 4 }}>Av. Providencia 1234, Providencia</Text>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}>
+                        <Clock size={14} color="#9CA3AF" />
+                        <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>Lun-Vie: 9:00-20:00 · Sáb: 10:00-18:00</Text>
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                        <MapPin size={14} color="#9CA3AF" />
+                        <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>1.2 km</Text>
+                      </View>
+                    </View>
+
+                    <View style={{ alignItems: 'flex-end', gap: 8 }}>
+                      <View style={{ backgroundColor: '#DCFCE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                        <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '900' }}>• Stock</Text>
+                      </View>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: '#6366F1' }}>Listo en 2 horas</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* Payment Method Section */}
+          <View style={{ paddingHorizontal: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 }}>
+              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                <CreditCard size={18} color="#1E1B4B" />
+              </View>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Método de Pago</Text>
+            </View>
+
+            <TouchableOpacity 
+              onPress={() => setPaymentMethod('cash')}
+              style={{ 
+                borderWidth: 2, borderColor: paymentMethod === 'cash' ? '#1E1B4B' : '#F9FAFB', borderRadius: 24, padding: 16, 
+                backgroundColor: paymentMethod === 'cash' ? '#EEF2FF' : '#F9FAFB',
+                flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12
+              }}
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#D1E0FF', justifyContent: 'center', alignItems: 'center' }}>
+                <Banknote size={22} color="#1E1B4B" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Efectivo</Text>
+                <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '500' }}>Pago contra entrega</Text>
+              </View>
+              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: paymentMethod === 'cash' ? '#1E1B4B' : '#E5E7EB', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>✓</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => setPaymentMethod('card')}
+              style={{ 
+                borderWidth: 2, borderColor: paymentMethod === 'card' ? '#1E1B4B' : '#F9FAFB', borderRadius: 24, padding: 16, 
+                backgroundColor: paymentMethod === 'card' ? '#EEF2FF' : '#F9FAFB',
+                marginBottom: 30
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
+                  <CreditCard size={22} color="#9CA3AF" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Tarjeta</Text>
+                  <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '500' }}>Débito o crédito</Text>
+                </View>
+                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: paymentMethod === 'card' ? '#1E1B4B' : '#E5E7EB', justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>✓</Text>
+                </View>
+              </View>
+
+              {paymentMethod === 'card' && (
+                <View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 20 }}>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      {/* Visa Card */}
+                      <TouchableOpacity 
+                        onPress={() => {
+                          setSelectedCardId('visa-1');
+                          setShowNewCardForm(false);
+                        }}
+                        style={{ 
+                          width: 140, height: 90, borderRadius: 16, backgroundColor: '#1E1B4B', padding: 12,
+                          borderWidth: 2, borderColor: selectedCardId === 'visa-1' && !showNewCardForm ? '#10B981' : 'transparent'
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png' }} style={{ width: 35, height: 12 }} resizeMode="contain" />
+                          {selectedCardId === 'visa-1' && !showNewCardForm && (
+                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                              <Text style={{ color: 'white', fontSize: 10 }}>✓</Text>
+                            </View>
+                          )}
+                        </View>
+                        <View style={{ marginTop: 'auto' }}>
+                          <Text style={{ color: 'white', fontSize: 12, fontWeight: '700' }}>Visa</Text>
+                          <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>•••• 4242</Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Mastercard Card */}
+                      <TouchableOpacity 
+                        onPress={() => {
+                          setSelectedCardId('master-1');
+                          setShowNewCardForm(false);
+                        }}
+                        style={{ 
+                          width: 140, height: 90, borderRadius: 16, backgroundColor: '#7C2D12', padding: 12,
+                          borderWidth: 2, borderColor: selectedCardId === 'master-1' && !showNewCardForm ? '#10B981' : 'transparent'
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png' }} style={{ width: 35, height: 20 }} resizeMode="contain" />
+                          {selectedCardId === 'master-1' && !showNewCardForm && (
+                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                              <Text style={{ color: 'white', fontSize: 10 }}>✓</Text>
+                            </View>
+                          )}
+                        </View>
+                        <View style={{ marginTop: 'auto' }}>
+                          <Text style={{ color: 'white', fontSize: 12, fontWeight: '700' }}>Mastercard</Text>
+                          <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>•••• 5555</Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* New Card Button */}
+                      <TouchableOpacity 
+                        onPress={() => setShowNewCardForm(true)}
+                        style={{ 
+                          width: 120, height: 90, borderRadius: 16, backgroundColor: '#FFFFFF', 
+                          justifyContent: 'center', alignItems: 'center', gap: 6, borderStyle: 'solid', borderWidth: 2, borderColor: showNewCardForm ? '#10B981' : '#E5E7EB'
+                        }}
+                      >
+                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center' }}>
+                          <Plus size={18} color="#10B981" />
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>Nueva Tarjeta</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </ScrollView>
+
+                  {showNewCardForm && (
+                    <View style={{ marginTop: 24, gap: 16 }}>
+                      {/* Card Preview */}
+                      <View style={{ 
+                        width: '100%', height: 180, borderRadius: 24, backgroundColor: '#1E1B4B', padding: 24,
+                        shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10
+                      }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <View style={{ width: 40, height: 30, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 6 }} />
+                          <Text style={{ color: 'white', fontSize: 18, fontWeight: '800', fontStyle: 'italic' }}>Visa</Text>
+                        </View>
+                        <Text style={{ color: 'white', fontSize: 24, fontWeight: '700', marginTop: 30, letterSpacing: 2 }}>
+                          {cardDetails.number ? cardDetails.number.replace(/(.{4})/g, '$1 ') : '#### #### #### ####'}
+                        </Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 'auto' }}>
+                          <View>
+                            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '700' }}>TITULAR</Text>
+                            <Text style={{ color: 'white', fontSize: 14, fontWeight: '700', textTransform: 'uppercase' }}>{cardDetails.name || 'Nombre del titular'}</Text>
+                          </View>
+                          <View style={{ alignItems: 'flex-end' }}>
+                            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '700' }}>VENCE</Text>
+                            <Text style={{ color: 'white', fontSize: 14, fontWeight: '700' }}>{cardDetails.expiry || 'MM/YY'}</Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Form Fields */}
+                      <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
+                        <CreditCard size={20} color="#10B981" />
+                        <TextInput 
+                          placeholder="Número de tarjeta"
+                          placeholderTextColor="#9CA3AF"
+                          value={cardDetails.number}
+                          onChangeText={(text) => setCardDetails(prev => ({ ...prev, number: text }))}
+                          style={{ flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600' }}
+                        />
+                      </View>
+
+                      <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                        <TextInput 
+                          placeholder="Nombre en la tarjeta"
+                          placeholderTextColor="#9CA3AF"
+                          value={cardDetails.name}
+                          onChangeText={(text) => setCardDetails(prev => ({ ...prev, name: text }))}
+                          style={{ fontSize: 15, fontWeight: '600' }}
+                        />
+                      </View>
+
+                      <View style={{ flexDirection: 'row', gap: 12 }}>
+                        <View style={{ flex: 1, height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                          <TextInput 
+                            placeholder="MM/YY"
+                            placeholderTextColor="#9CA3AF"
+                            value={cardDetails.expiry}
+                            onChangeText={(text) => setCardDetails(prev => ({ ...prev, expiry: text }))}
+                            style={{ fontSize: 15, fontWeight: '600' }}
+                          />
+                        </View>
+                        <View style={{ flex: 1, height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                          <TextInput 
+                            placeholder="CVV"
+                            placeholderTextColor="#9CA3AF"
+                            value={cardDetails.cvv}
+                            onChangeText={(text) => setCardDetails(prev => ({ ...prev, cvv: text }))}
+                            style={{ fontSize: 15, fontWeight: '600' }}
+                          />
+                        </View>
+                      </View>
+
+                      <TouchableOpacity 
+                        onPress={() => setShowNewCardForm(false)}
+                        style={{ 
+                          backgroundColor: '#10B981', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8
+                        }}
+                      >
+                        <CreditCard size={20} color="white" />
+                        <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Guardar Tarjeta</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Discount Code */}
+          <View style={{ marginHorizontal: 20, marginBottom: 30, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 12, borderWidth: 1, borderColor: '#F3F4F6', flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput 
+              placeholder="Ingresa tu código de descuento.."
+              style={{ flex: 1, paddingHorizontal: 15, fontSize: 14, fontWeight: '600' }}
+            />
+            <TouchableOpacity style={{ backgroundColor: '#F47321', borderRadius: 14, paddingHorizontal: 25, paddingVertical: 12 }}>
+              <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>Aplicar</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Order Summary */}
+          <View style={{ marginHorizontal: 20, padding: 24, backgroundColor: '#FFFFFF', borderRadius: 32, borderWidth: 1, borderColor: '#F3F4F6' }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', marginBottom: 20 }}>Resumen de Orden</Text>
+            
+            <View style={{ gap: 15, marginBottom: 25 }}>
+              {cart.map((item) => (
+                <View key={`${item.id}-${item.selectedSize}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: '#FFF9F5', justifyContent: 'center', alignItems: 'center' }}>
+                    <Image source={{ uri: item.image }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827', textTransform: 'uppercase' }} numberOfLines={1}>{item.name}</Text>
+                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '700' }}>x{item.quantity} · ${item.price.toLocaleString()}</Text>
+                  </View>
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>${(item.price * item.quantity).toLocaleString()}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={{ gap: 12, borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 20 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '700' }}>Subtotal</Text>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>${cartTotal.toLocaleString()}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '700' }}>Envío</Text>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: '#10B981' }}>Gratis</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '700' }}>Descuento</Text>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>$0</Text>
+              </View>
+              
+              <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 5 }} />
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Total</Text>
+                <Text style={{ fontSize: 28, fontWeight: '900', color: '#F47321' }}>${total.toLocaleString()}</Text>
+              </View>
+
+              <TouchableOpacity 
+                onPress={handlePayment}
+                style={{ 
+                  backgroundColor: '#22C55E', borderRadius: 20, height: 60, justifyContent: 'center', alignItems: 'center',
+                  marginTop: 25, shadowColor: '#22C55E', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>PEDIR CONTRA ENTREGA</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+        {/* SUCCESS MODAL */}
+        {isSuccessModalOpen && (
+          <View style={{ 
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20000,
+            backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center'
+          }}>
+            <View style={{ 
+              width: '90%', backgroundColor: '#FFFFFF', borderRadius: 40, padding: 32, alignItems: 'center',
+              shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 40, shadowOffset: { width: 0, height: 20 }
+            }}>
+              <View style={{ 
+                width: 80, height: 80, borderRadius: 40, backgroundColor: '#DCFCE7', 
+                justifyContent: 'center', alignItems: 'center', marginBottom: 24
+              }}>
+                <CheckCircle2 size={40} color="#10B981" />
+              </View>
+              
+              <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>¡Pedido Realizado!</Text>
+              <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '600', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
+                Tu pedido ha sido procesado exitosamente. Recibirás un correo con el detalle de tu compra.
+              </Text>
+
+              <TouchableOpacity 
+                onPress={() => {
+                  clearCart();
+                  setIsSuccessModalOpen(false);
+                  router.push('/');
+                }}
+                style={{ 
+                  backgroundColor: '#111827', borderRadius: 18, height: 56, width: '100%',
+                  alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>VOLVER AL INICIO</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* MAP MODAL */}
+        <LocationMapModal
+          isOpen={isMapModalOpen}
+          onClose={() => setIsMapModalOpen(false)}
+          onSave={(location) => {
+            setSelectedLocation(location);
+            setIsMapModalOpen(false);
+          }}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      {/* HEADER */}
+      <View style={{ 
+        height: 80, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: isDesktop ? 60 : 20
+      }}>
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+        >
+          <ArrowLeft size={18} color="#111827" />
+          <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Volver</Text>
+        </TouchableOpacity>
+
+        <Text style={{ fontSize: 22, fontWeight: '900', color: '#1A1A2E' }}>Checkout Seguro</Text>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Lock size={16} color="#10B981" />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#10B981' }}>Encriptado 256-bit</Text>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={{ paddingHorizontal: isDesktop ? 60 : 20, paddingVertical: 40 }}>
+        <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 40, maxWidth: 1200, alignSelf: 'center', width: '100%' }}>
+          
+          {/* LEFT COLUMN: FORMS */}
+          <View style={{ flex: 1.5, gap: 32 }}>
+            
+            {/* DELIVERY TYPE TABS */}
+            <View style={{ backgroundColor: '#F3F4F6', borderRadius: 20, padding: 6, flexDirection: 'row' }}>
+              <TouchableOpacity 
+                onPress={() => setDeliveryType('home')}
+                style={{ 
+                  flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  paddingVertical: 14, borderRadius: 16, backgroundColor: deliveryType === 'home' ? '#FFFFFF' : 'transparent',
+                  shadowColor: '#000', shadowOpacity: deliveryType === 'home' ? 0.05 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
+                }}
+              >
+                <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                    <MapPin size={14} color="#6B7280" />
+                </View>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: deliveryType === 'home' ? '#111827' : '#9CA3AF', letterSpacing: 1 }}>ENTREGA A DOMICILIO</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => setDeliveryType('store')}
+                style={{ 
+                  flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  paddingVertical: 14, borderRadius: 16, backgroundColor: deliveryType === 'store' ? '#FFFFFF' : 'transparent',
+                  shadowColor: '#000', shadowOpacity: deliveryType === 'store' ? 0.05 : 0, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
+                }}
+              >
+                 <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                    <CheckCircle2 size={14} color="#6B7280" />
+                </View>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: deliveryType === 'store' ? '#111827' : '#9CA3AF', letterSpacing: 1 }}>RETIRO EN SUCURSAL</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* DELIVERY ADDRESS OR STORE PICKUP SECTION */}
+            {deliveryType === 'home' ? (
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center' }}>
+                    <MapPin size={18} color="#F47321" />
+                  </View>
+                  <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>Dirección de Entrega</Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 16 }}>
+                  <TouchableOpacity style={{ 
+                    flex: 1, borderWidth: 2, borderColor: '#F47321', borderRadius: 20, padding: 20, backgroundColor: '#FFFBF7',
+                    flexDirection: 'row', alignItems: 'center', gap: 16
+                  }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center' }}>
+                      <MapPin size={22} color="white" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Dirección</Text>
+                      <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', marginTop: 2 }}>{selectedLocation.main}, {selectedLocation.sub}</Text>
+                    </View>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ color: 'white', fontSize: 12, fontWeight: '900' }}>✓</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    onPress={() => setIsMapModalOpen(true)}
+                    style={{ 
+                      width: 160, borderWidth: 1, borderStyle: 'dashed', borderColor: '#D1D5DB', borderRadius: 20,
+                      justifyContent: 'center', alignItems: 'center', gap: 8, backgroundColor: '#FFFFFF'
+                    }}
+                  >
+                    <Plus size={18} color="#F47321" strokeWidth={3} />
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: '#F47321' }}>Agregar nueva</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F3FF', justifyContent: 'center', alignItems: 'center' }}>
+                    <Store size={18} color="#6366F1" />
+                  </View>
+                  <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>Sucursal disponible</Text>
+                </View>
+
+                <TouchableOpacity style={{ 
+                  borderWidth: 2, borderColor: '#1E1B4B', borderRadius: 20, padding: 24, backgroundColor: '#FFFFFF',
+                  shadowColor: '#1E1B4B', shadowOpacity: 0.05, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
+                }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 18, fontWeight: '900', color: '#1E1B4B' }}>Saku Vet Central</Text>
+                      <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '600', marginTop: 4 }}>Av. Providencia 1234, Providencia</Text>
+                      
+                      <View style={{ flexDirection: 'row', gap: 16, marginTop: 12 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Clock size={16} color="#9CA3AF" />
+                          <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600' }}>09:00 - 20:00</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <MapPin size={16} color="#9CA3AF" />
+                          <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600' }}>1.2 km</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={{ alignItems: 'flex-end', gap: 10 }}>
+                      <View style={{ backgroundColor: '#DCFCE7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+                        <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '800' }}>• Stock disponible</Text>
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#6366F1' }}>Hoy, 15:00 hrs</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* PAYMENT METHOD SECTION */}
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#ECFDF5', justifyContent: 'center', alignItems: 'center' }}>
+                  <Banknote size={18} color="#10B981" />
+                </View>
+                <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>Método de Pago</Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                <TouchableOpacity 
+                  onPress={() => setPaymentMethod('cash')}
+                  style={{ 
+                    flex: 1, borderWidth: 2, borderColor: paymentMethod === 'cash' ? '#1E1B4B' : '#F3F4F6', borderRadius: 20, padding: 20, 
+                    backgroundColor: paymentMethod === 'cash' ? '#F5F3FF' : '#FFFFFF',
+                    flexDirection: 'row', alignItems: 'center', gap: 16
+                  }}
+                >
+                  <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 }}>
+                    <Banknote size={22} color="#1E1B4B" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Efectivo / Transfer</Text>
+                    <Text style={{ fontSize: 13, color: '#6366F1', fontWeight: '500', marginTop: 2 }}>Al momento de entrega</Text>
+                  </View>
+                  {paymentMethod === 'cash' && (
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#1E1B4B', justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  onPress={() => setPaymentMethod('card')}
+                  style={{ 
+                    flex: 1, borderWidth: 2, borderColor: paymentMethod === 'card' ? '#1E1B4B' : '#F3F4F6', borderRadius: 20, padding: 20, 
+                    backgroundColor: paymentMethod === 'card' ? '#F5F3FF' : '#FFFFFF',
+                    flexDirection: 'row', alignItems: 'center', gap: 16
+                  }}
+                >
+                  <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 }}>
+                    <CreditCard size={22} color="#9CA3AF" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Tarjeta Bancaria</Text>
+                    <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>Crédito / Débito Segura</Text>
+                  </View>
+                  {paymentMethod === 'card' && (
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#1E1B4B', justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* RIGHT COLUMN: ORDER SUMMARY */}
+          <View style={{ flex: 1, maxWidth: isDesktop ? 420 : '100%' }}>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 32, padding: 32, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, borderWidth: 1, borderColor: '#F3F4F6' }}>
+              <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginBottom: 24 }}>Resumen de Orden</Text>
+              
+              <View style={{ gap: 20, marginBottom: 32 }}>
+                {cart.map((item) => (
+                  <View key={`${item.id}-${item.selectedSize}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                    <View style={{ position: 'relative' }}>
+                      <Image source={{ uri: item.image }} style={{ width: 56, height: 56, borderRadius: 12 }} />
+                      <View style={{ position: 'absolute', top: -6, right: -6, backgroundColor: '#000', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF' }}>
+                        <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>{item.quantity}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>{item.name}</Text>
+                      {item.selectedSize && <Text style={{ fontSize: 11, color: '#F47321', fontWeight: '700' }}>{item.selectedSize}</Text>}
+                      <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>${item.price.toLocaleString()}</Text>
+                    </View>
+                    <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }}>${(item.price * item.quantity).toLocaleString()}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Promo Code */}
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 32 }}>
+                <TextInput 
+                  placeholder="Código promocional"
+                  placeholderTextColor="#BFBFBF"
+                  style={{ flex: 1, height: 50, backgroundColor: '#F9FAFB', borderRadius: 14, paddingHorizontal: 16, fontSize: 14, fontWeight: '600', borderWidth: 1, borderColor: '#F3F4F6' }}
+                />
+                <TouchableOpacity style={{ backgroundColor: '#F47321', borderRadius: 14, paddingHorizontal: 20, justifyContent: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>Aplicar</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Totals */}
+              <View style={{ gap: 12, marginBottom: 32 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>Subtotal</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }}>${cartTotal.toLocaleString()}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>Envío</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: '#10B981' }}>Gratis</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>Descuento</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }}>$0</Text>
+                </View>
+              </View>
+
+              <View style={{ height: 1, backgroundColor: '#F3F4F6', marginBottom: 32 }} />
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
+                <View>
+                  <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>Total</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                  <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '800' }}>CLP</Text>
+                  <Text style={{ fontSize: 32, fontWeight: '900', color: '#F47321' }}>${total.toLocaleString()}</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                onPress={handlePayment}
+                style={{ 
+                  backgroundColor: '#10B981', borderRadius: 20, height: 64, justifyContent: 'center', alignItems: 'center',
+                  shadowColor: '#10B981', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>
+                  PAGAR ${total.toLocaleString()} EN {paymentMethod === 'cash' ? 'EFECTIVO' : 'TARJETA'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+        </View>
+      </ScrollView>
+
+      {/* SUCCESS MODAL */}
+      {isSuccessModalOpen && (
+        <View style={{ 
+          position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 20000,
+          backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center'
+        }}>
+          <View style={{ 
+            width: isDesktop ? 480 : '90%', backgroundColor: '#FFFFFF', borderRadius: 40, padding: isDesktop ? 48 : 32, alignItems: 'center',
+            shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 40, shadowOffset: { width: 0, height: 20 }
+          }}>
+            <View style={{ 
+              width: 80, height: 80, borderRadius: 40, backgroundColor: '#DCFCE7', 
+              justifyContent: 'center', alignItems: 'center', marginBottom: 24
+            }}>
+              <CheckCircle2 size={40} color="#10B981" />
+            </View>
+            
+            <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>¡Pedido Realizado!</Text>
+            <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '600', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
+              Tu pedido ha sido procesado exitosamente. Recibirás un correo con el detalle de tu compra.
+            </Text>
+
+            <TouchableOpacity 
+              onPress={() => {
+                clearCart();
+                setIsSuccessModalOpen(false);
+                router.push('/');
+              }}
+              style={{ 
+                backgroundColor: '#111827', borderRadius: 18, height: 56, width: '100%',
+                alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>VOLVER AL INICIO</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* MAP MODAL */}
+      <LocationMapModal
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
+        onSave={(location) => {
+          setSelectedLocation(location);
+          setIsMapModalOpen(false);
+        }}
+      />
+    </View>
+  );
+}

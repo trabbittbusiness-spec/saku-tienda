@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { View, useWindowDimensions } from 'react-native';
 import PremiumNavbar from '../components/Navbar';
 import "../global.css";
@@ -6,10 +6,13 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { FavoritesProvider } from '../context/FavoritesContext';
+import { CartProvider } from '../context/CartContext';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const pathname = usePathname();
   const [loaded, error] = useFonts({
     // Fonts can go here
   });
@@ -26,18 +29,25 @@ export default function RootLayout() {
     return null;
   }
 
+  const hideNavbarScreens = ['/checkout', '/orders', '/addresses', '/account', '/cards', '/security'];
+  const shouldHideNavbar = hideNavbarScreens.includes(pathname) || pathname.startsWith('/product/');
+
   return (
     <View style={{ flex: 1 }}>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#F8F8F8' }
-        }}
-      >
-        <Stack.Screen name="index" />
-      </Stack>
-      {!isDesktop && <PremiumNavbar />}
+      <FavoritesProvider>
+        <CartProvider>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: '#F8F8F8' }
+            }}
+          >
+            <Stack.Screen name="index" />
+          </Stack>
+          {!isDesktop && !shouldHideNavbar && <PremiumNavbar />}
+        </CartProvider>
+      </FavoritesProvider>
     </View>
   );
 }
