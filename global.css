@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-premium-white text-premium-black;
+  }
+}
+
+/* For React Native Web / Desktop */
+html, body, #root {
+  height: 100%;
+}
