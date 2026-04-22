@@ -124,8 +124,8 @@ export default function OrdersScreen() {
                     onPress={() => router.push(`/orders/${order.id}` as any)}
                     style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}
                   >
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>Ver detalles</Text>
-                    <ChevronRight size={16} color="#111827" />
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#3B1E54' }}>Ver detalles</Text>
+                    <ChevronRight size={16} color="#3B1E54" />
                   </TouchableOpacity>
                 </View>
               </View>

@@ -285,7 +285,10 @@ export default function SearchScreen() {
                       
                       <TouchableOpacity 
                         onPress={() => router.push('/product/1')}
-                        style={{ backgroundColor: '#092415', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
+                        style={{ 
+                          backgroundColor: '#3B1E54', borderRadius: 12, paddingVertical: 14, alignItems: 'center',
+                          shadowColor: '#3B1E54', shadowOpacity: 0.2, shadowRadius: 10
+                        }}
                       >
                          <Text style={{ color: 'white', fontWeight: '800', fontSize: 16, letterSpacing: -0.3 }}>Ver detalles</Text>
                       </TouchableOpacity>

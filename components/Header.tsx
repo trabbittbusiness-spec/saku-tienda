@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Pressable, Modal, ScrollView, Image } from 'react-native';
 import { BellDot, ChevronDown, MapPin, Search, ShoppingCart, Heart, Store, Truck, Dog as DogIcon, LogOut, User, CreditCard, Shield, ChevronRight, X, Trash2, Minus, Plus, ArrowRight, Bell, ShoppingBag, Home, Briefcase, Star, Check, Navigation } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, interpolate } from 'react-native-reanimated';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -29,6 +30,106 @@ export default function Header() {
   const insets = useSafeAreaInsets();
   const isDesktop = width >= BREAKPOINT;
 
+  // Drawer Slide Animation
+  const drawerTranslateX = useSharedValue(width);
+  useEffect(() => {
+    if (isNotificationsOpen) {
+      drawerTranslateX.value = withTiming(0, { duration: 250 });
+    } else {
+      drawerTranslateX.value = withTiming(width, { duration: 200 });
+    }
+  }, [isNotificationsOpen, width]);
+
+  const animatedDrawerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: drawerTranslateX.value }],
+  }));
+
+  const renderNotificationsDrawer = () => {
+    return (
+      <Modal visible={isNotificationsOpen} transparent animationType="fade" onRequestClose={() => setIsNotificationsOpen(false)}>
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          {isDesktop && <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setIsNotificationsOpen(false)} />}
+          <Animated.View style={[{ width: isDesktop ? 420 : '100%', backgroundColor: '#FFFFFF', height: '100%', shadowColor: '#000', shadowOffset: { width: -10, height: 0 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 15 }, animatedDrawerStyle]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#F3F4F6', paddingTop: isDesktop ? 25 : insets.top + 20 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>Notificaciones</Text>
+                <View style={{ backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
+                  <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>3</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setIsNotificationsOpen(false)} style={{ width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
+                <X size={20} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 12 }}>
+              <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#FFF7ED', borderRadius: 16, borderWidth: 1, borderColor: '#FED7AA', gap: 14 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#FFEDD5', justifyContent: 'center', alignItems: 'center' }}>
+                  <Truck size={20} color="#F47321" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Pedido en camino</Text>
+                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Hace 5 min</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>Tu orden #4SO37PD ha sido despachada y está en camino a tu dirección.</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#F0FDF4', borderRadius: 16, borderWidth: 1, borderColor: '#BBF7D0', gap: 14 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center' }}>
+                  <ShoppingBag size={20} color="#10B981" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Compra confirmada</Text>
+                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Hace 2 hrs</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>Tu compra de Royal Dog Hypoallergenic ha sido confirmada exitosamente.</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: '#F3F4F6', gap: 14 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' }}>
+                  <Bell size={20} color="#6366F1" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Promoción especial</Text>
+                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Ayer</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>¡20% de descuento en alimentos premium para tu mascota! Válido hasta el domingo.</Text>
+                </View>
+              </TouchableOpacity>
+            </ScrollView>
+            <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingBottom: insets.bottom + 20 }}>
+              <TouchableOpacity style={{ backgroundColor: '#F3F4F6', borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Marcar todas como leídas</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
+    );
+  };
+
+  // Pro Dynamic Capsule Animations
+  const truckDrive = useSharedValue(0);
+  const radarPulse = useSharedValue(0);
+
+  useEffect(() => {
+    // Fast subtle bounce for the truck (simulating driving)
+    truckDrive.value = withRepeat(withTiming(1, { duration: 150 }), -1, true);
+    // Smooth radar pulse for the active dot
+    radarPulse.value = withRepeat(withTiming(1, { duration: 1200 }), -1, true);
+  }, []);
+
+  const animatedTruckStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(truckDrive.value, [0, 1], [0, -1.5]) }],
+  }));
+
+  const animatedRadarStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(radarPulse.value, [0, 1], [1, 1.8]) }],
+    opacity: interpolate(radarPulse.value, [0, 1], [1, 0.2]),
+  }));
+
   if (isDesktop) {
     // ── DESKTOP HEADER (Reference Perfect) ──────────────────────────────────
     return (
@@ -55,14 +156,18 @@ export default function Header() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}
         >
           <View style={{
-            backgroundColor: '#F47321',
-            width: 40,
-            height: 40,
-            borderRadius: 10,
+            backgroundColor: '#3B1E54',
+            width: 44,
+            height: 44,
+            borderRadius: 12,
             justifyContent: 'center',
             alignItems: 'center'
           }}>
-            <DogIcon color="white" size={24} />
+            <Image 
+              source={require('../assets/images/logo_saku_cl.png')} 
+              style={{ width: 32, height: 32 }} 
+              resizeMode="contain" 
+            />
           </View>
           <Text style={{ fontSize: 24, fontWeight: '900', color: '#1A1A2E', letterSpacing: -1 }}>
             SAKU<Text style={{ color: '#F47321' }}>.</Text>
@@ -203,24 +308,33 @@ export default function Header() {
             )}
             <TouchableOpacity
               onPress={() => setIsActiveOrderOpen(!isActiveOrderOpen)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#E8FAF4',
-                paddingHorizontal: 16,
-                paddingVertical: 10,
-                borderRadius: 25,
-                borderWidth: 1,
-                borderColor: '#6EE7B7',
-                gap: 8,
-              }}
+              activeOpacity={0.8}
             >
-              <Truck size={18} color="#059669" />
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' }} />
-              <Text style={{ fontSize: 15, color: '#065F46', fontWeight: '800' }}>
-                1 Orden Activa
-              </Text>
-              <ChevronDown size={14} color="#059669" />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#F5F3F7', // Soft purple background matching the header style
+                  paddingHorizontal: 16,
+                  paddingVertical: 8, // Matching address selector
+                  borderRadius: 25,
+                  gap: 8,
+                }}
+              >
+                <Truck size={18} color="#3B1E54" strokeWidth={2.5} />
+                
+                {/* Subtle Pulsing Dot */}
+                <View style={{ position: 'relative', width: 8, height: 8, justifyContent: 'center', alignItems: 'center' }}>
+                  <Animated.View style={[{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#F47321' }, animatedRadarStyle]} />
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#F47321', zIndex: 2 }} />
+                </View>
+
+                <Text style={{ fontSize: 15, color: '#1A1A2E', fontWeight: '800' }}>
+                  1 Orden Activa
+                </Text>
+                
+                <ChevronDown size={14} color="#555" strokeWidth={2.5} />
+              </View>
             </TouchableOpacity>
 
             {isActiveOrderOpen && (
@@ -259,8 +373,8 @@ export default function Header() {
                       onPress={() => { setIsActiveOrderOpen(false); router.push('/orders' as any); }}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#F47321' }}>Ver detalles</Text>
-                      <ArrowRight size={14} color="#F47321" />
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#3B1E54' }}>Ver detalles</Text>
+                      <ArrowRight size={14} color="#3B1E54" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -439,7 +553,13 @@ export default function Header() {
                   <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 10, marginHorizontal: 10 }} />
 
                   {/* Logout */}
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 12, marginBottom: 5 }}>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setIsAccountMenuOpen(false);
+                      router.replace('/login');
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 12, marginBottom: 5 }}
+                  >
                     <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' }}>
                       <LogOut size={20} color="#EF4444" />
                     </View>
@@ -461,68 +581,8 @@ export default function Header() {
           }}
         />
 
-        {/* NOTIFICATIONS DRAWER (DESKTOP ONLY) */}
-        {isNotificationsOpen && (
-          <View style={{ position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, flexDirection: 'row' }}>
-            <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setIsNotificationsOpen(false)} />
-            <View style={{ width: 420, backgroundColor: '#FFFFFF', height: '100%', shadowColor: '#000', shadowOffset: { width: -10, height: 0 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 15 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>Notificaciones</Text>
-                  <View style={{ backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
-                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>3</Text>
-                  </View>
-                </View>
-                <TouchableOpacity onPress={() => setIsNotificationsOpen(false)} style={{ width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
-                  <X size={20} color="#4B5563" />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 12 }}>
-                <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#FFF7ED', borderRadius: 16, borderWidth: 1, borderColor: '#FED7AA', gap: 14 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#FFEDD5', justifyContent: 'center', alignItems: 'center' }}>
-                    <Truck size={20} color="#F47321" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Pedido en camino</Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Hace 5 min</Text>
-                    </View>
-                    <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>Tu orden #4SO37PD ha sido despachada y está en camino a tu dirección.</Text>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#F0FDF4', borderRadius: 16, borderWidth: 1, borderColor: '#BBF7D0', gap: 14 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center' }}>
-                    <ShoppingBag size={20} color="#10B981" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Compra confirmada</Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Hace 2 hrs</Text>
-                    </View>
-                    <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>Tu compra de Royal Dog Hypoallergenic ha sido confirmada exitosamente.</Text>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: '#F3F4F6', gap: 14 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' }}>
-                    <Bell size={20} color="#6366F1" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Promoción especial</Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Ayer</Text>
-                    </View>
-                    <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>¡20% de descuento en alimentos premium para tu mascota! Válido hasta el domingo.</Text>
-                  </View>
-                </TouchableOpacity>
-              </ScrollView>
-              <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#F3F4F6' }}>
-                <TouchableOpacity style={{ backgroundColor: '#F3F4F6', borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Marcar todas como leídas</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        )}
+        {/* NOTIFICATIONS DRAWER (UNIVERSAL) */}
+        {renderNotificationsDrawer()}
 
         {/* CART DRAWER MODAL (DESKTOP ONLY) */}
         {isCartOpen && (
@@ -644,6 +704,7 @@ export default function Header() {
 
   // ── MOBILE HEADER ─────────
   return (
+    <>
     <LinearGradient
       colors={['#FF8F40', '#F47321']} // Soft Lighter Orange (Top) to Saku Orange (Bottom)
       style={{
@@ -676,7 +737,7 @@ export default function Header() {
 
         <View style={{ position: 'relative' }}>
           <TouchableOpacity
-            onPress={() => setIsCartOpen(true)}
+            onPress={() => setIsNotificationsOpen(true)}
             style={{
               backgroundColor: 'rgba(255,255,255,0.25)',
               width: 44,
@@ -686,29 +747,32 @@ export default function Header() {
               justifyContent: 'center',
             }}
           >
-            <ShoppingBag size={22} color="white" strokeWidth={2} />
+            <Bell size={22} color="white" strokeWidth={2} />
           </TouchableOpacity>
-          {cartCount > 0 && (
-            <View
-              style={{
-                position: 'absolute',
-                top: -4,
-                right: -4,
-                backgroundColor: '#FF3B30',
-                borderRadius: 11,
-                minWidth: 22,
-                height: 22,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 2,
-                borderColor: '#F47321',
-              }}
-            >
-              <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>{cartCount}</Text>
-            </View>
-          )}
+          {/* Notification Badge */}
+          <View
+            style={{
+              position: 'absolute',
+              top: -4,
+              right: -4,
+              backgroundColor: '#FF3B30',
+              borderRadius: 11,
+              minWidth: 22,
+              height: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 2,
+              borderColor: '#F47321',
+            }}
+          >
+            <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>3</Text>
+          </View>
+
         </View>
       </View>
     </LinearGradient>
+    {/* MOBILE NOTIFICATIONS DRAWER */}
+    {renderNotificationsDrawer()}
+    </>
   );
 }

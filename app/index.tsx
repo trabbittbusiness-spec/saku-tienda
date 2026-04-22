@@ -225,7 +225,7 @@ function MobileProductCard({ item }: { item: typeof products[0] }) {
         <Image source={{ uri: item.image }} style={{ width: '90%', height: '90%' }} resizeMode="contain" />
       </View>
 
-      <Text style={{ fontSize: 9, color: '#1F8A70', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>{item.category}</Text>
+      <Text style={{ fontSize: 9, color: '#3B1E54', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>{item.category}</Text>
       
       <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A2E', lineHeight: 16, marginBottom: 10, minHeight: 32 }} numberOfLines={2}>
         {item.name}
@@ -243,7 +243,7 @@ function MobileProductCard({ item }: { item: typeof products[0] }) {
         activeOpacity={0.8}
         onPress={() => router.push('/product/1')}
         style={{ 
-          backgroundColor: '#1F8A70', 
+          backgroundColor: '#3B1E54', 
           borderRadius: 12, 
           paddingVertical: 10, 
           alignItems: 'center'
@@ -467,35 +467,34 @@ function DesktopSubHeader() {
 
 function DesktopPromoBanner() {
   return (
-    <View style={{ width: '100%', height: 60, backgroundColor: '#E60012', flexDirection: 'row', overflow: 'hidden' }}>
-      {/* Left Red Section */}
-      <View style={{ width: 80, backgroundColor: '#E60012' }} />
-
-      {/* Main Content with Green Gradient */}
-      <View style={{ flex: 1, backgroundColor: '#22C55E', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 40, height: 40, backgroundColor: 'white', borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
-            <Megaphone size={22} color="#22C55E" />
-          </View>
-          <Text style={{ color: 'white', fontSize: 18, fontWeight: '400' }}>Ya abrimos </Text>
-          <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>¡Nuevas tiendas!</Text>
+    <LinearGradient
+      colors={['#F47321', '#3B1E54']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={{ width: '100%', height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20 }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ width: 40, height: 40, backgroundColor: 'white', borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
+          <Megaphone size={22} color="#F47321" />
         </View>
-
-        {/* Store Icon */}
-        <View style={{ marginLeft: 30, backgroundColor: 'white', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-           <Text style={{ color: '#22C55E', fontWeight: '900', fontSize: 10 }}>DUAL</Text>
-        </View>
-
-        {/* Locations */}
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 20 }}>
-           <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Te estamos esperando en:</Text>
-           <View>
-             <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>• <Text style={{ fontWeight: '900' }}>Las Brisas</Text> Autop. Los Libertadores KM 16, Colina</Text>
-             <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>• <Text style={{ fontWeight: '900' }}>Los Toros</Text> Av. Concha y Toro 3909, Vivo Outlet</Text>
-           </View>
-        </View>
+        <Text style={{ color: 'white', fontSize: 18, fontWeight: '400' }}>Ya abrimos </Text>
+        <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>¡Nuevas tiendas!</Text>
       </View>
-    </View>
+
+      {/* Store Icon */}
+      <View style={{ marginLeft: 30, backgroundColor: 'white', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+         <Text style={{ color: '#3B1E54', fontWeight: '900', fontSize: 10 }}>DUAL</Text>
+      </View>
+
+      {/* Locations */}
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 20 }}>
+         <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Te estamos esperando en:</Text>
+         <View>
+           <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>• <Text style={{ fontWeight: '900' }}>Las Brisas</Text> Autop. Los Libertadores KM 16, Colina</Text>
+           <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>• <Text style={{ fontWeight: '900' }}>Los Toros</Text> Av. Concha y Toro 3909, Vivo Outlet</Text>
+         </View>
+      </View>
+    </LinearGradient>
   );
 }
 
@@ -722,7 +721,7 @@ export default function Home() {
 
             {/* CATEGORIES SECTION */}
             <View style={{ marginTop: 60, marginBottom: 40 }}>
-              <Text style={{ fontSize: 32, fontWeight: '900', color: '#1A6332', marginBottom: 30, letterSpacing: -0.5 }}>Comprar por categorías</Text>
+              <Text style={{ fontSize: 32, fontWeight: '900', color: '#3B1E54', marginBottom: 30, letterSpacing: -0.5 }}>Comprar por categorías</Text>
               
               <View style={{ flexDirection: 'row', gap: 20, justifyContent: 'space-between' }}>
                 {[
@@ -759,28 +758,16 @@ export default function Home() {
                     <View style={{ 
                       width: '100%', 
                       height: 50, 
-                      backgroundColor: '#E5E5E5', 
+                      backgroundColor: '#3B1E54', 
                       justifyContent: 'center', 
                       alignItems: 'center',
                       borderBottomLeftRadius: 8,
                       borderBottomRightRadius: 8,
                     }}>
-                      <Text style={{ fontWeight: '900', fontSize: 16, color: '#1A1A2E' }}>{cat.title}</Text>
+                      <Text style={{ fontWeight: '900', fontSize: 16, color: 'white' }}>{cat.title}</Text>
                     </View>
                   </TouchableOpacity>
                 ))}
-              </View>
-
-              {/* Navigation Arrows for Categories (Visual only as requested by image reference) */}
-              <View style={{ position: 'absolute', top: '55%', left: -25, zIndex: 30 }}>
-                 <TouchableOpacity style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                    <ChevronLeft size={24} color="#666" />
-                 </TouchableOpacity>
-              </View>
-              <View style={{ position: 'absolute', top: '55%', right: -25, zIndex: 30 }}>
-                 <TouchableOpacity style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                    <ChevronRight size={24} color="#666" />
-                 </TouchableOpacity>
               </View>
             </View>
 
@@ -1055,8 +1042,8 @@ export default function Home() {
                       <TouchableOpacity 
                         onPress={() => router.push('/product/1')}
                         style={{ 
-                          backgroundColor: '#0A2919', paddingVertical: 16, borderRadius: 10, alignItems: 'center', width: '100%',
-                          shadowColor: '#0A2919', shadowOpacity: 0.2, shadowRadius: 10
+                          backgroundColor: '#3B1E54', paddingVertical: 16, borderRadius: 10, alignItems: 'center', width: '100%',
+                          shadowColor: '#3B1E54', shadowOpacity: 0.2, shadowRadius: 10
                         }}
                       >
                         <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>Ver detalles</Text>
@@ -1222,7 +1209,7 @@ export default function Home() {
               resizeMode="cover"
             />
             <LinearGradient
-              colors={['rgba(34,197,94,0.92)', 'rgba(6,78,59,0.95)']}
+              colors={['rgba(76,29,149,0.92)', 'rgba(59,30,84,0.95)']}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
@@ -1249,7 +1236,7 @@ export default function Home() {
                   }}
                 />
                 <TouchableOpacity style={{ 
-                  backgroundColor: '#22C55E', 
+                  backgroundColor: '#3B1E54', 
                   height: '100%', 
                   paddingHorizontal: 40,
                   justifyContent: 'center',
@@ -1272,10 +1259,12 @@ export default function Home() {
                   {/* Brand & Mission */}
                   <View style={{ flex: 1.5, paddingRight: 50 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 25 }}>
-                      <View style={{ width: 54, height: 54, backgroundColor: '#ECFDF5', borderRadius: 27, justifyContent: 'center', alignItems: 'center' }}>
-                        <DogIcon size={28} color="#10B981" strokeWidth={2.5} />
+                      <View style={{ width: 54, height: 54, backgroundColor: 'rgba(59,30,84,0.1)', borderRadius: 27, justifyContent: 'center', alignItems: 'center' }}>
+                        <DogIcon size={28} color="#3B1E54" strokeWidth={2.5} />
                       </View>
-                      <Text style={{ fontSize: 38, fontWeight: '900', color: '#10B981', letterSpacing: -1 }}>Dr.Pet®</Text>
+                      <Text style={{ fontSize: 38, fontWeight: '900', color: '#3B1E54', letterSpacing: -1 }}>
+                        SAKU<Text style={{ color: '#F47321' }}>.</Text>
+                      </Text>
                     </View>
                     <Text style={{ fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 15, letterSpacing: -0.5, lineHeight: 32 }}>
                       Amor incondicional,{'\n'}calidad excepcional.
@@ -1296,9 +1285,9 @@ export default function Home() {
                           width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF', 
                           justifyContent: 'center', alignItems: 'center', 
                           borderWidth: 1, borderColor: '#E5E7EB',
-                          shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3
+                          shadowColor: '#3B1E54', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3
                         }}>
-                          <FontAwesome name={social.name as any} size={20} color="#10B981" />
+                          <FontAwesome name={social.name as any} size={20} color="#3B1E54" />
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -1353,7 +1342,7 @@ export default function Home() {
                     <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} />
                     <TouchableOpacity><Text style={{ color: '#4B5563', fontSize: 13, fontWeight: '600' }}>Términos de Servicio</Text></TouchableOpacity>
                     <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} />
-                    <TouchableOpacity><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '800' }}>Configurar Cookies</Text></TouchableOpacity>
+                    <TouchableOpacity><Text style={{ color: '#3B1E54', fontSize: 13, fontWeight: '800' }}>Configurar Cookies</Text></TouchableOpacity>
                   </View>
                 </View>
 
@@ -1378,10 +1367,10 @@ export default function Home() {
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 10 }}>
             {[
-              { id: 1, name: 'Perro',     IconComp: DogIcon,     color: '#C8860A', bg: '#FFF9F0', border: '#F5DEB3' },
-              { id: 2, name: 'Gato',      IconComp: CatIcon,     color: '#D4820B', bg: '#FFF9F0', border: '#F5DEB3' },
-              { id: 3, name: 'Exóticos',  IconComp: Bird,        color: '#A0522D', bg: '#FFF9F0', border: '#F5DEB3' },
-              { id: 4, name: 'Servicios', IconComp: Stethoscope, color: '#C0392B', bg: '#FFF9F0', border: '#F5DEB3' }
+              { id: 1, name: 'Perro',     IconComp: DogIcon,     color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' },
+              { id: 2, name: 'Gato',      IconComp: CatIcon,     color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' },
+              { id: 3, name: 'Exóticos',  IconComp: Bird,        color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' },
+              { id: 4, name: 'Servicios', IconComp: Stethoscope, color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' }
             ].map((cat) => (
               <TouchableOpacity key={cat.id} style={{ alignItems: 'center' }} activeOpacity={0.8}>
                 <View 
@@ -1395,16 +1384,16 @@ export default function Home() {
                     marginBottom: 10,
                     borderWidth: 1.5,
                     borderColor: cat.border,
-                    shadowColor: '#D4820B',
+                    shadowColor: '#3B1E54',
                     shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.08,
+                    shadowOpacity: 0.15,
                     shadowRadius: 10,
                     elevation: 3
                   }}
                 >
                   <cat.IconComp size={36} color={cat.color} strokeWidth={1.8} />
                 </View>
-                <Text style={{ fontSize: 13, fontWeight: '800', color: '#2D1B00', textAlign: 'center' }}>{cat.name}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: '#1A1A2E', textAlign: 'center' }}>{cat.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1456,8 +1445,8 @@ export default function Home() {
           <Text style={{ color: '#2E852D', fontSize: 11, fontWeight: '800', letterSpacing: 0.5, marginBottom: 12, textAlign: 'center' }}>
             NOS ENCANTAN LAS MASCOTAS FELICES Y SALUDABLES
           </Text>
-          <Text style={{ color: '#092B19', fontSize: 24, fontWeight: '900', textAlign: 'center' }}>
-            Síguenos en @drpetchile
+          <Text style={{ color: '#3B1E54', fontSize: 24, fontWeight: '900', textAlign: 'center' }}>
+            Síguenos en @sakuchile
           </Text>
         </View>
 
@@ -1468,7 +1457,10 @@ export default function Home() {
             style={{ width: '100%', height: '100%', position: 'absolute' }} 
             resizeMode="cover"
           />
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', padding: 30, justifyContent: 'center', alignItems: 'center' }}>
+          <LinearGradient
+            colors={['rgba(76,29,149,0.85)', 'rgba(59,30,84,0.92)']}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: 30, justifyContent: 'center', alignItems: 'center' }}
+          >
             <Text style={{ color: 'white', fontSize: 28, fontWeight: '900', textAlign: 'center', marginBottom: 24, lineHeight: 34 }}>
               Inscríbete y recibe nuestras promociones
             </Text>
@@ -1493,7 +1485,7 @@ export default function Home() {
             <TouchableOpacity 
               activeOpacity={0.9}
               style={{ 
-                backgroundColor: '#2E852D', 
+                backgroundColor: '#3B1E54', 
                 width: '100%', 
                 height: 54, 
                 borderRadius: 8, 
@@ -1503,13 +1495,15 @@ export default function Home() {
             >
               <Text style={{ color: 'white', fontSize: 15, fontWeight: '900', letterSpacing: 1 }}>SUSCRIBIRSE</Text>
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
         </View>
 
         {/* Main Footer Section */}
-        <View style={{ backgroundColor: '#F9F9F9', paddingVertical: 40, paddingHorizontal: 25 }}>
+        <View style={{ backgroundColor: '#FFFFFF', paddingVertical: 40, paddingHorizontal: 25 }}>
           <View style={{ marginBottom: 30 }}>
-            <Text style={{ fontSize: 42, fontWeight: '900', color: '#2E852D' }}>Dr.Pet®</Text>
+            <Text style={{ fontSize: 42, fontWeight: '900', color: '#3B1E54', letterSpacing: -1 }}>
+              SAKU<Text style={{ color: '#F47321' }}>.</Text>
+            </Text>
             <Text style={{ fontSize: 18, color: '#666', fontStyle: 'italic', marginTop: -5 }}>Todo por tu mascota</Text>
           </View>
           
@@ -1532,17 +1526,17 @@ export default function Home() {
         </View>
 
         {/* Bottom Social & Copyright */}
-        <View style={{ backgroundColor: '#092B19', paddingTop: 40, paddingBottom: 60, paddingHorizontal: 20, alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24 }}>
+        <View style={{ backgroundColor: '#FFFFFF', paddingTop: 20, paddingBottom: 60, paddingHorizontal: 20, alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', gap: 20, marginBottom: 24 }}>
             {['facebook', 'youtube-play', 'instagram', 'linkedin'].map((social) => (
-              <TouchableOpacity key={social} style={{ width: 48, height: 48, backgroundColor: 'white', borderRadius: 8, justifyContent: 'center', alignItems: 'center' }}>
-                <FontAwesome name={social as any} size={24} color="#092B19" />
+              <TouchableOpacity key={social} style={{ width: 48, height: 48, backgroundColor: 'transparent', borderRadius: 8, justifyContent: 'center', alignItems: 'center' }}>
+                <FontAwesome name={social as any} size={28} color="#3B1E54" />
               </TouchableOpacity>
             ))}
           </View>
           
-          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, textAlign: 'center', marginBottom: 8 }}>
-            © 2026 Dr.Pet · Todos los derechos reservados
+          <Text style={{ color: '#6B7280', fontSize: 13, textAlign: 'center', marginBottom: 8, fontWeight: '500' }}>
+            © 2026 Saku · Todos los derechos reservados
           </Text>
         </View>
 
