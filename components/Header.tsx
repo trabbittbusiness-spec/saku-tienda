@@ -9,12 +9,18 @@ import { useRouter } from 'expo-router';
 import LocationMapModal from './LocationMapModal';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { doc, getDoc, onSnapshot, query, collection, where, updateDoc, serverTimestamp, addDoc } from 'firebase/firestore';
 
 const BREAKPOINT = 768;
 
 export default function Header() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -29,6 +35,72 @@ export default function Header() {
   const { favorites } = useFavorites();
   const insets = useSafeAreaInsets();
   const isDesktop = width >= BREAKPOINT;
+
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [defaultAddrId, setDefaultAddrId] = useState<string | null>(null);
+  const [activeOrders, setActiveOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setUserEmail(currentUser.email || '');
+        
+        // Fetch User Profile (Name and Default Address)
+        const unsubUser = onSnapshot(doc(db, 'users', currentUser.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const fullName = [data.display_name, data.apellido].filter(Boolean).join(' ');
+            setUserName(fullName || currentUser.displayName || 'Usuario');
+            
+            if (data.direccionDefault) {
+              setSelectedLocation({
+                main: data.direccionDefault.main,
+                sub: data.direccionDefault.sub
+              });
+              setDefaultAddrId(data.direccionDefault.id);
+            }
+          }
+        });
+
+        // Fetch Addresses Collection
+        const qAddr = query(collection(db, 'Direcciones'), where('userId', '==', currentUser.uid));
+        const unsubAddresses = onSnapshot(qAddr, (snapshot) => {
+          const addrList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setAddresses(addrList);
+        });
+
+        // Fetch Active Orders (Pendiente or Enviado)
+        const qOrders = query(collection(db, 'Ordenes'), where('userId', '==', currentUser.uid));
+        const unsubOrders = onSnapshot(qOrders, (snapshot) => {
+          const ordersList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })).filter((o: any) => {
+            const status = o.estado?.toLowerCase();
+            return status === 'pendiente' || status === 'enviado';
+          });
+          setActiveOrders(ordersList);
+        });
+
+        return () => {
+          unsubUser();
+          unsubAddresses();
+          unsubOrders();
+        };
+      } else {
+        setUserName('');
+        setUserEmail('');
+        setAddresses([]);
+        setDefaultAddrId(null);
+        setActiveOrders([]);
+      }
+    });
+    return unsubscribeAuth;
+  }, []);
 
   // Drawer Slide Animation
   const drawerTranslateX = useSharedValue(width);
@@ -130,6 +202,32 @@ export default function Header() {
     opacity: interpolate(radarPulse.value, [0, 1], [1, 0.2]),
   }));
 
+  const handleSetDefault = async (addr: any) => {
+    if (!auth.currentUser) return;
+    try {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+        direccionDefault: addr
+      });
+      setIsAddressPickerOpen(false);
+    } catch (e) {
+      console.error("Error setting default address:", e);
+    }
+  };
+
+  const handleSaveNewAddress = async (location: any) => {
+    if (!auth.currentUser) return;
+    try {
+      await addDoc(collection(db, 'Direcciones'), {
+        ...location,
+        userId: auth.currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+      setIsMapModalOpen(false);
+    } catch (e) {
+      console.error("Error saving address:", e);
+    }
+  };
+
   if (isDesktop) {
     // ── DESKTOP HEADER (Reference Perfect) ──────────────────────────────────
     return (
@@ -219,7 +317,7 @@ export default function Header() {
                 numberOfLines={1}
                 style={{ fontSize: 15, color: '#1A1A2E', fontWeight: '800', flexShrink: 1 }}
               >
-                Selecciona tu dirección
+                {selectedLocation.main || 'Selecciona tu dirección'}
               </Text>
               <ChevronDown size={14} color="#555" strokeWidth={2.5} style={{ flexShrink: 0 }} />
             </TouchableOpacity>
@@ -227,34 +325,55 @@ export default function Header() {
             {isAddressPickerOpen && (
               <View style={{
                 position: 'absolute', top: 48, left: 0, right: 0, minWidth: 380,
-                backgroundColor: '#FFFFFF', borderRadius: 18, padding: 8,
-                shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.08, shadowRadius: 30,
+                backgroundColor: '#FFFFFF', borderRadius: 22, padding: 12,
+                shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.1, shadowRadius: 35,
                 borderWidth: 1, borderColor: '#F3F4F6', zIndex: 75
               }}>
-                <TouchableOpacity
-                  onPress={() => setIsAddressPickerOpen(false)}
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 14, backgroundColor: '#FFF7ED', borderRadius: 14 }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                    <MapPin size={18} color="#F47321" strokeWidth={2} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>Dirección</Text>
-                      <Text numberOfLines={1} style={{ fontSize: 12, color: '#6B7280', fontWeight: '500', marginTop: 1 }}>Nueva Providencia 1515, Providen...</Text>
-                    </View>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: '#9CA3AF', marginLeft: 12, marginBottom: 12, letterSpacing: 0.5 }}>MIS DIRECCIONES</Text>
+                
+                <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
+                  <View style={{ gap: 8 }}>
+                    {addresses.map((addr) => {
+                      const isSelected = defaultAddrId === addr.id;
+                      return (
+                        <TouchableOpacity
+                          key={addr.id}
+                          onPress={() => handleSetDefault(addr)}
+                          style={{ 
+                            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
+                            paddingVertical: 14, paddingHorizontal: 16, 
+                            backgroundColor: isSelected ? '#FFF7ED' : '#FFFFFF', 
+                            borderRadius: 16, borderWidth: 1, borderColor: isSelected ? '#F4732140' : '#F9FAFB'
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: isSelected ? '#F47321' : '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                              <MapPin size={18} color={isSelected ? 'white' : '#9CA3AF'} strokeWidth={2} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>{addr.category || 'Dirección'}</Text>
+                              <Text numberOfLines={1} style={{ fontSize: 12, color: '#6B7280', fontWeight: '500', marginTop: 1 }}>{addr.main}, {addr.sub}</Text>
+                            </View>
+                          </View>
+                          {isSelected && (
+                            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                              <Check size={14} color="white" strokeWidth={3} />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
-                  <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: 'white', fontSize: 13, fontWeight: '900' }}>✓</Text>
-                  </View>
-                </TouchableOpacity>
+                </ScrollView>
 
-                <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 4, marginHorizontal: 8 }} />
+                <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 12, marginHorizontal: 8 }} />
 
                 <TouchableOpacity
                   onPress={() => { setIsAddressPickerOpen(false); setIsMapModalOpen(true); }}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 14 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#F0FDF4', borderRadius: 16 }}
                 >
-                  <Plus size={16} color="#10B981" strokeWidth={2.5} />
-                  <Text style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>Agregar dirección</Text>
+                  <Plus size={18} color="#10B981" strokeWidth={3} />
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: '#10B981' }}>Agregar nueva dirección</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -299,88 +418,108 @@ export default function Header() {
         {/* Right Side: Status & Icons */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           {/* Active Order Capsule */}
-          <View style={{ position: 'relative', zIndex: 80 }}>
-            {isActiveOrderOpen && (
-              <Pressable
-                style={{ position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 75 }}
-                onPress={() => setIsActiveOrderOpen(false)}
-              />
-            )}
-            <TouchableOpacity
-              onPress={() => setIsActiveOrderOpen(!isActiveOrderOpen)}
-              activeOpacity={0.8}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: '#F5F3F7', // Soft purple background matching the header style
-                  paddingHorizontal: 16,
-                  paddingVertical: 8, // Matching address selector
-                  borderRadius: 25,
-                  gap: 8,
-                }}
+          {activeOrders.length > 0 && (
+            <View style={{ position: 'relative', zIndex: 80 }}>
+              {isActiveOrderOpen && (
+                <Pressable
+                  style={{ position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 75 }}
+                  onPress={() => setIsActiveOrderOpen(false)}
+                />
+              )}
+              <TouchableOpacity
+                onPress={() => setIsActiveOrderOpen(!isActiveOrderOpen)}
+                activeOpacity={0.8}
               >
-                <Truck size={18} color="#3B1E54" strokeWidth={2.5} />
-                
-                {/* Subtle Pulsing Dot */}
-                <View style={{ position: 'relative', width: 8, height: 8, justifyContent: 'center', alignItems: 'center' }}>
-                  <Animated.View style={[{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#F47321' }, animatedRadarStyle]} />
-                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#F47321', zIndex: 2 }} />
-                </View>
-
-                <Text style={{ fontSize: 15, color: '#1A1A2E', fontWeight: '800' }}>
-                  1 Orden Activa
-                </Text>
-                
-                <ChevronDown size={14} color="#555" strokeWidth={2.5} />
-              </View>
-            </TouchableOpacity>
-
-            {isActiveOrderOpen && (
-              <View style={{
-                position: 'absolute', top: 52, right: 0, width: 340,
-                backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20,
-                shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.08, shadowRadius: 30,
-                borderWidth: 1, borderColor: '#F3F4F6', zIndex: 85
-              }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                  <View>
-                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Órdenes Activas</Text>
-                    <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>Usuario</Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#F5F3F7',
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 25,
+                    gap: 8,
+                  }}
+                >
+                  <Truck size={18} color="#3B1E54" strokeWidth={2.5} />
+                  
+                  {/* Subtle Pulsing Dot */}
+                  <View style={{ position: 'relative', width: 8, height: 8, justifyContent: 'center', alignItems: 'center' }}>
+                    <Animated.View style={[{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#F47321' }, animatedRadarStyle]} />
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#F47321', zIndex: 2 }} />
                   </View>
-                  <TouchableOpacity onPress={() => setIsActiveOrderOpen(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
-                    <X size={16} color="#6B7280" />
-                  </TouchableOpacity>
+
+                  <Text style={{ fontSize: 15, color: '#1A1A2E', fontWeight: '800' }}>
+                    {activeOrders.length} {activeOrders.length === 1 ? 'Orden Activa' : 'Órdenes Activas'}
+                  </Text>
+                  
+                  <ChevronDown size={14} color="#555" strokeWidth={2.5} />
                 </View>
-                <View style={{ backgroundColor: '#F9FAFB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#F3F4F6' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
-                      <Store size={18} color="white" strokeWidth={1.8} />
-                    </View>
+              </TouchableOpacity>
+
+              {isActiveOrderOpen && (
+                <View style={{
+                  position: 'absolute', top: 52, right: 0, width: 340,
+                  backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20,
+                  shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.1, shadowRadius: 35,
+                  borderWidth: 1, borderColor: '#F3F4F6', zIndex: 85
+                }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                     <View>
-                      <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }}>#4SO37PDSNQV</Text>
-                      <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '500', marginTop: 1 }}>Retiro en Tienda</Text>
+                      <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Órdenes Activas</Text>
+                      <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>Seguimiento en tiempo real</Text>
                     </View>
-                  </View>
-                  <View style={{ height: 1, backgroundColor: '#E5E7EB', marginBottom: 12 }} />
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#F59E0B' }} />
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#6B7280' }}>Pendiente</Text>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => { setIsActiveOrderOpen(false); router.push('/orders' as any); }}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                    >
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#3B1E54' }}>Ver detalles</Text>
-                      <ArrowRight size={14} color="#3B1E54" />
+                    <TouchableOpacity onPress={() => setIsActiveOrderOpen(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                      <X size={16} color="#6B7280" />
                     </TouchableOpacity>
                   </View>
+
+                  <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
+                    <View style={{ gap: 12 }}>
+                      {activeOrders.map((order) => (
+                        <View key={order.id} style={{ backgroundColor: '#F9FAFB', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#F3F4F6' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: order.estado?.toLowerCase() === 'enviado' ? '#F47321' : '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                              {order.estado?.toLowerCase() === 'enviado' ? (
+                                <Truck size={20} color="white" strokeWidth={2} />
+                              ) : (
+                                <Store size={20} color="white" strokeWidth={2} />
+                              )}
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>#{order.orderCode || order.id.slice(0, 8).toUpperCase()}</Text>
+                              <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '500', marginTop: 1 }}>{order.shippingMethod || 'Envío a domicilio'}</Text>
+                            </View>
+                          </View>
+                          <View style={{ height: 1, backgroundColor: '#E5E7EB', marginBottom: 12, borderStyle: 'dashed' }} />
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: order.estado?.toLowerCase() === 'enviado' ? '#3B82F6' : '#F59E0B' }} />
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: '#4B5563' }}>{order.estado}</Text>
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => { setIsActiveOrderOpen(false); router.push(`/orders/${order.id}` as any); }}
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                            >
+                              <Text style={{ fontSize: 13, fontWeight: '900', color: '#F47321' }}>Ver detalles</Text>
+                              <ArrowRight size={14} color="#F47321" strokeWidth={2.5} />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  </ScrollView>
+
+                  <TouchableOpacity 
+                    onPress={() => { setIsActiveOrderOpen(false); router.push('/orders' as any); }}
+                    style={{ marginTop: 15, alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#F3F4F6' }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: '#9CA3AF' }}>Ver todo el historial</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
-            )}
-          </View>
+              )}
+            </View>
+          )}
 
           {/* Icon Set */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 10 }}>
@@ -473,7 +612,11 @@ export default function Header() {
                 width: 36, height: 36, borderRadius: 18, backgroundColor: '#1A1A2E',
                 justifyContent: 'center', alignItems: 'center'
               }}>
-                <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>M</Text>
+                {user ? (
+                  <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>{userName ? userName.charAt(0).toUpperCase() : 'U'}</Text>
+                ) : (
+                  <User size={18} color="white" />
+                )}
               </View>
             </TouchableOpacity>
 
@@ -509,63 +652,80 @@ export default function Header() {
                   borderBottomColor: 'white',
                 }} />
 
-                {/* Header Item */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15, padding: 16, marginBottom: 5 }}>
-                  <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#1A1A2E', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowOffset: { width: 0, height: 3 }, shadowRadius: 5 }}>
-                    <Text style={{ color: 'white', fontSize: 22, fontWeight: '900' }}>M</Text>
-                  </View>
-                  <View>
-                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A1A2E' }}>Mi cuenta</Text>
-                    <Text style={{ fontSize: 14, color: '#666', fontWeight: '500' }}>demo1@gmail.com</Text>
-                  </View>
-                </View>
+                {/* Conditional Content based on Auth State */}
+                {user ? (
+                  <>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15, padding: 16, marginBottom: 5 }}>
+                      <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#1A1A2E', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowOffset: { width: 0, height: 3 }, shadowRadius: 5 }}>
+                        <Text style={{ color: 'white', fontSize: 22, fontWeight: '900' }}>{userName ? userName.charAt(0).toUpperCase() : 'U'}</Text>
+                      </View>
+                      <View>
+                        <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A1A2E' }}>{userName}</Text>
+                        <Text style={{ fontSize: 14, color: '#666', fontWeight: '500' }}>{userEmail}</Text>
+                      </View>
+                    </View>
 
-                {/* Menu Items */}
-                <View style={{ paddingHorizontal: 8 }}>
-                  {[
-                    { title: 'Mis órdenes', sub: 'Historial y seguimiento', Icon: ShoppingBag, color: '#EC4899', bg: '#FDF2F8', route: '/orders' },
-                    { title: 'Mis direcciones', sub: 'Direcciones guardadas', Icon: MapPin, color: '#F59E0B', bg: '#FFFBEB', route: '/addresses' },
-                    { title: 'Mi cuenta', sub: 'Datos personales y perfil', Icon: User, color: '#10B981', bg: '#ECFDF5', route: '/account' },
-                    { title: 'Mis tarjetas', sub: 'Medios de pago guardados', Icon: CreditCard, color: '#6366F1', bg: '#EEF2FF', route: '/cards' },
-                    { title: 'Seguridad', sub: 'Contraseña y 2FA', Icon: Shield, color: '#D97706', bg: '#FEF3C7', route: '/security' },
-                  ].map((item, i) => (
-                    <TouchableOpacity
-                      key={i}
+                    <View style={{ paddingHorizontal: 8 }}>
+                      {[
+                        { title: 'Mis órdenes', sub: 'Historial y seguimiento', Icon: ShoppingBag, color: '#EC4899', bg: '#FDF2F8', route: '/orders' },
+                        { title: 'Mis direcciones', sub: 'Direcciones guardadas', Icon: MapPin, color: '#F59E0B', bg: '#FFFBEB', route: '/addresses' },
+                        { title: 'Mi cuenta', sub: 'Datos personales y perfil', Icon: User, color: '#10B981', bg: '#ECFDF5', route: '/account' },
+                        { title: 'Mis tarjetas', sub: 'Medios de pago guardados', Icon: CreditCard, color: '#6366F1', bg: '#EEF2FF', route: '/cards' },
+                        { title: 'Seguridad', sub: 'Contraseña y 2FA', Icon: Shield, color: '#D97706', bg: '#FEF3C7', route: '/security' },
+                      ].map((item, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          onPress={() => {
+                            setIsAccountMenuOpen(false);
+                            if (item.route) router.push(item.route as any);
+                          }}
+                          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 12 }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: item.bg, justifyContent: 'center', alignItems: 'center' }}>
+                              <item.Icon size={20} color={item.color} />
+                            </View>
+                            <View>
+                              <Text style={{ fontSize: 15, fontWeight: '800', color: '#1A1A2E', marginBottom: 2 }}>{item.title}</Text>
+                              <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500' }}>{item.sub}</Text>
+                            </View>
+                          </View>
+                          <ChevronRight size={18} color="#D1D5DB" />
+                        </TouchableOpacity>
+                      ))}
+
+                      <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 10, marginHorizontal: 10 }} />
+
+                      <TouchableOpacity 
+                        onPress={async () => {
+                          setIsAccountMenuOpen(false);
+                          await signOut(auth);
+                          router.replace('/login');
+                        }}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 12, marginBottom: 5 }}
+                      >
+                        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' }}>
+                          <LogOut size={20} color="#EF4444" />
+                        </View>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: '#EF4444', marginBottom: 2 }}>Cerrar sesión</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  <View style={{ padding: 20 }}>
+                    <Text style={{ fontSize: 20, fontWeight: '900', color: '#1A1A2E', marginBottom: 8 }}>¡Hola!</Text>
+                    <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '500', marginBottom: 24 }}>Inicia sesión para ver tus órdenes, guardar favoritos y administrar tu cuenta.</Text>
+                    <TouchableOpacity 
                       onPress={() => {
                         setIsAccountMenuOpen(false);
-                        if (item.route) router.push(item.route as any);
+                        router.push('/login');
                       }}
-                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 12 }}
+                      style={{ backgroundColor: '#10B981', paddingVertical: 14, borderRadius: 14, alignItems: 'center', shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 }}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: item.bg, justifyContent: 'center', alignItems: 'center' }}>
-                          <item.Icon size={20} color={item.color} />
-                        </View>
-                        <View>
-                          <Text style={{ fontSize: 15, fontWeight: '800', color: '#1A1A2E', marginBottom: 2 }}>{item.title}</Text>
-                          <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500' }}>{item.sub}</Text>
-                        </View>
-                      </View>
-                      <ChevronRight size={18} color="#D1D5DB" />
+                      <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>Iniciar Sesión</Text>
                     </TouchableOpacity>
-                  ))}
-
-                  <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 10, marginHorizontal: 10 }} />
-
-                  {/* Logout */}
-                  <TouchableOpacity 
-                    onPress={() => {
-                      setIsAccountMenuOpen(false);
-                      router.replace('/login');
-                    }}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 12, marginBottom: 5 }}
-                  >
-                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' }}>
-                      <LogOut size={20} color="#EF4444" />
-                    </View>
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#EF4444', marginBottom: 2 }}>Cerrar sesión</Text>
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -624,18 +784,18 @@ export default function Header() {
                   </View>
                 ) : (
                   cart.map((item) => (
-                    <View key={`${item.id}-${item.selectedSize}`} style={{ flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 15, borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
+                    <View key={item.firebaseId || `${item.ID_productos}-${item.medida}`} style={{ flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 15, borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
                       <View style={{ width: 100, height: 100, backgroundColor: '#FFF7F0', borderRadius: 16, overflow: 'hidden' }}>
-                        <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                        <Image source={{ uri: item.foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                       </View>
                       <View style={{ flex: 1, marginLeft: 15, justifyContent: 'space-between' }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <View style={{ width: '80%' }}>
-                            <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>{item.name}</Text>
-                            {item.selectedSize && <Text style={{ fontSize: 13, color: '#F47321', fontWeight: '700', marginTop: 2 }}>Formato: {item.selectedSize}</Text>}
+                            <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>{item.nombre}</Text>
+                            {item.medida && <Text style={{ fontSize: 13, color: '#F47321', fontWeight: '700', marginTop: 2 }}>Formato: {item.medida}</Text>}
                           </View>
                           <TouchableOpacity 
-                            onPress={() => removeFromCart(item.id)}
+                            onPress={() => removeFromCart(item.firebaseId || item.ID_productos)}
                             style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' }}
                           >
                             <Trash2 size={18} color="#EF4444" />
@@ -643,19 +803,19 @@ export default function Header() {
                         </View>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 12 }}>
                           <View>
-                            <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>${item.price.toLocaleString()} c/u</Text>
-                            <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginTop: 2 }}>${(item.price * item.quantity).toLocaleString()}</Text>
+                            <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>${(item.precio || 0).toLocaleString()} c/u</Text>
+                            <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginTop: 2 }}>${(item.subtotal || 0).toLocaleString()}</Text>
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, padding: 4 }}>
                             <TouchableOpacity 
-                              onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                              onPress={() => updateQuantity(item.firebaseId || item.ID_productos, item.cantidad - 1)}
                               style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 }}
                             >
                               <Minus size={14} color="#111827" strokeWidth={3} />
                             </TouchableOpacity>
-                            <Text style={{ fontWeight: '900', fontSize: 15, width: 36, textAlign: 'center', color: '#111827' }}>{item.quantity}</Text>
+                            <Text style={{ fontWeight: '900', fontSize: 15, width: 36, textAlign: 'center', color: '#111827' }}>{item.cantidad}</Text>
                             <TouchableOpacity 
-                              onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                              onPress={() => updateQuantity(item.firebaseId || item.ID_productos, item.cantidad + 1)}
                               style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center', shadowColor: '#F47321', shadowOpacity: 0.2, shadowRadius: 5 }}
                             >
                               <Plus size={14} color="#FFFFFF" strokeWidth={3} />
@@ -714,7 +874,7 @@ export default function Header() {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View>
+        <View style={{ flex: 1, marginRight: 15 }}>
           <Text
             style={{
               color: 'rgba(255,255,255,0.9)',
@@ -726,10 +886,13 @@ export default function Header() {
           >
             ENTREGAR A
           </Text>
-          <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+          <TouchableOpacity 
+            onPress={() => setIsAddressPickerOpen(!isAddressPickerOpen)}
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}
+          >
             <MapPin size={16} color="white" strokeWidth={2.5} />
-            <Text style={{ color: 'white', fontWeight: '900', fontSize: 17, marginLeft: 6, marginRight: 4 }}>
-              Selecciona tu dirección
+            <Text numberOfLines={1} style={{ color: 'white', fontWeight: '900', fontSize: 17, marginLeft: 6, marginRight: 4, flexShrink: 1 }}>
+              {selectedLocation.main || 'Selecciona tu dirección'}
             </Text>
             <ChevronDown size={18} color="white" strokeWidth={2.5} />
           </TouchableOpacity>
@@ -767,10 +930,79 @@ export default function Header() {
           >
             <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>3</Text>
           </View>
-
         </View>
       </View>
+
+      {/* MOBILE ADDRESS PICKER DROPDOWN */}
+      {isAddressPickerOpen && (
+        <Modal transparent visible={isAddressPickerOpen} animationType="fade" onRequestClose={() => setIsAddressPickerOpen(false)}>
+          <Pressable 
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-start', paddingTop: insets.top + 70 }} 
+            onPress={() => setIsAddressPickerOpen(false)}
+          >
+            <View style={{ 
+              marginHorizontal: 15, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 12,
+              shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10
+            }}>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: '#9CA3AF', marginLeft: 12, marginBottom: 12, letterSpacing: 0.5 }}>MIS DIRECCIONES</Text>
+              
+              <ScrollView style={{ maxHeight: 350 }} showsVerticalScrollIndicator={false}>
+                <View style={{ gap: 8 }}>
+                  {addresses.map((addr) => {
+                    const isSelected = defaultAddrId === addr.id;
+                    return (
+                      <TouchableOpacity
+                        key={addr.id}
+                        onPress={() => handleSetDefault(addr)}
+                        style={{ 
+                          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
+                          paddingVertical: 14, paddingHorizontal: 16, 
+                          backgroundColor: isSelected ? '#FFF7ED' : '#FFFFFF', 
+                          borderRadius: 18, borderWidth: 1, borderColor: isSelected ? '#F4732140' : '#F9FAFB'
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: isSelected ? '#F47321' : '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                            <MapPin size={20} color={isSelected ? 'white' : '#9CA3AF'} strokeWidth={2} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>{addr.category || 'Dirección'}</Text>
+                            <Text numberOfLines={1} style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', marginTop: 1 }}>{addr.main}, {addr.sub}</Text>
+                          </View>
+                        </View>
+                        {isSelected && (
+                          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                            <Check size={16} color="white" strokeWidth={3} />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+
+              <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 12, marginHorizontal: 8 }} />
+
+              <TouchableOpacity
+                onPress={() => { setIsAddressPickerOpen(false); setIsMapModalOpen(true); }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: '#F0FDF4', borderRadius: 18 }}
+              >
+                <Plus size={20} color="#10B981" strokeWidth={3} />
+                <Text style={{ fontSize: 15, fontWeight: '900', color: '#10B981' }}>Agregar nueva dirección</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
     </LinearGradient>
+
+    {/* MAP ADDRESS MODAL (UNIVERSAL) */}
+    <LocationMapModal
+      isOpen={isMapModalOpen}
+      onClose={() => setIsMapModalOpen(false)}
+      onSave={handleSaveNewAddress}
+    />
+
     {/* MOBILE NOTIFICATIONS DRAWER */}
     {renderNotificationsDrawer()}
     </>

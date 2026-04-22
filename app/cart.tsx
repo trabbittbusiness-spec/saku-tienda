@@ -109,7 +109,7 @@ export default function CartScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 15, paddingBottom: 180 }}>
         {cart.map((item) => (
-          <View key={`${item.id}-${item.selectedSize}`} style={{ 
+          <View key={`${item.ID_productos}-${item.medida}`} style={{ 
             backgroundColor: '#FFFFFF', borderRadius: 28, padding: 16, marginBottom: 15, 
             flexDirection: 'row', alignItems: 'center',
             borderWidth: 1, borderColor: '#F3F4F6',
@@ -117,16 +117,16 @@ export default function CartScreen() {
           }}>
             {/* Image Container */}
             <View style={{ width: 85, height: 85, backgroundColor: '#FFF9F5', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
-              <Image source={{ uri: item.image }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
+              <Image source={{ uri: item.foto }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
             </View>
 
             <View style={{ flex: 1, marginLeft: 15 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Text style={{ fontSize: 13, fontWeight: '900', color: '#111827', flex: 1, textTransform: 'uppercase' }} numberOfLines={2}>
-                  {item.name}
+                  {item.nombre}
                 </Text>
                 <TouchableOpacity 
-                  onPress={() => removeFromCart(item.id)}
+                  onPress={() => removeFromCart(item.ID_productos)}
                   style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFF1F1', justifyContent: 'center', alignItems: 'center', marginLeft: 10 }}
                 >
                   <Trash2 size={14} color="#F87171" />
@@ -134,27 +134,27 @@ export default function CartScreen() {
               </View>
 
               <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>
-                ${item.price.toLocaleString()} c/u
+                ${(item.precio || 0).toLocaleString()} c/u {item.medida ? `(${item.medida})` : ''}
               </Text>
               
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 8 }}>
                 <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>
-                  ${(item.price * item.quantity).toLocaleString()}
+                  ${(item.subtotal || 0).toLocaleString()}
                 </Text>
                 
                 {/* Quantity Selector */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#F3F4F6' }}>
                   <TouchableOpacity 
-                    onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                    onPress={() => updateQuantity(item.ID_productos, item.cantidad - 1)}
                     style={{ paddingHorizontal: 12, paddingVertical: 8 }}
                   >
                     <Minus size={14} color="#9CA3AF" />
                   </TouchableOpacity>
                   <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827', minWidth: 30, textAlign: 'center' }}>
-                    {item.quantity}
+                    {item.cantidad}
                   </Text>
                   <TouchableOpacity 
-                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                    onPress={() => updateQuantity(item.ID_productos, item.cantidad + 1)}
                     style={{ backgroundColor: '#F47321', paddingHorizontal: 12, paddingVertical: 8 }}
                   >
                     <Plus size={14} color="white" />

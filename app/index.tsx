@@ -36,10 +36,24 @@ import {
   FileText
 } from 'lucide-react-native';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import CategoryBar from '../components/CategoryBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useFavorites } from '../context/FavoritesContext';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+
+export interface ProductItem {
+  id: string | number;
+  category: string;
+  name: string;
+  price: string;
+  rating: number;
+  image: string;
+  promo?: boolean;
+  medida?: string;
+}
 
 const BREAKPOINT = 1024; // Aumentar breakpoint para desktop real
 
@@ -109,7 +123,7 @@ const petCategories = [
   { id: 4, name: 'Servicios', icon: Stethoscope, color: '#E74C3C', bg: '#FDECEA' },
 ];
 
-const products = [
+const MOCK_PRODUCTS: ProductItem[] = [
   { id: 1, category: 'PERRO O GATO', name: 'BRIT CARE GRAIN FREE SENIOR & LIGHT ...', price: '$74.990', rating: 5, image: 'https://images.unsplash.com/photo-1589924691106-073b19f55de7?q=80&w=500' },
   { id: 2, category: 'PERRO O GATO', name: 'ROYAL CANIN XSMALL PUPPY 2,5 KG', price: '$32.990', rating: 5, image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=500' },
   { id: 3, category: 'PERRO O GATO', name: 'PETEVER FORTE 150 ML', price: '$19.200', rating: 5, image: 'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?q=80&w=500' },
@@ -181,13 +195,13 @@ function MobileHeroCarousel({ screenWidth }: { screenWidth: number }) {
   );
 }
 
-function MobileProductCard({ item }: { item: typeof products[0] }) {
+function MobileProductCard({ item }: { item: ProductItem }) {
   const { toggleFavorite, isFavorite } = useFavorites();
   const liked = isFavorite(item.id);
 
   return (
     <TouchableOpacity 
-      onPress={() => router.push('/product/1')}
+      onPress={() => router.push(`/product/${item.id}`)}
       style={{ 
         width: 170, 
         backgroundColor: '#FFFFFF', 
@@ -241,7 +255,7 @@ function MobileProductCard({ item }: { item: typeof products[0] }) {
 
       <TouchableOpacity 
         activeOpacity={0.8}
-        onPress={() => router.push('/product/1')}
+        onPress={() => router.push(`/product/${item.id}`)}
         style={{ 
           backgroundColor: '#3B1E54', 
           borderRadius: 12, 
@@ -601,6 +615,38 @@ export default function Home() {
   const currentOffersX = useRef(0);
   const currentTestimonialsX = useRef(0);
   const isDesktop = screenWidth >= BREAKPOINT;
+  const [products, setProducts] = useState<ProductItem[]>(MOCK_PRODUCTS);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'Products'));
+        const productsList = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: data.ID_productos || doc.id,
+            category: data.categoria || data.Tipo || data.animal || 'GENERAL',
+            name: data.nombre || 'Producto sin nombre',
+            price: '$' + (data.precio || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."),
+            rating: 5,
+            image: data.foto1 || 'https://via.placeholder.com/500',
+            promo: data.estadoPromocion === true,
+            medida: data.medida || ''
+          };
+        });
+        setProducts(productsList.length > 0 ? productsList : MOCK_PRODUCTS);
+      } catch (error) {
+        console.error("Error fetching products from Firebase: ", error);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+
 
   const handleOffersScroll = (direction: 'left' | 'right') => {
     const cardWidth = 290 + 24; // Width + gap
@@ -983,21 +1029,12 @@ export default function Home() {
                   showsHorizontalScrollIndicator={false} 
                   contentContainerStyle={{ gap: 24, paddingVertical: 10, paddingRight: 50 }}
                 >
-                  {[
-                    { id: 1, name: 'Royal Dog Hypoallergenic', price: '$ 19.943 - $ 75.742', perKg: '$ 7.575 x kg', img: 'https://cdn.royalcanin-weshare-online.com/p2mXf2QBBK995S_G-S1C/v137/canine-veterinary-diet-hypoallergenic-dry' },
-                    { id: 2, name: 'Royal Dog Anallergic', price: '$ 34.267 - $ 74.243', perKg: '$ 9.281 x kg', img: 'https://cdn.royalcanin-weshare-online.com/pGmXf2QBBK995S_G-S1C/v1/canine-veterinary-diet-anallergic-dry' },
-                    { id: 3, name: 'Royal Dog Diabetic 10 Kg', price: '$ 68.993', oldPrice: '$ 91.990', perKg: '$ 6.900 x kg', img: 'https://cdn.royalcanin-weshare-online.com/p2mXf2QBBK995S_G-S1C/v137/canine-veterinary-diet-diabetic-dry' },
-                    { id: 4, name: 'Royal Dog Hepatic Canine', price: '$ 14.993 - $ 68.993', perKg: '$ 6.900 x kg', img: 'https://cdn.royalcanin-weshare-online.com/q2mXf2QBBK995S_G-S1C/v1/canine-veterinary-diet-hepatic-dry' },
-                    { id: 5, name: 'Purina Pro Plan Puppy Large', price: '$ 42.990 - $ 89.990', perKg: '$ 5.990 x kg', img: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=800' },
-                    { id: 6, name: 'Bravecto Perro 20-40kg', price: '$ 32.500', oldPrice: '$ 38.900', perKg: '1 comp.', img: 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?q=80&w=800' },
-                    { id: 7, name: 'Royal Canin Urinary Gato', price: '$ 12.490 - $ 45.990', perKg: '$ 11.200 x kg', img: 'https://cdn.royalcanin-weshare-online.com/D2mXf2QBBK995S_G-S1C/v1/feline-veterinary-diet-urinary-s-o-dry' },
-                    { id: 8, name: 'Zee.Dog Air Mesh Harness', price: '$ 18.900 - $ 25.900', perKg: 'Accesorios', img: 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=800' }
-                    ].map((item) => {
+                  {products.filter(p => p.promo).slice(0, 15).map((item) => {
                       const liked = isFavorite(item.id);
                       
                       return (
                         <TouchableOpacity 
-                          onPress={() => router.push('/product/1')}
+                          onPress={() => router.push(`/product/${item.id}`)}
                           key={item.id} style={{ 
                             width: 290, backgroundColor: 'white', borderRadius: 16, padding: 20,
                             shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 2,
@@ -1015,7 +1052,7 @@ export default function Home() {
                                   id: item.id,
                                   name: item.name,
                                   price: item.price,
-                                  image: item.img
+                                  image: item.image
                                 });
                               }}
                               style={{ padding: 5 }}
@@ -1025,22 +1062,19 @@ export default function Home() {
                           </View>
 
                           <View style={{ height: 220, justifyContent: 'center', alignItems: 'center', marginVertical: 15 }}>
-                            <Image source={{ uri: item.img }} style={{ width: '90%', height: '100%' }} resizeMode="contain" />
+                            <Image source={{ uri: item.image }} style={{ width: '90%', height: '100%' }} resizeMode="contain" />
                           </View>
 
                       <View style={{ alignItems: 'flex-start', marginBottom: 20, width: '100%' }}>
                         <Text style={{ fontSize: 17, color: '#1A1A2E', fontWeight: '500', marginBottom: 10, minHeight: 48 }}>{item.name}</Text>
                         <View style={{ minHeight: 50 }}>
-                          {item.oldPrice && (
-                            <Text style={{ fontSize: 14, color: '#BBB', textDecorationLine: 'line-through', marginBottom: 2 }}>{item.oldPrice}</Text>
-                          )}
                           <Text style={{ fontSize: 20, fontWeight: '900', color: '#C41E3A' }}>{item.price}</Text>
-                          <Text style={{ fontSize: 13, color: '#999', marginTop: 4 }}>desde ({item.perKg})</Text>
+                          {item.medida ? <Text style={{ fontSize: 13, color: '#999', marginTop: 4 }}>Medida: {item.medida}</Text> : null}
                         </View>
                       </View>
 
                       <TouchableOpacity 
-                        onPress={() => router.push('/product/1')}
+                        onPress={() => router.push(`/product/${item.id}`)}
                         style={{ 
                           backgroundColor: '#3B1E54', paddingVertical: 16, borderRadius: 10, alignItems: 'center', width: '100%',
                           shadowColor: '#3B1E54', shadowOpacity: 0.2, shadowRadius: 10

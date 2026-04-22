@@ -102,7 +102,7 @@ export default function FavoritesScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 20 }}>
             {favorites.map((item) => (
               <TouchableOpacity 
-                onPress={() => router.push('/product/1')}
+                onPress={() => router.push(`/product/${item.id}`)}
                 key={item.id} 
                 style={{ 
                   width: isDesktop ? '23.5%' : '47%', backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16,

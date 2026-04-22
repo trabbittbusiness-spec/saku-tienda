@@ -29,8 +29,8 @@ export default function RootLayout() {
     return null;
   }
 
-  const hideNavbarScreens = ['/login', '/checkout', '/orders', '/addresses', '/account', '/cards', '/security'];
-  const shouldHideNavbar = hideNavbarScreens.includes(pathname) || pathname.startsWith('/product/');
+  const hideNavbarScreens = ['/login', '/checkout', '/addresses', '/account', '/cards', '/security'];
+  const shouldHideNavbar = hideNavbarScreens.includes(pathname) || pathname.startsWith('/product/') || pathname.startsWith('/orders/');
 
   return (
     <View style={{ flex: 1 }}>

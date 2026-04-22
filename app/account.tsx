@@ -1,16 +1,154 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, useWindowDimensions } from 'react-native';
-import { ArrowLeft, Camera, User, Mail, Phone, CreditCard, CheckCircle, Clock, PawPrint } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, useWindowDimensions, ActivityIndicator, Image } from 'react-native';
+import { ArrowLeft, Camera, User, Mail, Phone, CreditCard, CheckCircle, Clock, PawPrint, LogOut } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { auth, db, storage } from '../lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import * as ImagePicker from 'expo-image-picker';
+import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 
 export default function AccountScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const isDesktop = width >= 1024;
   
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [rut, setRut] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [notification, setNotification] = useState<{message: string, type: 'success'|'error'} | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setEmail(currentUser.email || '');
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            const fullName = [data.display_name, data.apellido].filter(Boolean).join(' ');
+            setName(fullName || currentUser.displayName || 'Usuario');
+            setPhone(data.phone_number || '');
+            setPhotoUrl(data.photo_url || '');
+            // Si tuvieras RUT u otros campos, los pondrías aquí
+          } else {
+            setName(currentUser.displayName || 'Usuario');
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setName(currentUser.displayName || 'Usuario');
+        }
+      } else {
+        router.replace('/login');
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/login');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handlePickImage = async () => {
+    if (!user) return;
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.4,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSaving(true);
+        const { uri } = result.assets[0];
+        
+        const response = await fetch(uri);
+        const blob = await response.blob();
+
+        const storageRef = ref(storage, `users/${user.uid}/profile.jpg`);
+        await uploadBytes(storageRef, blob);
+        
+        const downloadUrl = await getDownloadURL(storageRef);
+        
+        await updateDoc(doc(db, 'users', user.uid), {
+          photo_url: downloadUrl
+        });
+
+        setPhotoUrl(downloadUrl);
+        showNotification('Foto de perfil actualizada exitosamente');
+      }
+    } catch (error) {
+      console.error("Error al subir imagen: ", error);
+      showNotification('Error al subir la imagen', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const parts = name.trim().split(' ');
+      const display_name = parts[0] || '';
+      const apellido = parts.slice(1).join(' ') || '';
+
+      await updateDoc(doc(db, 'users', user.uid), {
+        display_name,
+        apellido,
+        phone_number: phone
+      });
+      showNotification('Datos guardados correctamente');
+    } catch (error) {
+      console.error('Error actualizando perfil:', error);
+      showNotification('Error guardando los datos', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#10B981" />
+      </View>
+    );
+  }
+
+  const firstLetter = name ? name.charAt(0).toUpperCase() : 'U';
+  
   if (!isDesktop) {
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        {notification && (
+          <Animated.View entering={FadeInUp} exiting={FadeOutUp} style={{ position: 'absolute', top: 50, alignSelf: 'center', backgroundColor: notification.type === 'success' ? '#10B981' : '#EF4444', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: notification.type === 'success' ? '#10B981' : '#EF4444', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, zIndex: 100 }}>
+            <CheckCircle size={20} color="white" />
+            <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>{notification.message}</Text>
+          </Animated.View>
+        )}
+
         {/* Header */}
         <View style={{ 
           height: 80, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
@@ -29,13 +167,17 @@ export default function AccountScreen() {
           {/* Profile Section */}
           <View style={{ alignItems: 'center', marginBottom: 40 }}>
             <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15 }}>
-              <Text style={{ fontSize: 48, fontWeight: '900', color: '#111827' }}>U</Text>
-              <TouchableOpacity style={{ position: 'absolute', bottom: 0, right: 0, width: 36, height: 36, borderRadius: 18, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#FFFFFF' }}>
+              {photoUrl ? (
+                <Image source={{ uri: photoUrl }} style={{ width: 120, height: 120, borderRadius: 60 }} />
+              ) : (
+                <Text style={{ fontSize: 48, fontWeight: '900', color: '#111827' }}>{firstLetter}</Text>
+              )}
+              <TouchableOpacity onPress={handlePickImage} style={{ position: 'absolute', bottom: 0, right: 0, width: 36, height: 36, borderRadius: 18, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#FFFFFF' }}>
                 <Camera size={16} color="white" />
               </TouchableOpacity>
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827', marginTop: 20 }}>Usuario Saku</Text>
-            <Text style={{ fontSize: 15, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>usuario@saku.cl</Text>
+            <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827', marginTop: 20 }}>{name}</Text>
+            <Text style={{ fontSize: 15, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>{email}</Text>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: 20, gap: 8 }}>
               <PawPrint size={16} color="#10B981" />
@@ -49,7 +191,7 @@ export default function AccountScreen() {
               <Text style={{ fontSize: 11, fontWeight: '900', color: '#4B5563', letterSpacing: 1, marginBottom: 10 }}>NOMBRE COMPLETO</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 16, borderWeight: 1, borderColor: '#F3F4F6', paddingHorizontal: 16, height: 56, gap: 12 }}>
                 <User size={18} color="#9CA3AF" />
-                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827' }} value="Usuario Saku" />
+                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827', outlineStyle: 'none' }} value={name} onChangeText={setName} />
               </View>
             </View>
 
@@ -62,7 +204,7 @@ export default function AccountScreen() {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 16, paddingHorizontal: 16, height: 56, gap: 12 }}>
                 <Mail size={18} color="#9CA3AF" />
-                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '600', color: '#9CA3AF' }} value="usuario@saku.cl" editable={false} />
+                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '600', color: '#9CA3AF', outlineStyle: 'none' }} value={email} editable={false} />
               </View>
             </View>
 
@@ -70,7 +212,7 @@ export default function AccountScreen() {
               <Text style={{ fontSize: 11, fontWeight: '900', color: '#4B5563', letterSpacing: 1, marginBottom: 10 }}>TELÉFONO</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 16, paddingHorizontal: 16, height: 56, gap: 12 }}>
                 <Phone size={18} color="#9CA3AF" />
-                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827' }} value="+56 9 1234 5678" />
+                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827', outlineStyle: 'none' }} value={phone} onChangeText={setPhone} placeholder="Ingresa tu teléfono" placeholderTextColor="#9CA3AF" />
               </View>
             </View>
 
@@ -78,13 +220,18 @@ export default function AccountScreen() {
               <Text style={{ fontSize: 11, fontWeight: '900', color: '#4B5563', letterSpacing: 1, marginBottom: 10 }}>RUT / DOCUMENTO DE IDENTIDAD</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 16, paddingHorizontal: 16, height: 56, gap: 12 }}>
                 <CreditCard size={18} color="#9CA3AF" />
-                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827' }} value="18.123.456-7" />
+                <TextInput style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827', outlineStyle: 'none' }} value={rut} onChangeText={setRut} placeholder="Ej: 18.123.456-7" placeholderTextColor="#9CA3AF" />
               </View>
             </View>
           </View>
 
-          <TouchableOpacity style={{ backgroundColor: '#10B981', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 40, shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 15 }}>
-            <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Guardar cambios</Text>
+          <TouchableOpacity onPress={handleSave} disabled={saving} style={{ backgroundColor: '#10B981', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 40, shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 15, opacity: saving ? 0.7 : 1 }}>
+            {saving ? <ActivityIndicator color="white" /> : <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Guardar cambios</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleLogout} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30, gap: 8 }}>
+            <LogOut size={16} color="#EF4444" />
+            <Text style={{ color: '#EF4444', fontSize: 15, fontWeight: '700' }}>Cerrar sesión</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -93,9 +240,13 @@ export default function AccountScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      {notification && (
+        <Animated.View entering={FadeInUp} exiting={FadeOutUp} style={{ position: 'absolute', top: 50, alignSelf: 'center', backgroundColor: notification.type === 'success' ? '#10B981' : '#EF4444', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: notification.type === 'success' ? '#10B981' : '#EF4444', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, zIndex: 100 }}>
+          <CheckCircle size={20} color="white" />
+          <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>{notification.message}</Text>
+        </Animated.View>
+      )}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 40, width: '100%', maxWidth: 1400, alignSelf: 'center', flexGrow: 1 }}>
-        
-        {/* Superior Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
           <TouchableOpacity 
             onPress={() => router.back()}
@@ -123,13 +274,17 @@ export default function AccountScreen() {
           }}>
              <View style={{ alignItems: 'center', marginBottom: 30 }}>
                 <View style={{ width: 110, height: 110, borderRadius: 55, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 }}>
-                   <Text style={{ fontSize: 40, fontWeight: '900', color: '#111827' }}>U</Text>
-                   <TouchableOpacity style={{ position: 'absolute', bottom: 5, right: 5, width: 30, height: 30, borderRadius: 15, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFFFFF' }}>
+                   {photoUrl ? (
+                     <Image source={{ uri: photoUrl }} style={{ width: 102, height: 102, borderRadius: 51 }} />
+                   ) : (
+                     <Text style={{ fontSize: 40, fontWeight: '900', color: '#111827' }}>{firstLetter}</Text>
+                   )}
+                   <TouchableOpacity onPress={handlePickImage} style={{ position: 'absolute', bottom: 5, right: 5, width: 30, height: 30, borderRadius: 15, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFFFFF' }}>
                       <Camera size={14} color="white" />
                    </TouchableOpacity>
                 </View>
-                <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginTop: 15 }}>Usuario Saku</Text>
-                <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>usuario@saku.cl</Text>
+                <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginTop: 15 }}>{name}</Text>
+                <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>{email}</Text>
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 16, gap: 6 }}>
                    <PawPrint size={14} color="#10B981" />
@@ -147,8 +302,13 @@ export default function AccountScreen() {
              </View>
              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <Clock size={18} color="#6366F1" />
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#4B5563' }}>Miembro desde 2024</Text>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#4B5563' }}>Miembro activo</Text>
              </View>
+
+             <TouchableOpacity onPress={handleLogout} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 40, gap: 12 }}>
+                <LogOut size={18} color="#EF4444" />
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#EF4444' }}>Cerrar sesión</Text>
+             </TouchableOpacity>
           </View>
 
           {/* Right Main Content Card */}
@@ -171,7 +331,8 @@ export default function AccountScreen() {
                       <User size={18} color="#9CA3AF" />
                       <TextInput 
                         style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827', outlineStyle: 'none' }}
-                        defaultValue="Usuario Saku"
+                        value={name}
+                        onChangeText={setName}
                       />
                    </View>
                 </View>
@@ -188,7 +349,7 @@ export default function AccountScreen() {
                       <Mail size={18} color="#9CA3AF" />
                       <TextInput 
                         style={{ flex: 1, fontSize: 15, fontWeight: '600', color: '#9CA3AF', outlineStyle: 'none' }}
-                        defaultValue="usuario@saku.cl"
+                        value={email}
                         editable={false}
                       />
                    </View>
@@ -201,7 +362,10 @@ export default function AccountScreen() {
                       <Phone size={18} color="#9CA3AF" />
                       <TextInput 
                         style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827', outlineStyle: 'none' }}
-                        defaultValue="+56 9 1234 5678"
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder="Ingresa tu teléfono"
+                        placeholderTextColor="#9CA3AF"
                       />
                    </View>
                 </View>
@@ -213,7 +377,10 @@ export default function AccountScreen() {
                       <CreditCard size={18} color="#9CA3AF" />
                       <TextInput 
                         style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827', outlineStyle: 'none' }}
-                        defaultValue="18.123.456-7"
+                        value={rut}
+                        onChangeText={setRut}
+                        placeholder="Ej: 18.123.456-7"
+                        placeholderTextColor="#9CA3AF"
                       />
                    </View>
                 </View>
@@ -221,8 +388,8 @@ export default function AccountScreen() {
 
              {/* Action Button */}
              <View style={{ alignItems: 'flex-end', marginTop: 40 }}>
-                <TouchableOpacity style={{ backgroundColor: '#10B981', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 12, shadowColor: '#10B981', shadowOpacity: 0.3, shadowOffset: { width: 0, height: 6 }, shadowRadius: 15 }}>
-                   <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>Guardar cambios</Text>
+                <TouchableOpacity onPress={handleSave} disabled={saving} style={{ backgroundColor: '#10B981', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 12, shadowColor: '#10B981', shadowOpacity: 0.3, shadowOffset: { width: 0, height: 6 }, shadowRadius: 15, opacity: saving ? 0.7 : 1 }}>
+                   {saving ? <ActivityIndicator color="white" /> : <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>Guardar cambios</Text>}
                 </TouchableOpacity>
              </View>
           </View>

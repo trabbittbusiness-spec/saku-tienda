@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, useWindowDimensions, ScrollView, Linking } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, useWindowDimensions, ScrollView, Linking, ActivityIndicator, Alert } from 'react-native';
 import { ArrowLeft, EyeOff, Eye, MapPin } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated';
 import LocationMapModal from '../components/LocationMapModal';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 
 export default function Login() {
   const router = useRouter();
@@ -17,6 +19,27 @@ export default function Login() {
     main: '',
     sub: ''
   });
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Por favor ingresa tu correo y contraseña');
+      return;
+    }
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      router.replace('/');
+    } catch (error: any) {
+      console.error("Login error:", error);
+      Alert.alert('Error', 'Credenciales incorrectas o problema de red. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getTitle = () => {
     if (activeTab === 'login') return 'Bienvenido';
@@ -121,10 +144,25 @@ export default function Login() {
               {activeTab === 'login' && (
                 <>
                   <View style={{ backgroundColor: '#F1F5F9', borderRadius: 16, paddingHorizontal: 20, height: 64, justifyContent: 'center' }}>
-                    <TextInput placeholder="trabbitt.business5@gmail.com" style={{ fontSize: 16, fontWeight: '600', color: '#1E1B4B' }} placeholderTextColor="#9CA3AF" />
+                    <TextInput 
+                      placeholder="Correo electrónico" 
+                      value={email}
+                      onChangeText={setEmail}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      style={{ fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      placeholderTextColor="#9CA3AF" 
+                    />
                   </View>
                   <View style={{ backgroundColor: '#F1F5F9', borderRadius: 16, paddingHorizontal: 20, height: 64, flexDirection: 'row', alignItems: 'center' }}>
-                    <TextInput placeholder="123456." secureTextEntry={!showPassword} style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#1E1B4B' }} placeholderTextColor="#9CA3AF" />
+                    <TextInput 
+                      placeholder="Contraseña" 
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword} 
+                      style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      placeholderTextColor="#9CA3AF" 
+                    />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff size={20} color="#9CA3AF" /> : <Eye size={20} color="#9CA3AF" />}
                     </TouchableOpacity>
@@ -187,8 +225,11 @@ export default function Login() {
             </View>
 
             <TouchableOpacity 
+              disabled={loading}
               onPress={() => {
-                if (activeTab === 'register' && registerStep === 1) {
+                if (activeTab === 'login') {
+                  handleLogin();
+                } else if (activeTab === 'register' && registerStep === 1) {
                   setRegisterStep(2);
                 } else {
                   router.replace('/');
@@ -198,13 +239,19 @@ export default function Login() {
                 width: '100%', 
                 backgroundColor: (activeTab === 'register' && registerStep === 2) ? '#10B981' : '#1E1B4B', 
                 height: 64, borderRadius: 16, 
-                justifyContent: 'center', alignItems: 'center', marginTop: 30,
-                shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
+                justifyContent: 'center', alignItems: 'center', 
+                marginTop: 20,
+                shadowColor: '#1E1B4B', shadowOpacity: 0.2, shadowRadius: 15, elevation: 5,
+                opacity: loading ? 0.7 : 1
               }}
             >
-              <Text style={{ color: 'white', fontSize: 18, fontWeight: '900' }}>
-                {activeTab === 'login' ? 'Iniciar sesión' : (registerStep === 1 ? 'Crear mi cuenta' : 'Finalizar e Ingresar')}
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={{ color: 'white', fontWeight: '900', fontSize: 18 }}>
+                  {activeTab === 'login' ? 'Iniciar sesión' : (registerStep === 1 ? 'Continuar' : 'Crear cuenta')}
+                </Text>
+              )}
             </TouchableOpacity>
 
             {activeTab === 'login' && (
