@@ -70,9 +70,12 @@ export default function OrdersScreen() {
                 }
               }
 
+              const rawStatus = data.estado || 'Pendiente';
+              const normalizedStatus = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase();
+
               ordersData.push({
                 id: data.ID_orden || docSnapshot.id,
-                status: data.estado || 'Pendiente',
+                status: normalizedStatus,
                 total: data.total || data.amount || 0,
                 date: dateStr,
                 items: items.length > 0 ? items : [{ name: 'Sin productos', image: 'https://via.placeholder.com/150' }],
@@ -105,7 +108,10 @@ export default function OrdersScreen() {
     };
   }, []);
 
-  const filteredOrders = orders.filter(o => filter === 'Todas' || o.status === filter);
+  const filteredOrders = orders.filter(o => {
+    if (filter === 'Todas') return true;
+    return o.status.toLowerCase() === filter.toLowerCase();
+  });
   
   const ITEMS_PER_PAGE = 7;
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE) || 1;
@@ -144,7 +150,7 @@ export default function OrdersScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingVertical: 30, width: '100%' }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingTop: 30, paddingBottom: isDesktop ? 30 : 120, width: '100%' }}>
         {/* Filters */}
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 30 }}>
           {['Todas', 'Pendiente', 'Enviado', 'Entregado'].map((tab) => (

@@ -1,19 +1,21 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ShoppingBag, Search, User, Heart, Home } from 'lucide-react-native';
+import { useCart } from '../context/CartContext';
 import { usePathname, useRouter } from 'expo-router';
-
-const NAV_ITEMS = [
-  { name: 'Inicio',    icon: Home,        path: '/',        badge: 0 },
-  { name: 'Favoritos', icon: Heart,       path: '/favorites', badge: 0 },
-  { name: 'Buscar',    icon: Search,      path: '/search',  badge: 0 },
-  { name: 'Carrito',   icon: ShoppingBag, path: '/cart',    badge: 2 },
-  { name: 'Perfil',    icon: User,        path: '/profile', badge: 0 },
-];
 
 export default function PremiumNavbar() {
   const pathname = usePathname();
   const router   = useRouter();
+  const { cartCount } = useCart();
+
+  const NAV_ITEMS = [
+    { name: 'Inicio',    icon: Home,        path: '/',        badge: 0 },
+    { name: 'Favoritos', icon: Heart,       path: '/favorites', badge: 0 },
+    { name: 'Buscar',    icon: Search,      path: '/search',  badge: 0 },
+    { name: 'Carrito',   icon: ShoppingBag, path: '/cart',    badge: cartCount },
+    { name: 'Perfil',    icon: User,        path: '/profile', badge: 0 },
+  ];
 
   return (
     <View

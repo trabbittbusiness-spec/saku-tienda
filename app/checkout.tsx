@@ -64,9 +64,62 @@ export default function CheckoutScreen() {
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState('visa-1');
   const [isLoading, setIsLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsValidatingCoupon(true);
+    try {
+      const codeToValidate = couponCode.toUpperCase().trim();
+      
+      // 1. Check if the user has already used this coupon
+      if (auth.currentUser) {
+        const usedQuery = query(
+          collection(db, 'Orden'), 
+          where('creadorId', '==', auth.currentUser.uid),
+          where('cuponAplicado.code', '==', codeToValidate)
+        );
+        const usedSnapshot = await getDocs(usedQuery);
+        if (!usedSnapshot.empty) {
+          alert('Ya has utilizado este cupón anteriormente.');
+          setAppliedCoupon(null);
+          setIsValidatingCoupon(false);
+          return;
+        }
+      }
+
+      // 2. Check if coupon exists and is active
+      const q = query(collection(db, 'Coupons'), where('code', '==', codeToValidate), where('active', '==', true));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        alert('Cupón no válido o inactivo');
+        setAppliedCoupon(null);
+      } else {
+        const coupon = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as any;
+        
+        if (cartTotal < coupon.minAmount) {
+          alert(`Este cupón requiere una compra mínima de $${coupon.minAmount.toLocaleString()}`);
+          setAppliedCoupon(null);
+        } else {
+          setAppliedCoupon(coupon);
+        }
+      }
+    } catch (error) {
+      console.log("Error validating coupon:", error);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
 
   const shipping = 0;
-  const discount = 0;
+  const discount = appliedCoupon 
+    ? (appliedCoupon.type === 'percentage' 
+        ? (cartTotal * (appliedCoupon.value / 100)) 
+        : appliedCoupon.value)
+    : 0;
   const total = cartTotal + shipping - discount;
 
   const handlePayment = async () => {
@@ -93,6 +146,12 @@ export default function CheckoutScreen() {
         subtotal: cartTotal,
         envio: shipping,
         descuento: discount,
+        cuponAplicado: appliedCoupon ? {
+          id: appliedCoupon.id,
+          code: appliedCoupon.code,
+          valor: appliedCoupon.value,
+          tipo: appliedCoupon.type
+        } : null,
         metodoPago: paymentMethod,
         tipoEntrega: deliveryType,
         direccion: deliveryType === 'home' ? {
@@ -197,7 +256,7 @@ export default function CheckoutScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Delivery Address or Store Pickup Section */}
+          {/* Delivery Address Section */}
           <View style={{ paddingHorizontal: 20 }}>
             {deliveryType === 'home' ? (
               <View>
@@ -208,11 +267,11 @@ export default function CheckoutScreen() {
                   <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Dirección de Entrega</Text>
                 </View>
 
+                {userAddresses.map((addr) => (
                   <TouchableOpacity 
                     key={addr.id || `${addr.lat}-${addr.lng}`}
                     onPress={async () => {
                       setSelectedLocation(addr);
-                      // Update default address in profile
                       if (auth.currentUser) {
                         try {
                           await updateDoc(doc(db, 'users', auth.currentUser.uid), {
@@ -222,7 +281,8 @@ export default function CheckoutScreen() {
                       }
                     }}
                     style={{ 
-                      borderWidth: 2, borderColor: selectedLocation?.id === addr.id || (selectedLocation?.lat === addr.lat && selectedLocation?.lng === addr.lng) ? '#F47321' : '#F3F4F6', 
+                      borderWidth: 2, 
+                      borderColor: (selectedLocation?.id === addr.id || (selectedLocation?.lat === addr.lat && selectedLocation?.lng === addr.lng)) ? '#F47321' : '#F3F4F6', 
                       borderRadius: 24, padding: 16, backgroundColor: '#FFFFFF',
                       flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12
                     }}
@@ -255,43 +315,17 @@ export default function CheckoutScreen() {
               </View>
             ) : (
               <View>
-                {/* Pickup Banner */}
                 <View style={{ backgroundColor: '#EEF2FF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 25 }}>
                   <MapPin size={20} color="#6366F1" />
-                  <Text style={{ flex: 1, fontSize: 13, color: '#6366F1', fontWeight: '700' }}>Retira tu pedido sin costo adicional en la sucursal que prefieras.</Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 }}>
-                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Sucursales disponibles</Text>
+                  <Text style={{ flex: 1, fontSize: 13, color: '#6366F1', fontWeight: '700' }}>Retira tu pedido sin costo adicional.</Text>
                 </View>
 
                 <TouchableOpacity style={{ 
                   borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 24, padding: 20, backgroundColor: '#FFFFFF',
                   marginBottom: 30
                 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Saku Providencia</Text>
-                      <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600', marginTop: 4 }}>Av. Providencia 1234, Providencia</Text>
-                      
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}>
-                        <Clock size={14} color="#9CA3AF" />
-                        <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>Lun-Vie: 9:00-20:00 · Sáb: 10:00-18:00</Text>
-                      </View>
-                      
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                        <MapPin size={14} color="#9CA3AF" />
-                        <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>1.2 km</Text>
-                      </View>
-                    </View>
-
-                    <View style={{ alignItems: 'flex-end', gap: 8 }}>
-                      <View style={{ backgroundColor: '#DCFCE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
-                        <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '900' }}>• Stock</Text>
-                      </View>
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: '#6366F1' }}>Listo en 2 horas</Text>
-                    </View>
-                  </View>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Saku Providencia</Text>
+                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600' }}>Av. Providencia 1234</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -449,7 +483,7 @@ export default function CheckoutScreen() {
                         <TextInput 
                           placeholder="Número de tarjeta"
                           placeholderTextColor="#9CA3AF"
-                          value={cardDetails.number}
+                          value={cardDetails.number || ''}
                           onChangeText={(text) => setCardDetails(prev => ({ ...prev, number: text }))}
                           style={{ flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600' }}
                         />
@@ -459,7 +493,7 @@ export default function CheckoutScreen() {
                         <TextInput 
                           placeholder="Nombre en la tarjeta"
                           placeholderTextColor="#9CA3AF"
-                          value={cardDetails.name}
+                          value={cardDetails.name || ''}
                           onChangeText={(text) => setCardDetails(prev => ({ ...prev, name: text }))}
                           style={{ fontSize: 15, fontWeight: '600' }}
                         />
@@ -470,7 +504,7 @@ export default function CheckoutScreen() {
                           <TextInput 
                             placeholder="MM/YY"
                             placeholderTextColor="#9CA3AF"
-                            value={cardDetails.expiry}
+                            value={cardDetails.expiry || ''}
                             onChangeText={(text) => setCardDetails(prev => ({ ...prev, expiry: text }))}
                             style={{ fontSize: 15, fontWeight: '600' }}
                           />
@@ -479,7 +513,7 @@ export default function CheckoutScreen() {
                           <TextInput 
                             placeholder="CVV"
                             placeholderTextColor="#9CA3AF"
-                            value={cardDetails.cvv}
+                            value={cardDetails.cvv || ''}
                             onChangeText={(text) => setCardDetails(prev => ({ ...prev, cvv: text }))}
                             style={{ fontSize: 15, fontWeight: '600' }}
                           />
@@ -503,14 +537,34 @@ export default function CheckoutScreen() {
           </View>
 
           {/* Discount Code */}
-          <View style={{ marginHorizontal: 20, marginBottom: 30, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 12, borderWidth: 1, borderColor: '#F3F4F6', flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ marginHorizontal: 20, marginBottom: 30, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 12, borderWidth: 1, borderColor: appliedCoupon ? '#10B981' : '#F3F4F6', flexDirection: 'row', alignItems: 'center' }}>
             <TextInput 
               placeholder="Ingresa tu código de descuento.."
-              style={{ flex: 1, paddingHorizontal: 15, fontSize: 14, fontWeight: '600' }}
+              value={couponCode || ''}
+              onChangeText={setCouponCode}
+              editable={!appliedCoupon}
+              autoCapitalize="characters"
+              style={{ flex: 1, paddingHorizontal: 15, fontSize: 14, fontWeight: '600', color: appliedCoupon ? '#10B981' : '#111827' }}
             />
-            <TouchableOpacity style={{ backgroundColor: '#F47321', borderRadius: 14, paddingHorizontal: 25, paddingVertical: 12 }}>
-              <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>Aplicar</Text>
-            </TouchableOpacity>
+            {appliedCoupon ? (
+              <TouchableOpacity 
+                onPress={() => {
+                  setAppliedCoupon(null);
+                  setCouponCode('');
+                }}
+                style={{ backgroundColor: '#FEE2E2', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 12 }}
+              >
+                <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '900' }}>Quitar</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                onPress={validateCoupon}
+                disabled={isValidatingCoupon || !couponCode}
+                style={{ backgroundColor: '#F47321', borderRadius: 14, paddingHorizontal: 25, paddingVertical: 12, opacity: isValidatingCoupon ? 0.6 : 1 }}
+              >
+                {isValidatingCoupon ? <ActivityIndicator size="small" color="white" /> : <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>Aplicar</Text>}
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Order Summary */}
@@ -895,7 +949,7 @@ export default function CheckoutScreen() {
                         <TextInput 
                           placeholder="Número de tarjeta"
                           placeholderTextColor="#9CA3AF"
-                          value={cardDetails.number}
+                          value={cardDetails.number || ''}
                           onChangeText={(text) => setCardDetails(prev => ({ ...prev, number: text }))}
                           style={{ flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600' }}
                         />
@@ -905,7 +959,7 @@ export default function CheckoutScreen() {
                         <TextInput 
                           placeholder="Nombre en la tarjeta"
                           placeholderTextColor="#9CA3AF"
-                          value={cardDetails.name}
+                          value={cardDetails.name || ''}
                           onChangeText={(text) => setCardDetails(prev => ({ ...prev, name: text }))}
                           style={{ fontSize: 15, fontWeight: '600' }}
                         />
@@ -916,7 +970,7 @@ export default function CheckoutScreen() {
                           <TextInput 
                             placeholder="MM/YY"
                             placeholderTextColor="#9CA3AF"
-                            value={cardDetails.expiry}
+                            value={cardDetails.expiry || ''}
                             onChangeText={(text) => setCardDetails(prev => ({ ...prev, expiry: text }))}
                             style={{ fontSize: 15, fontWeight: '600' }}
                           />
@@ -925,7 +979,7 @@ export default function CheckoutScreen() {
                           <TextInput 
                             placeholder="CVV"
                             placeholderTextColor="#9CA3AF"
-                            value={cardDetails.cvv}
+                            value={cardDetails.cvv || ''}
                             onChangeText={(text) => setCardDetails(prev => ({ ...prev, cvv: text }))}
                             style={{ fontSize: 15, fontWeight: '600' }}
                           />
@@ -1004,12 +1058,32 @@ export default function CheckoutScreen() {
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 32 }}>
                 <TextInput 
                   placeholder="Código promocional"
+                  value={couponCode || ''}
+                  onChangeText={setCouponCode}
+                  editable={!appliedCoupon}
+                  autoCapitalize="characters"
                   placeholderTextColor="#BFBFBF"
-                  style={{ flex: 1, height: 50, backgroundColor: '#F9FAFB', borderRadius: 14, paddingHorizontal: 16, fontSize: 14, fontWeight: '600', borderWidth: 1, borderColor: '#F3F4F6' }}
+                  style={{ flex: 1, height: 50, backgroundColor: '#F9FAFB', borderRadius: 14, paddingHorizontal: 16, fontSize: 14, fontWeight: '600', borderWidth: 1, borderColor: appliedCoupon ? '#10B981' : '#F3F4F6', color: appliedCoupon ? '#10B981' : '#111827' }}
                 />
-                <TouchableOpacity style={{ backgroundColor: '#F47321', borderRadius: 14, paddingHorizontal: 20, justifyContent: 'center' }}>
-                  <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>Aplicar</Text>
-                </TouchableOpacity>
+                {appliedCoupon ? (
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setAppliedCoupon(null);
+                      setCouponCode('');
+                    }}
+                    style={{ backgroundColor: '#FEE2E2', borderRadius: 14, paddingHorizontal: 20, justifyContent: 'center' }}
+                  >
+                    <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '900' }}>Quitar</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity 
+                    onPress={validateCoupon}
+                    disabled={isValidatingCoupon || !couponCode}
+                    style={{ backgroundColor: '#F47321', borderRadius: 14, paddingHorizontal: 20, justifyContent: 'center', opacity: isValidatingCoupon ? 0.6 : 1 }}
+                  >
+                    {isValidatingCoupon ? <ActivityIndicator size="small" color="white" /> : <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>Aplicar</Text>}
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Totals */}
@@ -1024,7 +1098,9 @@ export default function CheckoutScreen() {
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>Descuento</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }}>$0</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: discount > 0 ? '#EF4444' : '#111827' }}>
+                    {discount > 0 ? `- $${discount.toLocaleString()}` : '$0'}
+                  </Text>
                 </View>
               </View>
 

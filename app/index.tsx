@@ -133,15 +133,16 @@ const MOCK_PRODUCTS: ProductItem[] = [
 //  MOBILE COMPONENTS
 // ══════════════════════════════════════════════════════════════════════════════
 
-function MobileHeroCarousel({ screenWidth }: { screenWidth: number }) {
+function MobileHeroCarousel({ screenWidth, slides = [] }: { screenWidth: number, slides?: any[] }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const CARD_W = screenWidth - 32;
   const indexRef = useRef(0);
 
   useEffect(() => {
+    if (slides.length <= 1) return;
     const interval = setInterval(() => {
-      indexRef.current = (indexRef.current + 1) % mobileHeroSlides.length;
+      indexRef.current = (indexRef.current + 1) % slides.length;
       flatListRef.current?.scrollToIndex({
         index: indexRef.current,
         animated: true
@@ -149,7 +150,7 @@ function MobileHeroCarousel({ screenWidth }: { screenWidth: number }) {
       setActiveSlide(indexRef.current);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [slides]);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / CARD_W);
@@ -161,7 +162,7 @@ function MobileHeroCarousel({ screenWidth }: { screenWidth: number }) {
     <View style={{ marginHorizontal: 15, borderRadius: 20, overflow: 'hidden', height: 260, marginTop: -140, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 25, elevation: 20, backgroundColor: '#FFFFFF' }}>
       <FlatList
         ref={flatListRef}
-        data={mobileHeroSlides}
+        data={slides}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -175,19 +176,27 @@ function MobileHeroCarousel({ screenWidth }: { screenWidth: number }) {
         })}
         renderItem={({ item }) => (
           <View style={{ width: CARD_W, height: 260 }}>
-            <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-            <View style={{ position: 'absolute', top: 14, left: 14, backgroundColor: item.badgeColor, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5 }}>
-              <Text style={{ color: 'white', fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>{item.badge}</Text>
-            </View>
-            <View style={{ position: 'absolute', bottom: 20, left: 16, right: 60 }}>
-              <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', lineHeight: 28, letterSpacing: -0.5 }}>{item.title}</Text>
-              <Text style={{ color: 'rgba(255,255,255,1)', fontSize: 13, fontWeight: '700', marginTop: 2 }}>{item.subtitle}</Text>
-            </View>
+            <Image 
+              source={typeof item.image === 'string' ? { uri: item.image, cache: 'force-cache' } : (item.imageUrl ? { uri: item.imageUrl, cache: 'force-cache' } : item.image)} 
+              style={{ width: '100%', height: '100%' }} 
+              resizeMode="cover" 
+            />
+            {item.badge && (
+              <View style={{ position: 'absolute', top: 14, left: 14, backgroundColor: item.badgeColor, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5 }}>
+                <Text style={{ color: 'white', fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>{item.badge}</Text>
+              </View>
+            )}
+            {(item.title || item.subtitle) && (
+              <View style={{ position: 'absolute', bottom: 20, left: 16, right: 60 }}>
+                {item.title && <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', lineHeight: 28, letterSpacing: -0.5 }}>{item.title}</Text>}
+                {item.subtitle && <Text style={{ color: 'rgba(255,255,255,1)', fontSize: 13, fontWeight: '700', marginTop: 2 }}>{item.subtitle}</Text>}
+              </View>
+            )}
           </View>
         )}
       />
       <View style={{ position: 'absolute', bottom: 24, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        {mobileHeroSlides.map((_, i) => (
+        {slides.map((_, i) => (
           <View key={i} style={{ width: i === activeSlide ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: i === activeSlide ? 'white' : 'rgba(255,255,255,0.5)' }} />
         ))}
       </View>
@@ -533,70 +542,96 @@ const desktopHeroSlides = [
   }
 ];
 
-function DesktopHeroSlider() {
+function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
+    if (slides.length <= 1) return;
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % desktopHeroSlides.length);
+      setActiveSlide((prev) => (prev + 1) % slides.length);
     }, 6000); // Cambia cada 6 segundos
     return () => clearInterval(timer);
-  }, []);
+  }, [slides]);
+
+  const currentSlide = slides[activeSlide];
+  if (!currentSlide) return null;
+  
+  const source = typeof currentSlide.image === 'string' 
+    ? { uri: currentSlide.image, cache: 'force-cache' } 
+    : (currentSlide.imageUrl ? { uri: currentSlide.imageUrl, cache: 'force-cache' } : currentSlide.image);
+
+  const imageSource = source;
+
+  // Determine if this is a "Full Image" banner (from Publicidad) or a "Composite" banner (hardcoded)
+  const isFullImage = !!currentSlide.imageUrl;
 
   return (
     <View style={{ width: '100%', height: 450, backgroundColor: 'white', position: 'relative' }}>
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        {/* Left Side: Brand & Main Title */}
-        <View style={{ width: '45%', justifyContent: 'center', paddingLeft: 100, backgroundColor: 'white' }}>
-          <View style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 15, paddingVertical: 5, borderRadius: 20, marginBottom: 15 }}>
-            <Text style={{ color: 'white', fontWeight: '900', fontSize: 14 }}>{desktopHeroSlides[activeSlide].brand}</Text>
+        {isFullImage ? (
+          <View style={{ flex: 1 }}>
+            <Image 
+              source={imageSource}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
           </View>
-          <Text style={{ fontSize: 90, fontWeight: '300', color: '#1A1A2E', lineHeight: 95 }}>{desktopHeroSlides[activeSlide].title}</Text>
-          <Text style={{ fontSize: 105, fontWeight: '900', color: '#1A1A2E', marginTop: -25, fontStyle: 'italic', letterSpacing: -2 }}>{desktopHeroSlides[activeSlide].highlight}</Text>
-          
-          <Text style={{ fontSize: 18, color: '#666', marginTop: 20, fontWeight: '500', maxWidth: 350 }}>
-            {desktopHeroSlides[activeSlide].subtitle}
-          </Text>
+        ) : (
+          <>
+            {/* Left Side: Brand & Main Title */}
+            <View style={{ width: '45%', justifyContent: 'center', paddingLeft: 100, backgroundColor: 'white' }}>
+              <View style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 15, paddingVertical: 5, borderRadius: 20, marginBottom: 15 }}>
+                <Text style={{ color: 'white', fontWeight: '900', fontSize: 14 }}>{currentSlide.brand}</Text>
+              </View>
+              <Text style={{ fontSize: 90, fontWeight: '300', color: '#1A1A2E', lineHeight: 95 }}>{currentSlide.title}</Text>
+              <Text style={{ fontSize: 105, fontWeight: '900', color: '#1A1A2E', marginTop: -25, fontStyle: 'italic', letterSpacing: -2 }}>{currentSlide.highlight}</Text>
+              
+              <Text style={{ fontSize: 18, color: '#666', marginTop: 20, fontWeight: '500', maxWidth: 350 }}>
+                {currentSlide.subtitle}
+              </Text>
 
-          <TouchableOpacity style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 50, paddingVertical: 18, borderRadius: 35, marginTop: 40, shadowColor: '#22C55E', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
-            <Text style={{ color: 'white', fontWeight: '900', fontSize: 20 }}>COMPRAR</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Right Side: Product Image & Discount Highlight */}
-        <View style={{ width: '55%', position: 'relative', overflow: 'hidden' }}>
-          <Image 
-            source={desktopHeroSlides[activeSlide].image} 
-            style={{ width: '100%', height: '100%' }} 
-            resizeMode="contain"
-          />
-          
-          {/* Discount Overlay (Only if not already prominent in image) */}
-          {desktopHeroSlides[activeSlide].id !== 1 && (
-            <View style={{ position: 'absolute', right: 50, top: '25%', backgroundColor: 'rgba(255,255,255,0.9)', padding: 30, borderRadius: 100, width: 180, height: 180, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#22C55E' }}>
-               <Text style={{ fontSize: 40, fontWeight: '900', color: '#22C55E' }}>{desktopHeroSlides[activeSlide].discount}</Text>
+              <TouchableOpacity style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 50, paddingVertical: 18, borderRadius: 35, marginTop: 40, shadowColor: '#22C55E', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
+                <Text style={{ color: 'white', fontWeight: '900', fontSize: 20 }}>COMPRAR</Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
+
+            {/* Right Side: Product Image & Discount Highlight */}
+            <View style={{ width: '55%', position: 'relative', overflow: 'hidden' }}>
+              <Image 
+                source={imageSource} 
+                style={{ width: '100%', height: '100%' }} 
+                resizeMode="contain"
+              />
+              
+              {/* Discount Overlay (Only if not already prominent in image) */}
+              {currentSlide.id !== 1 && (
+                <View style={{ position: 'absolute', right: 50, top: '25%', backgroundColor: 'rgba(255,255,255,0.9)', padding: 30, borderRadius: 100, width: 180, height: 180, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#22C55E' }}>
+                   <Text style={{ fontSize: 40, fontWeight: '900', color: '#22C55E' }}>{currentSlide.discount}</Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
       </View>
 
       {/* Modern Navigation Arrows */}
-      <View style={{ position: 'absolute', top: 0, bottom: 0, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
-        <TouchableOpacity 
-          onPress={() => setActiveSlide((activeSlide - 1 + desktopHeroSlides.length) % desktopHeroSlides.length)}
-          style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}
-        >
-          <ChevronLeft size={35} color="#1A1A2E" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          onPress={() => setActiveSlide((activeSlide + 1) % desktopHeroSlides.length)}
-          style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}
-        >
-          <ChevronRight size={35} color="#1A1A2E" />
-        </TouchableOpacity>
-      </View>
-
+      {slides.length > 1 && (
+        <View style={{ position: 'absolute', top: 0, bottom: 0, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
+          <TouchableOpacity 
+            onPress={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)}
+            style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}
+          >
+            <ChevronLeft size={35} color="#1A1A2E" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={() => setActiveSlide((activeSlide + 1) % slides.length)}
+            style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}
+          >
+            <ChevronRight size={35} color="#1A1A2E" />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -617,16 +652,52 @@ export default function Home() {
   const isDesktop = screenWidth >= BREAKPOINT;
   const [products, setProducts] = useState<ProductItem[]>(MOCK_PRODUCTS);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [mobileBanners, setMobileBanners] = useState<any[]>([]);
+  const [desktopBannersList, setDesktopBannersList] = useState<any[]>([]);
 
   useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'publicidad'));
+        const allBanners = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Pre-fetch all images for instant loading
+        allBanners.forEach((banner: any) => {
+          if (banner.imageUrl) {
+            Image.prefetch(banner.imageUrl);
+          }
+        });
+
+        const mBanners = allBanners.filter((b: any) => b.type === 'mobile');
+        const dBanners = allBanners.filter((b: any) => b.type === 'desktop');
+        
+        if (mBanners.length > 0) setMobileBanners(mBanners);
+        else setMobileBanners(mobileHeroSlides);
+
+        if (dBanners.length > 0) setDesktopBannersList(dBanners);
+        else setDesktopBannersList(desktopHeroSlides);
+      } catch (error) {
+        console.error("Error fetching banners:", error);
+        setMobileBanners(mobileHeroSlides);
+        setDesktopBannersList(desktopHeroSlides);
+      }
+    };
+
+    fetchBanners();
     const fetchProducts = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'Products'));
         const productsList = querySnapshot.docs.map(doc => {
           const data = doc.data();
+          
+          const formatClassification = (val: any) => {
+            if (Array.isArray(val)) return val.join(', ');
+            return val || '';
+          };
+
           return {
             id: data.ID_productos || doc.id,
-            category: data.categoria || data.Tipo || data.animal || 'GENERAL',
+            category: formatClassification(data.categoria || data.Tipo || data.animal || 'GENERAL'),
             name: data.nombre || 'Producto sin nombre',
             price: '$' + (data.precio || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."),
             rating: 5,
@@ -707,9 +778,12 @@ export default function Home() {
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
           
           <DesktopPromoBanner />
-          <DesktopHeroSlider />
+          <DesktopHeroSlider slides={desktopBannersList} />
 
           <View style={{ paddingHorizontal: 40 }}>
+            {/* HERO CAROUSEL FOR MOBILE (In Desktop ScrollView) */}
+            {!isDesktop && <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} />}
+            {isDesktop && <View style={{ height: 40 }} />}
             {/* TRUST BAR (Image 2 Footer) */}
             <View style={{ 
               marginTop: 40, 
@@ -1392,7 +1466,7 @@ export default function Home() {
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
         <Header />
-        <MobileHeroCarousel screenWidth={screenWidth} />
+        <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} />
         
         {/* Section: Categories */}
         <View style={{ marginTop: 24 }}>
@@ -1450,7 +1524,7 @@ export default function Home() {
           </ScrollView>
         </View>
 
-        {/* WhatsApp Community Banner */}
+        {/* WhatsApp Community Banner - MOBILE ONLY ASSET */}
         <TouchableOpacity 
           activeOpacity={0.9} 
           style={{ 
@@ -1459,16 +1533,16 @@ export default function Home() {
             marginBottom: 40,
             borderRadius: 24,
             overflow: 'hidden',
-            backgroundColor: '#10B981',
+            backgroundColor: '#25D366',
             shadowColor: '#10B981',
             shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.15,
+            shadowOpacity: 0.2,
             shadowRadius: 15,
             elevation: 8,
           }}
         >
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?q=80&w=800' }} 
+            source={require('../assets/images/whatsapp_banner_v2.png')} 
             style={{ width: '100%', height: 120 }} 
             resizeMode="cover"
           />
@@ -1484,51 +1558,51 @@ export default function Home() {
           </Text>
         </View>
 
-        {/* Newsletter Section */}
+        {/* Newsletter Section - ADAPTED FROM DESKTOP */}
         <View style={{ height: 320, position: 'relative', overflow: 'hidden' }}>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1516733725897-1aa73b87c8e8?q=80&w=800' }} 
+            source={{ uri: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=1200' }} 
             style={{ width: '100%', height: '100%', position: 'absolute' }} 
             resizeMode="cover"
           />
           <LinearGradient
-            colors={['rgba(76,29,149,0.85)', 'rgba(59,30,84,0.92)']}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: 30, justifyContent: 'center', alignItems: 'center' }}
+            colors={['rgba(76,29,149,0.92)', 'rgba(59,30,84,0.95)']}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, paddingHorizontal: 25, justifyContent: 'center', alignItems: 'center' }}
           >
-            <Text style={{ color: 'white', fontSize: 28, fontWeight: '900', textAlign: 'center', marginBottom: 24, lineHeight: 34 }}>
+            <Text style={{ color: 'white', fontSize: 30, fontWeight: '900', textAlign: 'center', marginBottom: 24, lineHeight: 36, letterSpacing: -0.5 }}>
               Inscríbete y recibe nuestras promociones
             </Text>
             
-            <TextInput 
-              placeholder="Su dirección de correo electrónico"
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              style={{ 
-                backgroundColor: 'rgba(255,255,255,0.2)', 
-                width: '100%', 
-                height: 56, 
-                borderRadius: 14, 
-                paddingHorizontal: 20, 
-                fontSize: 15,
-                color: 'white',
-                marginBottom: 16,
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.3)'
-              }}
-            />
-            
-            <TouchableOpacity 
-              activeOpacity={0.9}
-              style={{ 
-                backgroundColor: '#3B1E54', 
-                width: '100%', 
-                height: 54, 
-                borderRadius: 8, 
-                justifyContent: 'center', 
-                alignItems: 'center'
-              }}
-            >
-              <Text style={{ color: 'white', fontSize: 15, fontWeight: '900', letterSpacing: 1 }}>SUSCRIBIRSE</Text>
-            </TouchableOpacity>
+            <View style={{ width: '100%', gap: 12 }}>
+              <TextInput 
+                placeholder="Su dirección de correo electrónico"
+                placeholderTextColor="rgba(0,0,0,0.3)"
+                style={{ 
+                  backgroundColor: 'white', 
+                  width: '100%', 
+                  height: 58, 
+                  borderRadius: 8, 
+                  paddingHorizontal: 20, 
+                  fontSize: 16,
+                  color: '#1A1A2E',
+                  fontWeight: '500'
+                }}
+              />
+              
+              <TouchableOpacity 
+                activeOpacity={0.9}
+                style={{ 
+                  backgroundColor: '#3B1E54', 
+                  width: '100%', 
+                  height: 58, 
+                  borderRadius: 8, 
+                  justifyContent: 'center', 
+                  alignItems: 'center'
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 15, fontWeight: '900', letterSpacing: 1 }}>SUSCRIBIRSE</Text>
+              </TouchableOpacity>
+            </View>
           </LinearGradient>
         </View>
 

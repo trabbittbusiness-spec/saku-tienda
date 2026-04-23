@@ -421,7 +421,7 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
               backgroundColor: '#10B981', borderRadius: 20, paddingVertical: isDesktop ? 20 : 16,
               flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
               shadowColor: '#10B981', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 20,
-              marginTop: isDesktop ? 0 : 12
+              marginTop: isDesktop ? 24 : 12
             }}
           >
             <MapPin size={22} color="#FFFFFF" strokeWidth={3} />
