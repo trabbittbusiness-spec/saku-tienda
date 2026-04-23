@@ -5,19 +5,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, interpolate } from 'react-native-reanimated';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import LocationMapModal from './LocationMapModal';
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
-import { doc, getDoc, onSnapshot, query, collection, where, updateDoc, serverTimestamp, addDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, query, collection, where, updateDoc, serverTimestamp, addDoc, arrayUnion } from 'firebase/firestore';
+
 
 const BREAKPOINT = 768;
 
-export default function Header() {
-  const router = useRouter();
+const Header = React.memo(function Header() {
   const { width } = useWindowDimensions();
+
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
@@ -39,6 +40,7 @@ export default function Header() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [defaultAddrId, setDefaultAddrId] = useState<string | null>(null);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -46,57 +48,65 @@ export default function Header() {
       if (currentUser) {
         setUserEmail(currentUser.email || '');
         
-        // Fetch User Profile (Name and Default Address)
         const unsubUser = onSnapshot(doc(db, 'users', currentUser.uid), (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             const fullName = [data.display_name, data.apellido].filter(Boolean).join(' ');
             setUserName(fullName || currentUser.displayName || 'Usuario');
-            
             if (data.direccionDefault) {
-              setSelectedLocation({
-                main: data.direccionDefault.main,
-                sub: data.direccionDefault.sub
-              });
+              setSelectedLocation({ main: data.direccionDefault.main, sub: data.direccionDefault.sub });
               setDefaultAddrId(data.direccionDefault.id);
             }
           }
         });
 
-        // Fetch Addresses Collection
         const qAddr = query(collection(db, 'Direcciones'), where('userId', '==', currentUser.uid));
         const unsubAddresses = onSnapshot(qAddr, (snapshot) => {
-          const addrList = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setAddresses(addrList);
+          setAddresses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         });
 
-        // Fetch Active Orders (Pendiente or Enviado)
         const qOrders = query(collection(db, 'Ordenes'), where('userId', '==', currentUser.uid));
         const unsubOrders = onSnapshot(qOrders, (snapshot) => {
-          const ordersList = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })).filter((o: any) => {
+          setActiveOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o: any) => {
             const status = o.estado?.toLowerCase();
             return status === 'pendiente' || status === 'enviado';
-          });
-          setActiveOrders(ordersList);
+          }));
         });
 
-        return () => {
-          unsubUser();
-          unsubAddresses();
-          unsubOrders();
-        };
+        // Real-time personal notifications filtered by creador reference
+        const userRef = doc(db, 'users', currentUser.uid);
+        const qNotif = query(collection(db, 'notificaciones'), where('creador', '==', userRef));
+        const unsubNotif = onSnapshot(qNotif, (snapshot) => {
+          const personal = snapshot.docs.map(d => ({ id: d.id, _tipo: 'personal', ...d.data() }));
+          setNotifications(prev => {
+            const global = prev.filter((n: any) => n._tipo === 'global');
+            const merged = [...personal, ...global];
+            merged.sort((a: any, b: any) => (b.creadaEn?.seconds || 0) - (a.creadaEn?.seconds || 0));
+            return merged;
+          });
+        });
+
+        // Real-time global notifications (coupons, broadcasts)
+        const qGlobal = query(collection(db, 'notificaciones'), where('tipo', '==', 'global'));
+        const unsubGlobal = onSnapshot(qGlobal, (snapshot) => {
+          const global = snapshot.docs.map(d => ({ id: d.id, _tipo: 'global', ...d.data() }));
+          setNotifications(prev => {
+            const personal = prev.filter((n: any) => n._tipo === 'personal');
+            const merged = [...personal, ...global];
+            merged.sort((a: any, b: any) => (b.creadaEn?.seconds || 0) - (a.creadaEn?.seconds || 0));
+            return merged;
+          });
+        });
+
+        return () => { unsubUser(); unsubAddresses(); unsubOrders(); unsubNotif(); unsubGlobal(); };
+
       } else {
         setUserName('');
         setUserEmail('');
         setAddresses([]);
         setDefaultAddrId(null);
         setActiveOrders([]);
+        setNotifications([]);
       }
     });
     return unsubscribeAuth;
@@ -116,71 +126,117 @@ export default function Header() {
     transform: [{ translateX: drawerTranslateX.value }],
   }));
 
-  const renderNotificationsDrawer = () => {
-    return (
-      <Modal visible={isNotificationsOpen} transparent animationType="fade" onRequestClose={() => setIsNotificationsOpen(false)}>
-        <View style={{ flex: 1, flexDirection: 'row' }}>
-          {isDesktop && <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setIsNotificationsOpen(false)} />}
-          <Animated.View style={[{ width: isDesktop ? 420 : '100%', backgroundColor: '#FFFFFF', height: '100%', shadowColor: '#000', shadowOffset: { width: -10, height: 0 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 15 }, animatedDrawerStyle]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#F3F4F6', paddingTop: isDesktop ? 25 : insets.top + 20 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>Notificaciones</Text>
-                <View style={{ backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
-                  <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>3</Text>
-                </View>
-              </View>
-              <TouchableOpacity onPress={() => setIsNotificationsOpen(false)} style={{ width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
-                <X size={20} color="#4B5563" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 12 }}>
-              <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#FFF7ED', borderRadius: 16, borderWidth: 1, borderColor: '#FED7AA', gap: 14 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#FFEDD5', justifyContent: 'center', alignItems: 'center' }}>
-                  <Truck size={20} color="#F47321" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Pedido en camino</Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Hace 5 min</Text>
-                  </View>
-                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>Tu orden #4SO37PD ha sido despachada y está en camino a tu dirección.</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#F0FDF4', borderRadius: 16, borderWidth: 1, borderColor: '#BBF7D0', gap: 14 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center' }}>
-                  <ShoppingBag size={20} color="#10B981" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Compra confirmada</Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Hace 2 hrs</Text>
-                  </View>
-                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>Tu compra de Royal Dog Hypoallergenic ha sido confirmada exitosamente.</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity style={{ flexDirection: 'row', padding: 16, backgroundColor: '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: '#F3F4F6', gap: 14 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' }}>
-                  <Bell size={20} color="#6366F1" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Promoción especial</Text>
-                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>Ayer</Text>
-                  </View>
-                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>¡20% de descuento en alimentos premium para tu mascota! Válido hasta el domingo.</Text>
-                </View>
-              </TouchableOpacity>
-            </ScrollView>
-            <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingBottom: insets.bottom + 20 }}>
-              <TouchableOpacity style={{ backgroundColor: '#F3F4F6', borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}>
-                <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Marcar todas como leídas</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
-      </Modal>
-    );
+  const unreadCount = notifications.filter((n: any) => {
+    if (n._tipo === 'global') return !(n.leidaPor || []).includes(user?.uid);
+    return !n.leida;
+  }).length;
+
+  const markAllAsRead = async () => {
+    await Promise.all(notifications.map(async (n: any) => {
+      if (n._tipo === 'global') {
+        if (!(n.leidaPor || []).includes(user?.uid))
+          await updateDoc(doc(db, 'notificaciones', n.id), { leidaPor: arrayUnion(user?.uid) });
+      } else {
+        if (!n.leida)
+          await updateDoc(doc(db, 'notificaciones', n.id), { leida: true });
+      }
+    }));
   };
+
+  const markAsRead = async (notif: any) => {
+    if (notif._tipo === 'global') {
+      await updateDoc(doc(db, 'notificaciones', notif.id), { leidaPor: arrayUnion(user?.uid) });
+    } else {
+      await updateDoc(doc(db, 'notificaciones', notif.id), { leida: true });
+    }
+  };
+
+  const getNotifStyle = (notif: any) => {
+    // Global coupon notification
+    if (notif._tipo === 'global') return { bg: '#F5F3FF', border: '#DDD6FE', iconBg: '#EDE9FE', iconColor: '#7C3AED', Icon: ShoppingBag };
+    const s = (notif.estado || '').toLowerCase();
+    if (s === 'enviado') return { bg: '#FFF7ED', border: '#FED7AA', iconBg: '#FFEDD5', iconColor: '#F47321', Icon: Truck };
+    if (s === 'entregado') return { bg: '#F0FDF4', border: '#BBF7D0', iconBg: '#DCFCE7', iconColor: '#10B981', Icon: ShoppingBag };
+    if (s === 'cancelado') return { bg: '#FFF1F2', border: '#FECDD3', iconBg: '#FFE4E6', iconColor: '#EF4444', Icon: X };
+    return { bg: '#EEF2FF', border: '#C7D2FE', iconBg: '#E0E7FF', iconColor: '#6366F1', Icon: Bell };
+  };
+
+  const getRelativeTime = (ts: any) => {
+    if (!ts) return '';
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return 'Ahora';
+    if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} hrs`;
+    return `Hace ${Math.floor(diff / 86400)} días`;
+  };
+
+  const renderNotificationsDrawer = () => (
+    <Modal visible={isNotificationsOpen} transparent animationType="fade" onRequestClose={() => setIsNotificationsOpen(false)}>
+      <View style={{ flex: 1, flexDirection: 'row' }}>
+        {isDesktop && <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setIsNotificationsOpen(false)} />}
+        <Animated.View style={[{ width: isDesktop ? 420 : '100%', backgroundColor: '#FFFFFF', height: '100%', shadowColor: '#000', shadowOffset: { width: -10, height: 0 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 15 }, animatedDrawerStyle]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#F3F4F6', paddingTop: isDesktop ? 25 : insets.top + 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>Notificaciones</Text>
+              {unreadCount > 0 && (
+                <View style={{ backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
+                  <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>{unreadCount}</Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity onPress={() => setIsNotificationsOpen(false)} style={{ width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
+              <X size={20} color="#4B5563" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 12 }}>
+            {unreadCount === 0 ? (
+              <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 }}>
+                <Bell size={48} color="#E5E7EB" strokeWidth={1} />
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#9CA3AF' }}>Sin notificaciones</Text>
+                <Text style={{ fontSize: 13, color: '#D1D5DB', fontWeight: '500', textAlign: 'center' }}>Estás al día con todos tus pedidos</Text>
+              </View>
+            ) : (
+              notifications.filter((n: any) => {
+                if (n._tipo === 'global') return !(n.leidaPor || []).includes(user?.uid);
+                return !n.leida;
+              }).map((notif: any) => {
+                const st = getNotifStyle(notif);
+                const IconComp = st.Icon;
+                return (
+                  <TouchableOpacity
+                    key={notif.id}
+                    onPress={() => markAsRead(notif)}
+                    style={{ flexDirection: 'row', padding: 16, backgroundColor: st.bg, borderRadius: 16, borderWidth: 1, borderColor: st.border, gap: 14 }}
+                  >
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: st.iconBg, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                      <IconComp size={20} color={st.iconColor} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827', flex: 1 }} numberOfLines={1}>{notif.titulo}</Text>
+                        <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginLeft: 8 }}>{getRelativeTime(notif.creadaEn)}</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>{notif.mensaje}</Text>
+                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: st.iconColor, marginTop: 6 }} />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </ScrollView>
+
+          <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingBottom: insets.bottom + 20 }}>
+            <TouchableOpacity onPress={markAllAsRead} style={{ backgroundColor: '#F3F4F6', borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Marcar todas como leídas</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+
 
   // Pro Dynamic Capsule Animations
   const truckDrive = useSharedValue(0);
@@ -567,13 +623,15 @@ export default function Header() {
               onPress={() => setIsNotificationsOpen(true)}
             >
               <BellDot size={20} color="#4B5563" strokeWidth={1.8} />
-              <View style={{
-                position: 'absolute', top: -3, right: -3, backgroundColor: '#EF4444',
-                borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
-                borderWidth: 2, borderColor: '#FFFFFF'
-              }}>
-                <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>3</Text>
-              </View>
+              {unreadCount > 0 && (
+                <View style={{
+                  position: 'absolute', top: -3, right: -3, backgroundColor: '#EF4444',
+                  borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+                  borderWidth: 2, borderColor: '#FFFFFF'
+                }}>
+                  <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{unreadCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -913,23 +971,25 @@ export default function Header() {
             <Bell size={22} color="white" strokeWidth={2} />
           </TouchableOpacity>
           {/* Notification Badge */}
-          <View
-            style={{
-              position: 'absolute',
-              top: -4,
-              right: -4,
-              backgroundColor: '#FF3B30',
-              borderRadius: 11,
-              minWidth: 22,
-              height: 22,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 2,
-              borderColor: '#F47321',
-            }}
-          >
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>3</Text>
-          </View>
+          {unreadCount > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                backgroundColor: '#FF3B30',
+                borderRadius: 11,
+                minWidth: 22,
+                height: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: '#F47321',
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>{unreadCount}</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -1007,4 +1067,7 @@ export default function Header() {
     {renderNotificationsDrawer()}
     </>
   );
-}
+});
+
+export default Header;
+

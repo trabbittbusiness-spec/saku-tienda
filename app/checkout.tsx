@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator } from 'react-native';
-import { ArrowLeft, Lock, MapPin, Plus, CreditCard, Banknote, ShieldCheck, ChevronRight, CheckCircle2, Store, Clock, RefreshCcw, Wifi } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable } from 'react-native';
+
+import { ArrowLeft, Lock, MapPin, Plus, CreditCard, Banknote, ShieldCheck, ChevronRight, CheckCircle2, Store, Clock, RefreshCcw, Wifi, AlertCircle, Ticket, CalendarX, X } from 'lucide-react-native';
+
+import { router, useLocalSearchParams } from 'expo-router';
+
 import LocationMapModal from '../components/LocationMapModal';
 import { useCart } from '../context/CartContext';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, writeBatch, updateDoc, getDoc, query, where, getDocs } from 'firebase/firestore';
 
 export default function CheckoutScreen() {
-  const router = useRouter();
   const { width } = useWindowDimensions();
   const { cart, cartTotal, clearCart } = useCart();
   const isDesktop = width >= 1024;
@@ -60,13 +62,17 @@ export default function CheckoutScreen() {
   React.useEffect(() => {
     fetchAddresses();
   }, []);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
   const [showNewCardForm, setShowNewCardForm] = useState(false);
+
+
   const [selectedCardId, setSelectedCardId] = useState('visa-1');
   const [isLoading, setIsLoading] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponModal, setCouponModal] = useState({ visible: false, title: '', message: '', type: 'error' as 'error' | 'warning' | 'success' });
+
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -83,7 +89,12 @@ export default function CheckoutScreen() {
         );
         const usedSnapshot = await getDocs(usedQuery);
         if (!usedSnapshot.empty) {
-          alert('Ya has utilizado este cupón anteriormente.');
+          setCouponModal({
+            visible: true,
+            title: 'Cupón ya utilizado',
+            message: 'Ya has aprovechado este descuento en una compra anterior.',
+            type: 'warning'
+          });
           setAppliedCoupon(null);
           setIsValidatingCoupon(false);
           return;
@@ -95,13 +106,44 @@ export default function CheckoutScreen() {
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        alert('Cupón no válido o inactivo');
+        setCouponModal({
+          visible: true,
+          title: 'Código no válido',
+          message: 'El cupón que ingresaste no existe o ya no se encuentra activo.',
+          type: 'error'
+        });
         setAppliedCoupon(null);
       } else {
         const coupon = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as any;
         
+        // 3. Check expiration
+        if (coupon.expiryDate) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const expiry = new Date(coupon.expiryDate);
+          
+          if (isNaN(expiry.getTime())) {
+            console.warn('Invalid expiry date format:', coupon.expiryDate);
+          } else if (today > expiry) {
+            setCouponModal({
+              visible: true,
+              title: 'Cupón expirado',
+              message: 'Lamentablemente este descuento ya ha vencido.',
+              type: 'error'
+            });
+            setAppliedCoupon(null);
+            setIsValidatingCoupon(false);
+            return;
+          }
+        }
+        
         if (cartTotal < coupon.minAmount) {
-          alert(`Este cupón requiere una compra mínima de $${coupon.minAmount.toLocaleString()}`);
+          setCouponModal({
+            visible: true,
+            title: 'Monto insuficiente',
+            message: `Este cupón requiere una compra mínima de $${coupon.minAmount.toLocaleString()}`,
+            type: 'warning'
+          });
           setAppliedCoupon(null);
         } else {
           setAppliedCoupon(coupon);
@@ -113,6 +155,7 @@ export default function CheckoutScreen() {
       setIsValidatingCoupon(false);
     }
   };
+
 
   const shipping = 0;
   const discount = appliedCoupon 
@@ -196,8 +239,10 @@ export default function CheckoutScreen() {
         console.log(`Successfully cleared ${itemsToBatch} items from cart.`);
       }
 
-      // 3. Local state updates
-      setIsSuccessModalOpen(true);
+      // 3. Navigate to Home with success parameter
+      clearCart(); // Local context clear
+      router.replace('/?success=1');
+
     } catch (error: any) {
       console.error("Error creating order:", error);
       alert("Error: " + error.message);
@@ -624,46 +669,8 @@ export default function CheckoutScreen() {
             </View>
           </View>
         </ScrollView>
-        {/* SUCCESS MODAL */}
-        {isSuccessModalOpen && (
-          <View style={{ 
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20000,
-            backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center'
-          }}>
-            <View style={{ 
-              width: '90%', backgroundColor: '#FFFFFF', borderRadius: 40, padding: 32, alignItems: 'center',
-              shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 40, shadowOffset: { width: 0, height: 20 }
-            }}>
-              <View style={{ 
-                width: 80, height: 80, borderRadius: 40, backgroundColor: '#DCFCE7', 
-                justifyContent: 'center', alignItems: 'center', marginBottom: 24
-              }}>
-                <CheckCircle2 size={40} color="#10B981" />
-              </View>
-              
-              <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>¡Pedido Realizado!</Text>
-              <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '600', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
-                Tu pedido ha sido procesado exitosamente. Recibirás un correo con el detalle de tu compra.
-              </Text>
-
-              <TouchableOpacity 
-                onPress={() => {
-                  clearCart();
-                  setIsSuccessModalOpen(false);
-                  router.push('/');
-                }}
-                style={{ 
-                  backgroundColor: '#111827', borderRadius: 18, height: 56, width: '100%',
-                  alignItems: 'center', justifyContent: 'center'
-                }}
-              >
-                <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>VOLVER AL INICIO</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
         {/* MAP MODAL */}
+
         <LocationMapModal
           isOpen={isMapModalOpen}
           onClose={() => setIsMapModalOpen(false)}
@@ -1138,44 +1145,52 @@ export default function CheckoutScreen() {
         </View>
       </ScrollView>
 
-      {/* SUCCESS MODAL */}
-      {isSuccessModalOpen && (
-        <View style={{ 
-          position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 20000,
-          backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center'
-        }}>
-          <View style={{ 
-            width: isDesktop ? 480 : '90%', backgroundColor: '#FFFFFF', borderRadius: 40, padding: isDesktop ? 48 : 32, alignItems: 'center',
-            shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 40, shadowOffset: { width: 0, height: 20 }
-          }}>
+
+      {/* COUPON ERROR/WARNING MODAL */}
+      <Modal
+        visible={couponModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCouponModal({ ...couponModal, visible: false })}
+      >
+        <Pressable 
+          style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 }}
+          onPress={() => setCouponModal({ ...couponModal, visible: false })}
+        >
+          <View 
+            style={{ 
+              backgroundColor: '#fff', borderRadius: 32, width: '100%', maxWidth: 400, padding: 32, alignItems: 'center',
+              shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.15, shadowRadius: 40, elevation: 10
+            }}
+            onStartShouldSetResponder={() => true}
+          >
             <View style={{ 
-              width: 80, height: 80, borderRadius: 40, backgroundColor: '#DCFCE7', 
-              justifyContent: 'center', alignItems: 'center', marginBottom: 24
+              width: 72, height: 72, borderRadius: 36, 
+              backgroundColor: couponModal.type === 'error' ? '#FEF2F2' : '#FFF7ED', 
+              justifyContent: 'center', alignItems: 'center', marginBottom: 20
             }}>
-              <CheckCircle2 size={40} color="#10B981" />
+              {couponModal.type === 'error' ? (
+                <CalendarX size={32} color="#EF4444" />
+              ) : (
+                <AlertCircle size={32} color="#F47321" />
+              )}
             </View>
-            
-            <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>¡Pedido Realizado!</Text>
-            <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '600', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
-              Tu pedido ha sido procesado exitosamente. Recibirás un correo con el detalle de tu compra.
-            </Text>
+
+            <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>{couponModal.title}</Text>
+            <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '500', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>{couponModal.message}</Text>
 
             <TouchableOpacity 
-              onPress={() => {
-                clearCart();
-                setIsSuccessModalOpen(false);
-                router.push('/');
-              }}
+              onPress={() => setCouponModal({ ...couponModal, visible: false })}
               style={{ 
-                backgroundColor: '#111827', borderRadius: 18, height: 56, width: '100%',
-                alignItems: 'center', justifyContent: 'center'
+                width: '100%', backgroundColor: '#111827', borderRadius: 16, height: 54, 
+                justifyContent: 'center', alignItems: 'center'
               }}
             >
-              <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>VOLVER AL INICIO</Text>
+              <Text style={{ color: 'white', fontSize: 15, fontWeight: '800' }}>Entendido</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      )}
+        </Pressable>
+      </Modal>
 
       {/* MAP MODAL */}
       <LocationMapModal

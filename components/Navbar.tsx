@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ShoppingBag, Search, User, Heart, Home } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname, router } from 'expo-router';
 
-export default function PremiumNavbar() {
+const PremiumNavbar = React.memo(function PremiumNavbar() {
   const pathname = usePathname();
-  const router   = useRouter();
+
   const { cartCount } = useCart();
 
   const NAV_ITEMS = [
@@ -109,4 +109,7 @@ export default function PremiumNavbar() {
       })}
     </View>
   );
-}
+});
+
+export default PremiumNavbar;
+

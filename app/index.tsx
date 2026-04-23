@@ -10,7 +10,10 @@ import {
   TextInput,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Modal,
+  Pressable,
 } from 'react-native';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome } from '@expo/vector-icons';
 import Animated, { ZoomIn, useSharedValue, withRepeat, withTiming, withDelay, useAnimatedStyle, Easing } from 'react-native-reanimated';
@@ -33,13 +36,17 @@ import {
   Megaphone,
   MessageSquare,
   ShieldCheck,
-  FileText
+  FileText,
+  CheckCircle2,
+  X
 } from 'lucide-react-native';
+
 import Header from '../components/Header';
 import LoadingScreen from '../components/LoadingScreen';
 import CategoryBar from '../components/CategoryBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+
 import { useFavorites } from '../context/FavoritesContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -204,8 +211,11 @@ function MobileHeroCarousel({ screenWidth, slides = [] }: { screenWidth: number,
   );
 }
 
-function MobileProductCard({ item }: { item: ProductItem }) {
+const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
+
   const { toggleFavorite, isFavorite } = useFavorites();
+
+
   const liked = isFavorite(item.id);
 
   return (
@@ -276,7 +286,8 @@ function MobileProductCard({ item }: { item: ProductItem }) {
       </TouchableOpacity>
     </TouchableOpacity>
   );
-}
+});
+
 
 function PulseAnimation() {
   const scale = useSharedValue(1);
@@ -642,18 +653,29 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
 
 export default function Home() {
   const { toggleFavorite, isFavorite } = useFavorites();
-  const router = useRouter();
+  const params = useLocalSearchParams();
+
   const scrollY = useSharedValue(0);
   const { width: screenWidth } = useWindowDimensions();
+  const isDesktop = screenWidth >= BREAKPOINT;
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const offersScrollRef = useRef<ScrollView>(null);
   const testimonialsScrollRef = useRef<ScrollView>(null);
   const currentOffersX = useRef(0);
   const currentTestimonialsX = useRef(0);
-  const isDesktop = screenWidth >= BREAKPOINT;
+  
   const [products, setProducts] = useState<ProductItem[]>(MOCK_PRODUCTS);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [mobileBanners, setMobileBanners] = useState<any[]>([]);
   const [desktopBannersList, setDesktopBannersList] = useState<any[]>([]);
+
+  useEffect(() => {
+    console.log("Current params.success:", params.success);
+    if (params.success === '1') {
+      setShowSuccessModal(true);
+      router.setParams({ success: undefined });
+    }
+  }, [params.success]);
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -695,17 +717,22 @@ export default function Home() {
             return val || '';
           };
 
+          const imageUrl = data.foto1 || 'https://via.placeholder.com/500';
+          // Pre-fetch product image
+          Image.prefetch(imageUrl);
+
           return {
             id: data.ID_productos || doc.id,
             category: formatClassification(data.categoria || data.Tipo || data.animal || 'GENERAL'),
             name: data.nombre || 'Producto sin nombre',
             price: '$' + (data.precio || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."),
             rating: 5,
-            image: data.foto1 || 'https://via.placeholder.com/500',
+            image: imageUrl,
             promo: data.estadoPromocion === true,
             medida: data.medida || ''
           };
         });
+
         setProducts(productsList.length > 0 ? productsList : MOCK_PRODUCTS);
       } catch (error) {
         console.error("Error fetching products from Firebase: ", error);
@@ -1097,69 +1124,74 @@ export default function Home() {
                   <ChevronRight size={28} color="#0A2E1A" strokeWidth={2.5} />
                 </TouchableOpacity>
 
-                <ScrollView 
-                  ref={offersScrollRef}
-                  horizontal 
-                  showsHorizontalScrollIndicator={false} 
+                <FlatList
+                  ref={offersScrollRef as any}
+                  data={products.filter(p => p.promo).slice(0, 15)}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => item.id.toString()}
+                  initialNumToRender={5}
+                  maxToRenderPerBatch={5}
+                  windowSize={3}
+                  removeClippedSubviews={true}
                   contentContainerStyle={{ gap: 24, paddingVertical: 10, paddingRight: 50 }}
-                >
-                  {products.filter(p => p.promo).slice(0, 15).map((item) => {
-                      const liked = isFavorite(item.id);
-                      
-                      return (
-                        <TouchableOpacity 
-                          onPress={() => router.push(`/product/${item.id}`)}
-                          key={item.id} style={{ 
-                            width: 290, backgroundColor: 'white', borderRadius: 16, padding: 20,
-                            shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 2,
-                            borderWidth: 1, borderColor: '#F0F0F0'
-                          }}
-                        >
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-                            <View style={{ backgroundColor: '#C41E3A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 6 }}>
-                              <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>-25%</Text>
-                            </View>
-                            <TouchableOpacity 
-                              onPress={(e) => {
-                                e.stopPropagation();
-                                toggleFavorite({
-                                  id: item.id,
-                                  name: item.name,
-                                  price: item.price,
-                                  image: item.image
-                                });
-                              }}
-                              style={{ padding: 5 }}
-                            >
-                              <Heart size={24} color={liked ? '#EF4444' : '#D1D1D1'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
-                            </TouchableOpacity>
-                          </View>
-
-                          <View style={{ height: 220, justifyContent: 'center', alignItems: 'center', marginVertical: 15 }}>
-                            <Image source={{ uri: item.image }} style={{ width: '90%', height: '100%' }} resizeMode="contain" />
-                          </View>
-
-                      <View style={{ alignItems: 'flex-start', marginBottom: 20, width: '100%' }}>
-                        <Text style={{ fontSize: 17, color: '#1A1A2E', fontWeight: '500', marginBottom: 10, minHeight: 48 }}>{item.name}</Text>
-                        <View style={{ minHeight: 50 }}>
-                          <Text style={{ fontSize: 20, fontWeight: '900', color: '#C41E3A' }}>{item.price}</Text>
-                          {item.medida ? <Text style={{ fontSize: 13, color: '#999', marginTop: 4 }}>Medida: {item.medida}</Text> : null}
-                        </View>
-                      </View>
-
+                  renderItem={({ item }) => {
+                    const liked = isFavorite(item.id);
+                    return (
                       <TouchableOpacity 
                         onPress={() => router.push(`/product/${item.id}`)}
-                        style={{ 
-                          backgroundColor: '#3B1E54', paddingVertical: 16, borderRadius: 10, alignItems: 'center', width: '100%',
-                          shadowColor: '#3B1E54', shadowOpacity: 0.2, shadowRadius: 10
+                        key={item.id} style={{ 
+                          width: 290, backgroundColor: 'white', borderRadius: 16, padding: 20,
+                          shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 2,
+                          borderWidth: 1, borderColor: '#F0F0F0'
                         }}
                       >
-                        <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>Ver detalles</Text>
-                      </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#C41E3A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 6 }}>
+                            <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>-25%</Text>
+                          </View>
+                          <TouchableOpacity 
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite({
+                                id: item.id,
+                                name: item.name,
+                                price: item.price,
+                                image: item.image
+                              });
+                            }}
+                            style={{ padding: 5 }}
+                          >
+                            <Heart size={24} color={liked ? '#EF4444' : '#D1D1D1'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
+                          </TouchableOpacity>
+                        </View>
+
+                        <View style={{ height: 220, justifyContent: 'center', alignItems: 'center', marginVertical: 15 }}>
+                          <Image source={{ uri: item.image }} style={{ width: '90%', height: '100%' }} resizeMode="contain" />
+                        </View>
+
+                    <View style={{ alignItems: 'flex-start', marginBottom: 20, width: '100%' }}>
+                      <Text style={{ fontSize: 17, color: '#1A1A2E', fontWeight: '500', marginBottom: 10, minHeight: 48 }}>{item.name}</Text>
+                      <View style={{ minHeight: 50 }}>
+                        <Text style={{ fontSize: 20, fontWeight: '900', color: '#C41E3A' }}>{item.price}</Text>
+                        {item.medida ? <Text style={{ fontSize: 13, color: '#999', marginTop: 4 }}>Medida: {item.medida}</Text> : null}
+                      </View>
+                    </View>
+
+                    <TouchableOpacity 
+                      onPress={() => router.push(`/product/${item.id}`)}
+                      style={{ 
+                        backgroundColor: '#3B1E54', paddingVertical: 16, borderRadius: 10, alignItems: 'center', width: '100%',
+                        shadowColor: '#3B1E54', shadowOpacity: 0.2, shadowRadius: 10
+                      }}
+                    >
+                      <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>Ver detalles</Text>
                     </TouchableOpacity>
-                  );
-                })}
-                </ScrollView>
+                  </TouchableOpacity>
+                    );
+                  }}
+                />
+
 
                 {/* Pagination Dots */}
                 <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 40 }}>
@@ -1457,8 +1489,46 @@ export default function Home() {
               </View>
             </View>
           </ScrollView>
+
+          {/* SUCCESS ORDER MODAL (DESKTOP) */}
+          <Modal
+            visible={showSuccessModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowSuccessModal(false)}
+          >
+            <View style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+              <View style={{ 
+                width: 480, backgroundColor: '#FFFFFF', borderRadius: 40, padding: 48, alignItems: 'center',
+                shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 30, shadowOffset: { width: 0, height: 15 }, elevation: 20
+              }}>
+                <View style={{ 
+                  width: 88, height: 88, borderRadius: 44, backgroundColor: '#DCFCE7', 
+                  justifyContent: 'center', alignItems: 'center', marginBottom: 28
+                }}>
+                  <CheckCircle2 size={44} color="#10B981" />
+                </View>
+                
+                <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>¡Pedido Realizado!</Text>
+                <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '600', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
+                  Tu pedido ha sido procesado exitosamente. Recibirás un correo con el detalle de tu compra.
+                </Text>
+
+                <TouchableOpacity 
+                  onPress={() => setShowSuccessModal(false)}
+                  style={{ 
+                    width: '100%', backgroundColor: '#10B981', borderRadius: 20, height: 64, 
+                    justifyContent: 'center', alignItems: 'center', shadowColor: '#10B981', shadowOpacity: 0.25, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
+                  }}
+                >
+                  <Text style={{ color: 'white', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>Volver al Inicio</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </View>
     );
+
   }
 
   // ── MOBILE LAYOUT ─────────────────────
@@ -1517,11 +1587,21 @@ export default function Home() {
               <Text style={{ fontSize: 11, fontWeight: '900', color: '#D97706' }}>VER TODO</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 24 }}>
-            {products.map((item) => (
-              <MobileProductCard key={item.id} item={item} />
-            ))}
-          </ScrollView>
+          <FlatList
+            data={products}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id.toString()}
+            initialNumToRender={4}
+            maxToRenderPerBatch={4}
+            windowSize={3}
+            removeClippedSubviews={true}
+            contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 24 }}
+            renderItem={({ item }) => (
+              <MobileProductCard item={item} />
+            )}
+          />
+
         </View>
 
         {/* WhatsApp Community Banner - MOBILE ONLY ASSET */}
@@ -1649,6 +1729,44 @@ export default function Home() {
         </View>
 
       </ScrollView>
+
+      {/* SUCCESS ORDER MODAL */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ 
+            width: isDesktop ? 480 : '100%', backgroundColor: '#FFFFFF', borderRadius: 40, padding: isDesktop ? 48 : 32, alignItems: 'center',
+            shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 30, shadowOffset: { width: 0, height: 15 }, elevation: 20
+          }}>
+            <View style={{ 
+              width: 88, height: 88, borderRadius: 44, backgroundColor: '#DCFCE7', 
+              justifyContent: 'center', alignItems: 'center', marginBottom: 28
+            }}>
+              <CheckCircle2 size={44} color="#10B981" />
+            </View>
+            
+            <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>¡Pedido Realizado!</Text>
+            <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '600', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
+              Tu pedido ha sido procesado exitosamente. Recibirás un correo con el detalle de tu compra.
+            </Text>
+
+            <TouchableOpacity 
+              onPress={() => setShowSuccessModal(false)}
+              style={{ 
+                width: '100%', backgroundColor: '#10B981', borderRadius: 20, height: 64, 
+                justifyContent: 'center', alignItems: 'center', shadowColor: '#10B981', shadowOpacity: 0.25, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>Volver al Inicio</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
+
