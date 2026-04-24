@@ -65,16 +65,25 @@ const Header = React.memo(function Header() {
           setAddresses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         });
 
-        const qOrders = query(collection(db, 'Ordenes'), where('userId', '==', currentUser.uid));
+        const userRef = doc(db, 'users', currentUser.uid);
+        const qOrders = query(collection(db, 'Orden'), where('creador', '==', userRef));
         const unsubOrders = onSnapshot(qOrders, (snapshot) => {
-          setActiveOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o: any) => {
-            const status = o.estado?.toLowerCase();
-            return status === 'pendiente' || status === 'enviado';
-          }));
+          const fetchedOrders = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o: any) => {
+            const status = (o.estado || '').toLowerCase();
+            return ['pendiente', 'procesando', 'enviado', 'pago aceptado'].includes(status);
+          });
+          
+          // Sort by creation date (newest first)
+          fetchedOrders.sort((a: any, b: any) => {
+            const dateA = a.fechaCreacion?.toDate ? a.fechaCreacion.toDate().getTime() : new Date(a.fechaCreacion).getTime() || 0;
+            const dateB = b.fechaCreacion?.toDate ? b.fechaCreacion.toDate().getTime() : new Date(b.fechaCreacion).getTime() || 0;
+            return (dateB || 0) - (dateA || 0);
+          });
+          
+          setActiveOrders(fetchedOrders);
         });
 
         // Real-time personal notifications filtered by creador reference
-        const userRef = doc(db, 'users', currentUser.uid);
         const qNotif = query(collection(db, 'notificaciones'), where('creador', '==', userRef));
         const unsubNotif = onSnapshot(qNotif, (snapshot) => {
           const personal = snapshot.docs.map(d => ({ id: d.id, _tipo: 'personal', ...d.data() }));
@@ -490,87 +499,113 @@ const Header = React.memo(function Header() {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    backgroundColor: '#F5F3F7',
+                    backgroundColor: '#FFFFFF', 
                     paddingHorizontal: 16,
                     paddingVertical: 8,
-                    borderRadius: 25,
-                    gap: 8,
+                    borderRadius: 16,
+                    gap: 10,
+                    borderWidth: 1.5,
+                    borderColor: '#E1F8F0',
+                    shadowColor: '#10B981',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 10,
                   }}
                 >
-                  <Truck size={18} color="#3B1E54" strokeWidth={2.5} />
-                  
-                  {/* Subtle Pulsing Dot */}
-                  <View style={{ position: 'relative', width: 8, height: 8, justifyContent: 'center', alignItems: 'center' }}>
-                    <Animated.View style={[{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#F47321' }, animatedRadarStyle]} />
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#F47321', zIndex: 2 }} />
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#E1F8F0', justifyContent: 'center', alignItems: 'center' }}>
+                    <Truck size={18} color="#10B981" strokeWidth={2.5} />
                   </View>
-
-                  <Text style={{ fontSize: 15, color: '#1A1A2E', fontWeight: '800' }}>
-                    {activeOrders.length} {activeOrders.length === 1 ? 'Orden Activa' : 'Órdenes Activas'}
-                  </Text>
                   
-                  <ChevronDown size={14} color="#555" strokeWidth={2.5} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontSize: 14, color: '#111827', fontWeight: '900' }}>
+                      {activeOrders.length} {activeOrders.length === 1 ? 'Orden' : 'Órdenes'}
+                    </Text>
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 2, backgroundColor: '#10B981', borderRadius: 8 }}>
+                      <Text style={{ color: 'white', fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>Activa</Text>
+                    </View>
+                  </View>
+                  
+                  <ChevronDown size={14} color="#9CA3AF" strokeWidth={3} />
                 </View>
               </TouchableOpacity>
 
               {isActiveOrderOpen && (
                 <View style={{
-                  position: 'absolute', top: 52, right: 0, width: 340,
-                  backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20,
-                  shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.1, shadowRadius: 35,
+                  position: 'absolute', top: 60, right: 0, width: 380,
+                  backgroundColor: '#FFFFFF', borderRadius: 32, padding: 24,
+                  shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.15, shadowRadius: 40,
                   borderWidth: 1, borderColor: '#F3F4F6', zIndex: 85
                 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <View>
-                      <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Órdenes Activas</Text>
-                      <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>Seguimiento en tiempo real</Text>
+                      <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>Tus Pedidos</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' }} />
+                        <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '700' }}>{activeOrders.length} en proceso</Text>
+                      </View>
                     </View>
-                    <TouchableOpacity onPress={() => setIsActiveOrderOpen(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
-                      <X size={16} color="#6B7280" />
+                    <TouchableOpacity 
+                      onPress={() => setIsActiveOrderOpen(false)} 
+                      style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6' }}
+                    >
+                      <X size={18} color="#9CA3AF" />
                     </TouchableOpacity>
                   </View>
 
-                  <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
-                    <View style={{ gap: 12 }}>
+                  <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+                    <View style={{ gap: 16 }}>
                       {activeOrders.map((order) => (
-                        <View key={order.id} style={{ backgroundColor: '#F9FAFB', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#F3F4F6' }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: order.estado?.toLowerCase() === 'enviado' ? '#F47321' : '#10B981', justifyContent: 'center', alignItems: 'center' }}>
-                              {order.estado?.toLowerCase() === 'enviado' ? (
-                                <Truck size={20} color="white" strokeWidth={2} />
+                        <TouchableOpacity 
+                          key={order.id} 
+                          onPress={() => { setIsActiveOrderOpen(false); router.push(`/orders/${order.id}` as any); }}
+                          activeOpacity={0.7}
+                          style={{ 
+                            backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16, 
+                            borderWidth: 1, borderColor: '#F3F4F6',
+                            shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                            <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+                              {order.items && order.items[0]?.foto ? (
+                                <Image source={{ uri: order.items[0].foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                               ) : (
-                                <Store size={20} color="white" strokeWidth={2} />
+                                <Package size={28} color="#D1D5DB" />
                               )}
                             </View>
                             <View style={{ flex: 1 }}>
-                              <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>#{order.orderCode || order.id.slice(0, 8).toUpperCase()}</Text>
-                              <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '500', marginTop: 1 }}>{order.shippingMethod || 'Envío a domicilio'}</Text>
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 16, fontWeight: '900', color: '#111827', width: '70%' }}>
+                                  #{order.ID_orden || order.id}
+                                </Text>
+                                <Text style={{ fontSize: 13, fontWeight: '900', color: '#F47321' }}>${(order.total || 0).toLocaleString()} CLP</Text>
+                              </View>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                <View style={{ backgroundColor: '#F0FDF4', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981', textTransform: 'capitalize' }}>{order.estado}</Text>
+                                </View>
+                                <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>• {order.tipoEntrega === 'store' ? 'Retiro' : 'Envío'}</Text>
+                              </View>
                             </View>
                           </View>
-                          <View style={{ height: 1, backgroundColor: '#E5E7EB', marginBottom: 12, borderStyle: 'dashed' }} />
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: order.estado?.toLowerCase() === 'enviado' ? '#3B82F6' : '#F59E0B' }} />
-                              <Text style={{ fontSize: 13, fontWeight: '800', color: '#4B5563' }}>{order.estado}</Text>
-                            </View>
-                            <TouchableOpacity
-                              onPress={() => { setIsActiveOrderOpen(false); router.push(`/orders/${order.id}` as any); }}
-                              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                            >
-                              <Text style={{ fontSize: 13, fontWeight: '900', color: '#F47321' }}>Ver detalles</Text>
-                              <ArrowRight size={14} color="#F47321" strokeWidth={2.5} />
-                            </TouchableOpacity>
+                          
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 12, gap: 4 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F47321' }}>Seguir pedido</Text>
+                            <ArrowRight size={14} color="#F47321" strokeWidth={3} />
                           </View>
-                        </View>
+                        </TouchableOpacity>
                       ))}
                     </View>
                   </ScrollView>
 
                   <TouchableOpacity 
                     onPress={() => { setIsActiveOrderOpen(false); router.push('/orders' as any); }}
-                    style={{ marginTop: 15, alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#F3F4F6' }}
+                    style={{ 
+                      marginTop: 20, backgroundColor: '#F9FAFB', borderRadius: 16, padding: 14, 
+                      alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6' 
+                    }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: '#9CA3AF' }}>Ver todo el historial</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Ver todo el historial</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -861,8 +896,8 @@ const Header = React.memo(function Header() {
                         </View>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 12 }}>
                           <View>
-                            <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>${(item.precio || 0).toLocaleString()} c/u</Text>
-                            <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginTop: 2 }}>${(item.subtotal || 0).toLocaleString()}</Text>
+                            <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>${(item.precio || 0).toLocaleString()} CLP c/u</Text>
+                            <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginTop: 2 }}>${(item.subtotal || 0).toLocaleString()} CLP</Text>
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, padding: 4 }}>
                             <TouchableOpacity 
@@ -903,7 +938,7 @@ const Header = React.memo(function Header() {
                       </View>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                      <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>${cartTotal.toLocaleString()}</Text>
+                      <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>${cartTotal.toLocaleString()} CLP</Text>
                       <ArrowRight size={24} color="white" strokeWidth={3} />
                     </View>
                   </TouchableOpacity>

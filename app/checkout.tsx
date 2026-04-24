@@ -222,6 +222,22 @@ export default function CheckoutScreen() {
       const docRef = await addDoc(collection(db, 'Orden'), orderData);
       console.log("Order document created with ID:", docRef.id);
 
+      // 1.5 Create Admin Notification
+      try {
+        await addDoc(collection(db, 'Notifications'), {
+          title: 'Nuevo Pedido #' + docRef.id.slice(-4).toUpperCase(),
+          desc: `El cliente ha realizado una compra de $${total.toLocaleString()}.`,
+          time: new Date().toISOString(),
+          type: 'order',
+          read: false,
+          orderId: docRef.id,
+          timestamp: serverTimestamp()
+        });
+        console.log("Admin notification created.");
+      } catch (notifError) {
+        console.error("Error creating admin notification:", notifError);
+      }
+
       // 2. Clear the cart in Firestore (productosseleccionados)
       console.log("Cleaning up cart items from Firestore...");
       const batch = writeBatch(db);
@@ -1097,7 +1113,7 @@ export default function CheckoutScreen() {
               <View style={{ gap: 12, marginBottom: 32 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>Subtotal</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }}>${cartTotal.toLocaleString()}</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>${cartTotal.toLocaleString()} CLP</Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>Envío</Text>

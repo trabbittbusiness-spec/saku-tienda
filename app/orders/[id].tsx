@@ -245,7 +245,7 @@ export default function OrderDetailsScreen() {
                     <Image source={{ uri: item.image }} style={{ width: 40, height: 40, borderRadius: 8 }} />
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: isDesktop ? 13 : 12, fontWeight: '800', color: '#111827' }} numberOfLines={1}>{item.name}</Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 1 }}>x{item.qty} • ${item.price.toLocaleString()}</Text>
+                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 1 }}>x{item.qty} • ${item.price.toLocaleString()} CLP</Text>
                     </View>
                   </View>
                 ))}
@@ -290,7 +290,7 @@ export default function OrderDetailsScreen() {
                 <View style={{ gap: 8 }}>
                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>Subtotal</Text>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }}>${order.subtotal.toLocaleString()}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }}>${order.subtotal.toLocaleString()} CLP</Text>
                    </View>
                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>Envío</Text>
@@ -300,7 +300,7 @@ export default function OrderDetailsScreen() {
 
                 <View style={{ backgroundColor: '#F9FAFB', padding: 15, borderRadius: 16, alignItems: 'center' }}>
                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 2, letterSpacing: 0.5, textTransform: 'uppercase' }}>Total Pagado</Text>
-                   <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString()}</Text>
+                   <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString()} CLP</Text>
                 </View>
               </View>
             </View>

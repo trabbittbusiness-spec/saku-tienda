@@ -115,7 +115,7 @@ export default function CartScreen() {
                     <Text style={{ fontSize: 13, fontWeight: '900', color: '#111827', textTransform: 'uppercase' }} numberOfLines={2}>
                       {item.nombre}
                     </Text>
-                    {item.medida && (
+                    {item.medida && item.medida !== 'Único' && (
                       <Text style={{ fontSize: 11, color: '#F47321', fontWeight: '800', marginTop: 2 }}>
                         FORMATO: {item.medida}
                       </Text>
@@ -130,12 +130,12 @@ export default function CartScreen() {
                 </View>
 
                 <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>
-                  ${(item.precio || 0).toLocaleString()} c/u
+                  ${(item.precio || 0).toLocaleString()} CLP c/u
                 </Text>
                 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 8 }}>
                   <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>
-                    ${(item.subtotal || 0).toLocaleString()}
+                    ${(item.subtotal || 0).toLocaleString()} CLP
                   </Text>
                   
                   {/* Quantity Selector */}
@@ -180,7 +180,7 @@ export default function CartScreen() {
               <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '700' }}>{cart.length} productos</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-              <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>${cartTotal.toLocaleString()}</Text>
+              <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>${cartTotal.toLocaleString()} CLP</Text>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
                 <ArrowLeft size={18} color="white" style={{ transform: [{ rotate: '180deg' }] }} />
               </View>

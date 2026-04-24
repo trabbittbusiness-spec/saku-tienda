@@ -106,9 +106,20 @@ export default function FavoritesScreen() {
                 key={item.id} 
                 style={{ 
                   width: isDesktop ? '23.5%' : '47%', backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16,
-                  borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10
+                  borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10,
+                  overflow: 'hidden'
                 }}
               >
+                {item.promo && (
+                  <View style={{ 
+                    position: 'absolute', top: 12, left: -22, backgroundColor: '#22C55E', 
+                    width: 90, height: 24, transform: [{ rotate: '-45deg' }], 
+                    justifyContent: 'center', alignItems: 'center', zIndex: 20,
+                    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
+                  }}>
+                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, letterSpacing: 0.5 }}>PROMO</Text>
+                  </View>
+                )}
                 <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
                   <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
                   <TouchableOpacity 
@@ -126,7 +137,7 @@ export default function FavoritesScreen() {
                 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
                   <Text style={{ fontSize: 16, fontWeight: '900', color: '#1E1B4B' }}>
-                    {typeof item.price === 'number' ? `$${item.price.toLocaleString()}` : item.price}
+                    {typeof item.price === 'number' ? `$${item.price.toLocaleString()} CLP` : `${item.price} CLP`.replace('CLP CLP', 'CLP')}
                   </Text>
                   <TouchableOpacity style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center' }}>
                     <ShoppingBag size={16} color="white" strokeWidth={3} />

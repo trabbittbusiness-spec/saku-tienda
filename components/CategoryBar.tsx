@@ -1,18 +1,21 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { ShoppingBag, Tablet, LayoutGrid, Coffee, Dog, Cross, Star, Bone } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 const categories = [
-  { name: 'Todo', icon: LayoutGrid, isActive: true },
-  { name: 'Farmacia 24/7', icon: Cross },
-  { name: 'Alimentos', icon: Coffee },
-  { name: 'Higiene', icon: Tablet },
-  { name: 'Juguetes', icon: Dog },
-  { name: 'Collares', icon: Star }, // Aproximación, no veo icono claro de collar
-  { name: 'Snacks', icon: Bone }, // Aproximación
+  { name: 'Todo', icon: LayoutGrid, isActive: true, slug: '' },
+  { name: 'Farmacia 24/7', icon: Cross, slug: 'Medicamentos' },
+  { name: 'Alimentos', icon: Coffee, slug: 'Alimento' },
+  { name: 'Higiene', icon: Tablet, slug: 'Cuidado e higiene' },
+  { name: 'Juguetes', icon: Dog, slug: 'Juguetes' },
+  { name: 'Collares', icon: Star, slug: 'Accesorios' }, 
+  { name: 'Snacks', icon: Bone, slug: 'Snacks' },
 ];
 
 export default function CategoryBar() {
+  const router = useRouter();
+
   return (
     <View style={{ backgroundColor: '#1A1A2E', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
       <ScrollView 
@@ -27,7 +30,11 @@ export default function CategoryBar() {
         }}
       >
         {categories.map((cat, i) => (
-          <TouchableOpacity key={i} style={{ alignItems: 'center', position: 'relative' }}>
+          <TouchableOpacity 
+            key={i} 
+            onPress={() => router.push(cat.slug ? `/search?category=${cat.slug}` : '/search')}
+            style={{ alignItems: 'center', position: 'relative' }}
+          >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <cat.icon size={18} color={cat.isActive ? '#F47321' : '#A0A0B0'} strokeWidth={cat.isActive ? 3 : 2} />
               <Text style={{ 

@@ -21,7 +21,10 @@ export default function ProductDetailsScreen() {
   const [selectedSize, setSelectedSize] = useState('1kg');
   const [selectedImage, setSelectedImage] = useState(0);
   const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const scrollRef = React.useRef<any>(null);
+  const [scrollX, setScrollX] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -59,20 +62,47 @@ export default function ProductDetailsScreen() {
           }
 
           const sizesArray = Array.isArray(data.sizes) && data.sizes.length > 0 ? data.sizes : (data.medida ? [data.medida] : ['Único']);
+          const productCategory = data.categoria || data.Tipo || data.animal || 'General';
 
           setProduct({
             id: finalId,
             name: data.nombre || 'Producto sin nombre',
-            category: data.categoria || data.Tipo || data.animal || 'General',
+            category: productCategory,
             price: data.precio || 0,
             rating: 5,
             reviews: 0,
             description: data.descripcion || 'Sin descripción',
             images: images,
-            sizes: sizesArray
+            sizes: sizesArray,
+            promo: data.estadoPromocion === true
           });
           
           setSelectedSize(sizesArray[0]);
+
+          // Fetch Related Products
+          try {
+            const qRelated = query(
+              collection(db, 'Products'),
+              where('categoria', '==', productCategory),
+              // Limit to 6 related products
+            );
+            const relatedSnap = await getDocs(qRelated);
+            const related = relatedSnap.docs
+              .map(doc => ({
+                id: doc.id,
+                name: doc.data().nombre,
+                price: doc.data().precio,
+                brand: doc.data().marca || doc.data().Tipo || '',
+                image: doc.data().foto1 || doc.data().foto || 'https://via.placeholder.com/200',
+                promo: doc.data().estadoPromocion === true
+              }))
+              .filter(p => p.id !== finalId) // Exclude current product
+              .slice(0, 6);
+            
+            setRelatedProducts(related);
+          } catch (relError) {
+            console.log("Error fetching related:", relError);
+          }
         }
       } catch (e) {
         console.error("Error fetching product:", e);
@@ -107,25 +137,11 @@ export default function ProductDetailsScreen() {
       fechaCreacion: new Date()
     };
 
-    // 1. Add to local cart context
+    // 1. Add to cart via context (this now handles Firestore synchronization)
     addToCart(itemData);
 
     // 2. Start Animation Sequence immediately for feedback
     setShowCartAnim(true);
-
-    // 3. Add to Firestore collection 'productosseleccionados'
-    try {
-      if (!auth.currentUser) {
-        console.warn("Usuario no autenticado, el campo 'creator' será null");
-      }
-      
-      await addDoc(collection(db, 'productosseleccionados'), itemData);
-      console.log("Producto agregado a la colección productosseleccionados");
-      Alert.alert("¡Éxito!", "Producto agregado a tu carrito y sincronizado.");
-    } catch (e: any) {
-      console.error("Error al agregar a productosseleccionados:", e);
-      Alert.alert("Error", "No se pudo sincronizar con la base de datos: " + e.message);
-    }
     
     // Reset states
     bubblePos.setValue({ x: 0, y: 300 });
@@ -166,14 +182,6 @@ export default function ProductDetailsScreen() {
     });
   };
 
-
-  const relatedProducts = [
-    { name: 'Bravecto Antipulgas 10-20kg', price: 35000, brand: 'MSD', image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=200' },
-    { name: 'NexGard Espectra 15-30kg', price: 28900, brand: 'BOEHRINGER', image: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=200' },
-    { name: 'Apoquel 16mg x 20 comp', price: 45000, brand: 'ZOETIS', image: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?q=80&w=200' },
-    { name: 'Simparica Trio 10-20kg', price: 32000, brand: 'ZOETIS', image: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?q=80&w=200' },
-  ];
-
   // Si no está cargando y no hay producto, mostrar error
   if (!loading && !product) {
     return (
@@ -194,7 +202,17 @@ export default function ProductDetailsScreen() {
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           {/* Header Image Area */}
-          <View style={{ width: '100%', height: 420, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+          <View style={{ width: '100%', height: 420, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+            {!loading && product?.promo && (
+              <View style={{ 
+                position: 'absolute', top: 25, left: -30, backgroundColor: '#22C55E', 
+                width: 120, height: 32, transform: [{ rotate: '-45deg' }], 
+                justifyContent: 'center', alignItems: 'center', zIndex: 20,
+                shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
+              }}>
+                <Text style={{ color: 'white', fontWeight: '900', fontSize: 14, letterSpacing: 1 }}>PROMO</Text>
+              </View>
+            )}
             {loading ? (
               <View style={{ width: '85%', height: '85%', backgroundColor: '#F3F4F6', borderRadius: 20 }} />
             ) : (
@@ -245,9 +263,9 @@ export default function ProductDetailsScreen() {
 
                 <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', lineHeight: 28, marginBottom: 15 }}>{product.name}</Text>
                 
-                <Text style={{ fontSize: 28, fontWeight: '900', color: '#1E1B4B', marginBottom: 25 }}>
-                  ${product.price.toLocaleString()}
-                </Text>
+                <Text style={{ fontSize: 24, fontWeight: '900', color: '#CD1A3B', marginTop: 8 }}>
+                ${(product.price || 0).toLocaleString()} CLP
+              </Text>
               </>
             )}
 
@@ -282,32 +300,119 @@ export default function ProductDetailsScreen() {
                 {loading ? 'Cargando descripción...' : product.description}
               </Text>
             </View>
+          </View>
 
+          {/* Related Products Carousel (Mobile) - Full Width to avoid clipping */}
+          {relatedProducts.length > 0 && (
+            <View style={{ marginTop: 30, marginBottom: 20 }}>
+              {/* Header with Title and Arrows - Padded to match content */}
+              <View style={{ 
+                flexDirection: 'row', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: 20, 
+                paddingHorizontal: 25 
+              }}>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>También te podría interesar</Text>
+                
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity 
+                    onPress={() => scrollRef.current?.scrollTo({ x: Math.max(0, scrollX - 240), animated: true })}
+                    style={{ 
+                      width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', 
+                      borderWidth: 1, borderColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center',
+                      shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2
+                    }}
+                  >
+                    <ArrowLeft size={16} color="#111827" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => scrollRef.current?.scrollTo({ x: scrollX + 240, animated: true })}
+                    style={{ 
+                      width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF', 
+                      borderWidth: 1, borderColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center',
+                      shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2
+                    }}
+                  >
+                    <ChevronRight size={20} color="#111827" />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-
-            {/* Related */}
-            <View style={{ marginTop: 20 }}>
-              <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', marginBottom: 20 }}>También te puede interesar</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 15 }}>
-                {[
-                  { name: 'Pro Plan Adulto OptiDerma 3kg', price: 32000, image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=200' },
-                  { name: 'Acana Pacifica Perro 2kg', price: 25900, image: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=200' },
-                  { name: 'Orijen Cat & Kitten 1.8kg', price: 38000, image: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?q=80&w=200' }
-                ].map((item, i) => (
-                  <View key={i} style={{ width: 140, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: '#F3F4F6' }}>
-                    <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: 12, overflow: 'hidden', marginBottom: 10 }}>
-                      <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-                      <TouchableOpacity style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1 }}>
-                        <Heart size={12} color="#D1D5DB" />
+              <ScrollView 
+                ref={scrollRef}
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                onScroll={(e) => setScrollX(e.nativeEvent.contentOffset.x)}
+                scrollEventThrottle={16}
+                contentContainerStyle={{ 
+                  paddingHorizontal: 25, // This keeps cards aligned initially but lets them scroll to edge
+                  gap: 16, 
+                  paddingBottom: 10 
+                }}
+                style={{ width: '100%' }}
+              >
+                {relatedProducts.map((item, i) => (
+                  <View 
+                    key={i} 
+                    style={{ 
+                      width: 180, 
+                      backgroundColor: '#FFFFFF', 
+                      borderRadius: 20, 
+                      padding: 12, 
+                      borderWidth: 1, 
+                      borderColor: '#F3F4F6',
+                      shadowColor: '#000',
+                      shadowOpacity: 0.03,
+                      shadowRadius: 10,
+                      elevation: 1
+                    }}
+                  >
+                    {/* Badge and Heart */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <View style={{ backgroundColor: '#DC2626', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                        <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>-25%</Text>
+                      </View>
+                      <TouchableOpacity 
+                        onPress={() => toggleFavorite(item)}
+                        style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
+                      >
+                        <Heart size={14} color={isFavorite(item.id) ? '#EF4444' : '#D1D5DB'} fill={isFavorite(item.id) ? '#EF4444' : 'transparent'} />
                       </TouchableOpacity>
                     </View>
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#111827', height: 32 }} numberOfLines={2}>{item.name}</Text>
-                    <Text style={{ fontSize: 13, fontWeight: '900', color: '#111827', marginTop: 4 }}>${item.price.toLocaleString()}</Text>
+
+                    {/* Image */}
+                    <TouchableOpacity 
+                      onPress={() => router.push(`/product/${item.id}`)}
+                      style={{ width: '100%', height: 110, justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                    </TouchableOpacity>
+
+                    {/* Info */}
+                    <View style={{ marginTop: 10 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#111827', height: 32 }} numberOfLines={2}>{item.name}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '900', color: '#DC2626', marginTop: 4 }}>${item.price.toLocaleString()}</Text>
+                      
+                      <TouchableOpacity 
+                        onPress={() => router.push(`/product/${item.id}`)}
+                        style={{ 
+                          backgroundColor: '#311D4E', 
+                          height: 36, 
+                          borderRadius: 8, 
+                          justifyContent: 'center', 
+                          alignItems: 'center', 
+                          marginTop: 10 
+                        }}
+                      >
+                        <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>Ver detalles</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))}
               </ScrollView>
             </View>
-          </View>
+          )}
         </ScrollView>
 
         {/* Bottom Action Bar */}
@@ -438,12 +543,22 @@ export default function ProductDetailsScreen() {
           paddingVertical: 40, maxWidth: 1200, alignSelf: 'center', width: '100%' 
         }}>
           
-          {/* LEFT: IMAGES */}
-          <View style={{ flex: 1 }}>
+          {/* LEFT: IMAGE GALLERY */}
+          <View style={{ flex: 1, overflow: 'hidden', borderRadius: 24 }}>
             <View style={{ 
-              width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: 32, 
-              justifyContent: 'center', alignItems: 'center', overflow: 'hidden', position: 'relative'
+              width: '100%', height: 600, backgroundColor: '#F9FAFB', borderRadius: 24, 
+              justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' 
             }}>
+              {!loading && product?.promo && (
+                <View style={{ 
+                  position: 'absolute', top: 35, left: -45, backgroundColor: '#22C55E', 
+                  width: 180, height: 44, transform: [{ rotate: '-45deg' }], 
+                  justifyContent: 'center', alignItems: 'center', zIndex: 20,
+                  shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10
+                }}>
+                  <Text style={{ color: 'white', fontWeight: '900', fontSize: 18, letterSpacing: 2 }}>PROMO</Text>
+                </View>
+              )}
               {loading ? (
                 <View style={{ width: '100%', height: '100%', backgroundColor: '#F3F4F6' }} />
               ) : (
@@ -513,7 +628,7 @@ export default function ProductDetailsScreen() {
                 </View>
 
                 <Text style={{ fontSize: 42, fontWeight: '900', color: '#1E1B4B', marginBottom: 24 }}>
-                  ${product.price.toLocaleString()}
+                  ${product.price.toLocaleString()} CLP
                 </Text>
 
                 <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '500', lineHeight: 24, marginBottom: 32 }}>
@@ -570,7 +685,7 @@ export default function ProductDetailsScreen() {
               >
                 <ShoppingCart size={20} color="white" />
                 <Text style={{ color: 'white', fontSize: 15, fontWeight: '900' }}>
-                  {loading ? 'Cargando...' : `Agregar al carrito — $${(product.price * quantity).toLocaleString()}`}
+                  {loading ? 'Cargando...' : `Agregar al carrito — $${(product.price * quantity).toLocaleString()} CLP`}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -598,33 +713,129 @@ export default function ProductDetailsScreen() {
           </View>
         </View>
 
-        {/* RELATED PRODUCTS */}
-        <View style={{ paddingHorizontal: isDesktop ? 60 : 20, maxWidth: 1200, alignSelf: 'center', width: '100%', marginTop: 60 }}>
-          <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827', marginBottom: 32 }}>También te podría interesar</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 20 }}>
-            {relatedProducts.map((item, i) => (
-              <View key={i} style={{ 
-                width: isDesktop ? '23%' : '47%', backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16,
-                borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10
-              }}>
-                <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
-                  <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-                  <TouchableOpacity style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-                    <Heart size={14} color="#D1D5DB" />
-                  </TouchableOpacity>
-                </View>
-                <Text style={{ fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 4 }}>{item.brand}</Text>
-                <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827', height: 40 }}>{item.name}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>${item.price.toLocaleString()}</Text>
-                  <TouchableOpacity style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center' }}>
-                    <Plus size={16} color="white" strokeWidth={3} />
-                  </TouchableOpacity>
-                </View>
+        {/* RELATED PRODUCTS CAROUSEL */}
+        {relatedProducts.length > 0 && (
+          <View style={{ width: '100%', marginTop: 60, marginBottom: 40 }}>
+            {/* Header with Title and Arrows */}
+            <View style={{ 
+              flexDirection: 'row', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              paddingHorizontal: isDesktop ? 60 : 20,
+              marginBottom: 24,
+              maxWidth: 1400,
+              alignSelf: 'center',
+              width: '100%'
+            }}>
+              <Text style={{ fontSize: isDesktop ? 28 : 20, fontWeight: '900', color: '#111827' }}>También te podría interesar</Text>
+              
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity 
+                  onPress={() => scrollRef.current?.scrollTo({ x: Math.max(0, scrollX - 280), animated: true })}
+                  style={{ 
+                    width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', 
+                    borderWidth: 1, borderColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center', 
+                    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 3
+                  }}
+                >
+                  <ArrowLeft size={18} color="#111827" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => scrollRef.current?.scrollTo({ x: scrollX + 280, animated: true })}
+                  style={{ 
+                    width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', 
+                    borderWidth: 1, borderColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center', 
+                    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 3
+                  }}
+                >
+                  <ChevronRight size={22} color="#111827" />
+                </TouchableOpacity>
               </View>
-            ))}
+            </View>
+
+            {/* ScrollView - Full width to avoid clipping shadow */}
+            <ScrollView 
+              ref={scrollRef}
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              onScroll={(e) => setScrollX(e.nativeEvent.contentOffset.x)}
+              scrollEventThrottle={16}
+              contentContainerStyle={{ 
+                paddingHorizontal: isDesktop ? 60 : 20,
+                gap: 16, 
+                paddingBottom: 20,
+                paddingTop: 10
+              }}
+              style={{ width: '100%' }}
+            >
+              {relatedProducts.map((item, i) => (
+                <View 
+                  key={i} 
+                  style={{ 
+                    width: isDesktop ? 280 : 220, 
+                    backgroundColor: '#FFFFFF', 
+                    borderRadius: 20, 
+                    padding: 16,
+                    borderWidth: 1, 
+                    borderColor: '#F3F4F6', 
+                    shadowColor: '#000', 
+                    shadowOpacity: 0.05, 
+                    shadowRadius: 10,
+                    elevation: 2,
+                    overflow: 'hidden'
+                  }}
+                >
+                  {item.promo && (
+                    <View style={{ 
+                      position: 'absolute', top: 12, left: -22, backgroundColor: '#22C55E', 
+                      width: 90, height: 24, transform: [{ rotate: '-45deg' }], 
+                      justifyContent: 'center', alignItems: 'center', zIndex: 20,
+                      shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
+                    }}>
+                      <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, letterSpacing: 0.5 }}>PROMO</Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 10 }}>
+
+                    <TouchableOpacity 
+                      onPress={() => toggleFavorite(item)}
+                      style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Heart size={16} color={isFavorite(item.id) ? '#EF4444' : '#D1D5DB'} fill={isFavorite(item.id) ? '#EF4444' : 'transparent'} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity 
+                    onPress={() => router.push(`/product/${item.id}`)}
+                    style={{ width: '100%', height: 150, justifyContent: 'center', alignItems: 'center' }}
+                  >
+                    <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                  </TouchableOpacity>
+
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827', height: 40 }} numberOfLines={2}>{item.name}</Text>
+                    <Text style={{ fontSize: 20, fontWeight: '900', color: '#DC2626', marginTop: 8 }}>${item.price.toLocaleString()}</Text>
+                    <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>Medida: {item.brand || '1 unidad'}</Text>
+
+                    <TouchableOpacity 
+                      onPress={() => router.push(`/product/${item.id}`)}
+                      style={{ 
+                        backgroundColor: '#311D4E', 
+                        height: 44, 
+                        borderRadius: 10, 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        marginTop: 15 
+                      }}
+                    >
+                      <Text style={{ color: 'white', fontSize: 13, fontWeight: '900' }}>Ver detalles</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
           </View>
-        </View>
+        )}
       </ScrollView>
 
       {/* Floating Animation Overlay (Shared for Mobile and Web) */}

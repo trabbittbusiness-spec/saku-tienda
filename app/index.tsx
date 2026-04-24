@@ -48,8 +48,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { useFavorites } from '../context/FavoritesContext';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { useCart } from '../context/CartContext';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, onSnapshot, query, orderBy, where, doc } from 'firebase/firestore';
 
 export interface ProductItem {
   id: string | number;
@@ -131,9 +133,9 @@ const petCategories = [
 ];
 
 const MOCK_PRODUCTS: ProductItem[] = [
-  { id: 1, category: 'PERRO O GATO', name: 'BRIT CARE GRAIN FREE SENIOR & LIGHT ...', price: '$74.990', rating: 5, image: 'https://images.unsplash.com/photo-1589924691106-073b19f55de7?q=80&w=500' },
-  { id: 2, category: 'PERRO O GATO', name: 'ROYAL CANIN XSMALL PUPPY 2,5 KG', price: '$32.990', rating: 5, image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=500' },
-  { id: 3, category: 'PERRO O GATO', name: 'PETEVER FORTE 150 ML', price: '$19.200', rating: 5, image: 'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?q=80&w=500' },
+  { id: 1, category: 'PERRO O GATO', name: 'BRIT CARE GRAIN FREE SENIOR & LIGHT ...', price: 'CLP $74.990', rating: 5, image: 'https://images.unsplash.com/photo-1589924691106-073b19f55de7?q=80&w=500' },
+  { id: 2, category: 'PERRO O GATO', name: 'ROYAL CANIN XSMALL PUPPY 2,5 KG', price: 'CLP $32.990', rating: 5, image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=500' },
+  { id: 3, category: 'PERRO O GATO', name: 'PETEVER FORTE 150 ML', price: 'CLP $19.200', rating: 5, image: 'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?q=80&w=500' },
 ];
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -212,10 +214,9 @@ function MobileHeroCarousel({ screenWidth, slides = [] }: { screenWidth: number,
 }
 
 const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
-
   const { toggleFavorite, isFavorite } = useFavorites();
-
-
+  const { addToCart } = useCart();
+  const [quantity, setQuantity] = useState(1);
   const liked = isFavorite(item.id);
 
   return (
@@ -234,9 +235,20 @@ const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
         elevation: 5, 
         borderWidth: 1, 
         borderColor: '#F0F0F0', 
-        padding: 12 
+        padding: 12,
+        overflow: 'hidden'
       }}
     >
+      {item.promo && (
+        <View style={{ 
+          position: 'absolute', top: 12, left: -22, backgroundColor: '#22C55E', 
+          width: 90, height: 24, transform: [{ rotate: '-45deg' }], 
+          justifyContent: 'center', alignItems: 'center', zIndex: 20,
+          shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
+        }}>
+          <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, letterSpacing: 0.5 }}>PROMO</Text>
+        </View>
+      )}
       <TouchableOpacity 
         onPress={(e) => {
           e.stopPropagation();
@@ -254,36 +266,65 @@ const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
         <Heart size={20} color={liked ? '#EF4444' : '#E5E7EB'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
       </TouchableOpacity>
 
+
+
       <View style={{ width: '100%', height: 130, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
         <Image source={{ uri: item.image }} style={{ width: '90%', height: '90%' }} resizeMode="contain" />
       </View>
 
-      <Text style={{ fontSize: 9, color: '#3B1E54', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>{item.category}</Text>
+      <Text style={{ fontSize: 9, color: '#9CA3AF', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>{item.category}</Text>
       
-      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A2E', lineHeight: 16, marginBottom: 10, minHeight: 32 }} numberOfLines={2}>
+      <Text 
+        style={{ fontSize: 13, fontWeight: '700', color: '#1A1A2E', lineHeight: 16, marginBottom: 10, minHeight: 32, textTransform: 'uppercase' }} 
+        numberOfLines={2}
+      >
         {item.name}
       </Text>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <Text style={{ fontSize: 16, fontWeight: '900', color: '#1A1A2E' }}>{item.price}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Star size={12} color="#F59E0B" fill="#F59E0B" />
-          <Text style={{ fontSize: 11, fontWeight: '800', color: '#B0B0B0' }}>{item.rating}</Text>
-        </View>
-      </View>
+      <Text style={{ fontSize: 16, fontWeight: '900', color: '#CD1A3B', marginBottom: 14 }}>{item.price}</Text>
 
-      <TouchableOpacity 
-        activeOpacity={0.8}
-        onPress={() => router.push(`/product/${item.id}`)}
-        style={{ 
-          backgroundColor: '#3B1E54', 
-          borderRadius: 12, 
-          paddingVertical: 10, 
-          alignItems: 'center'
-        }}
-      >
-        <Text style={{ color: 'white', fontSize: 13, fontWeight: '900' }}>Agregar +</Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 10, paddingHorizontal: 6 }}>
+          <TouchableOpacity 
+            onPress={(e) => { e.stopPropagation(); setQuantity(prev => Math.max(1, prev - 1)); }} 
+            style={{ padding: 6 }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#4B5563' }}>-</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 13, fontWeight: '800', marginHorizontal: 2 }}>{quantity}</Text>
+          <TouchableOpacity 
+            onPress={(e) => { e.stopPropagation(); setQuantity(prev => prev + 1); }} 
+            style={{ padding: 6 }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#4B5563' }}>+</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity 
+          activeOpacity={0.8}
+          onPress={(e) => {
+            e.stopPropagation();
+            const priceNum = parseInt(item.price.replace(/[$.]/g, ''));
+            addToCart({
+              id: item.id,
+              name: item.name,
+              price: priceNum,
+              image: item.image,
+              quantity: quantity
+            });
+            setQuantity(1);
+          }}
+          style={{ 
+            flex: 1,
+            backgroundColor: '#F47321', 
+            borderRadius: 10, 
+            paddingVertical: 8, 
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <Text style={{ color: 'white', fontSize: 12, fontWeight: '900' }}>+ Agregar</Text>
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 });
@@ -372,125 +413,184 @@ function RippleRing({ delay }: { delay: number }) {
   );
 }
 
-function ActiveOrderBanner() {
+function ActiveOrderBanner({ count }: { count: number }) {
   return (
     <TouchableOpacity
+      onPress={() => router.push('/orders')}
       activeOpacity={0.9}
       style={{
         marginHorizontal: 15,
         marginTop: 20,
-        marginBottom: 8,
-        backgroundColor: '#EDFAF3',
-        borderRadius: 20,
-        borderWidth: 1.5,
-        borderColor: '#6EE7B7',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 14,
+        justifyContent: 'space-between',
         shadowColor: '#10B981',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.25,
-        shadowRadius: 20,
-        elevation: 8,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.12,
+        shadowRadius: 25,
+        elevation: 10,
+        borderWidth: 1,
+        borderColor: '#E1F8F0',
       }}
     >
-      {/* Left: ripple waves + solid circle */}
-      <View style={{ 
-        width: 80, 
-        height: 80, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        marginRight: 8 
-      }}>
-        <RippleRing delay={0} />
-        <RippleRing delay={500} />
-        <RippleRing delay={1000} />
-        {/* Solid green circle on top */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={{
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          backgroundColor: '#10B981',
+          width: 54,
+          height: 54,
+          borderRadius: 18,
+          backgroundColor: '#ECFDF5',
           justifyContent: 'center',
           alignItems: 'center',
-          position: 'absolute',
-          zIndex: 10,
         }}>
+          <Package size={26} color="#10B981" />
           <View style={{
-            width: 18,
-            height: 18,
-            borderWidth: 2.5,
-            borderColor: 'white',
-            borderRadius: 3,
+            position: 'absolute',
+            bottom: -2,
+            right: -2,
+            width: 16,
+            height: 16,
+            borderRadius: 8,
+            backgroundColor: '#10B981',
+            borderWidth: 3,
+            borderColor: '#FFFFFF',
           }} />
         </View>
-      </View>
-
-      {/* Center: badge + title + subtitle */}
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-          <View style={{
-            backgroundColor: '#10B981',
-            paddingHorizontal: 10,
-            paddingVertical: 3,
-            borderRadius: 20,
-          }}>
-            <Text style={{ color: 'white', fontSize: 12, fontWeight: '900' }}>1 Orden</Text>
-          </View>
-          <Text style={{ fontSize: 20, fontWeight: '900', color: '#065F46' }}>Activas</Text>
+        <View>
+          <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>
+            {count} {count === 1 ? 'Orden Activa' : 'Órdenes Activas'}
+          </Text>
+          <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600', marginTop: 1 }}>
+            Toca para ver el seguimiento en vivo
+          </Text>
         </View>
-        <Text style={{ fontSize: 13, color: '#059669', fontWeight: '600' }}>
-          Toca para ver el estado de tu pedido →
-        </Text>
       </View>
-
-      {/* Right: small green square outline */}
-      <View style={{
-        width: 20,
-        height: 20,
-        borderWidth: 2,
-        borderColor: '#34D399',
-        borderRadius: 4,
-        marginLeft: 8,
-      }} />
+      <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6' }}>
+        <ChevronRight size={18} color="#9CA3AF" strokeWidth={3} />
+      </View>
     </TouchableOpacity>
   );
 }
 
 
 function DesktopSubHeader() {
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  const dogCategories = [
+    { name: 'Alimento', slug: 'Alimento' },
+    { name: 'Cuidado e Higiene', slug: 'Cuidado e higiene' },
+    { name: 'Medicamentos', slug: 'Medicamentos' },
+    { name: 'Juguetes', slug: 'Juguetes' },
+    { name: 'Accesorios', slug: 'Accesorios' },
+    { name: 'Snacks', slug: 'Snacks' }
+  ];
+
+  const catCategories = [
+    { name: 'Alimento', slug: 'Alimento' },
+    { name: 'Arenas y Areneros', slug: 'Arenas y areneros' },
+    { name: 'Cuidado e Higiene', slug: 'Cuidado e higiene' },
+    { name: 'Medicamentos', slug: 'Medicamentos' },
+    { name: 'Juguetes', slug: 'Juguetes' },
+    { name: 'Snacks', slug: 'Snacks' }
+  ];
+
+  const farmaciaCategories = [
+    { name: 'Perro o gato', slug: 'Perro o gato' },
+    { name: 'Exoticos', slug: 'Exoticos' }
+  ];
+
+  const renderDropdown = (categories: any[], animal?: string, isFarmacia: boolean = false) => (
+    <View style={{ 
+      position: 'absolute', top: 30, left: 0, backgroundColor: 'white', 
+      borderRadius: 16, padding: 15, width: 220,
+      shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 },
+      borderWidth: 1, borderColor: '#F0F0F0', zIndex: 1000
+    }}>
+      {categories.map((cat, idx) => (
+        <TouchableOpacity 
+          key={idx}
+          onPress={() => {
+            setActiveMenu(null);
+            if (isFarmacia) {
+              router.push(`/search?tipo=${cat.slug}&category=Medicamentos`);
+            } else {
+              router.push(`/search?animal=${animal}&category=${cat.slug}`);
+            }
+          }}
+          style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, backgroundColor: 'transparent' }}
+          // @ts-ignore
+          onMouseEnter={(e: any) => e.target.style.backgroundColor = '#F9FAFB'}
+          onMouseLeave={(e: any) => e.target.style.backgroundColor = 'transparent'}
+        >
+          <Text style={{ fontSize: 13, fontWeight: '600', color: '#4B5563' }}>{cat.name}</Text>
+        </TouchableOpacity>
+      ))}
+      {!isFarmacia && (
+        <>
+          <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 8 }} />
+          <TouchableOpacity 
+            onPress={() => {
+              setActiveMenu(null);
+              router.push(`/search?animal=${animal}`);
+            }}
+            style={{ paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F47321' }}>Ver todo {animal}</Text>
+            <ChevronRight size={14} color="#F47321" />
+          </TouchableOpacity>
+        </>
+      )}
+    </View>
+  );
+
   return (
-    <View style={{ backgroundColor: 'white', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', zIndex: 10 }}>
+    <View style={{ backgroundColor: 'white', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', zIndex: 100 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: 40, paddingLeft: 80 }}>
         
         <View style={{ position: 'relative' }}>
-          <TouchableOpacity><Text style={{ fontWeight: '800', fontSize: 13, color: '#1A1A2E' }}>¡OFERTAS GUAU!</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/search?filter=promo')}>
+            <Text style={{ fontWeight: '800', fontSize: 13, color: '#1A1A2E' }}>¡OFERTAS GUAU!</Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <Text style={{ fontWeight: '700', fontSize: 13, color: '#444' }}>MUNDO PERRO</Text>
-          <ChevronDown size={14} color="#444" />
-        </TouchableOpacity>
+        <View style={{ position: 'relative' }}>
+          <TouchableOpacity 
+            onPress={() => setActiveMenu(activeMenu === 'perro' ? null : 'perro')}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+          >
+            <Text style={{ fontWeight: '700', fontSize: 13, color: activeMenu === 'perro' ? '#F47321' : '#444' }}>MUNDO PERRO</Text>
+            <ChevronDown size={14} color={activeMenu === 'perro' ? '#F47321' : '#444'} />
+          </TouchableOpacity>
+          {activeMenu === 'perro' && renderDropdown(dogCategories, 'Perro')}
+        </View>
 
-        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <Text style={{ fontWeight: '700', fontSize: 13, color: '#444' }}>MUNDO GATO</Text>
-          <ChevronDown size={14} color="#444" />
-        </TouchableOpacity>
+        <View style={{ position: 'relative' }}>
+          <TouchableOpacity 
+            onPress={() => setActiveMenu(activeMenu === 'gato' ? null : 'gato')}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+          >
+            <Text style={{ fontWeight: '700', fontSize: 13, color: activeMenu === 'gato' ? '#F47321' : '#444' }}>MUNDO GATO</Text>
+            <ChevronDown size={14} color={activeMenu === 'gato' ? '#F47321' : '#444'} />
+          </TouchableOpacity>
+          {activeMenu === 'gato' && renderDropdown(catCategories, 'Gato')}
+        </View>
 
-        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <Text style={{ fontWeight: '700', fontSize: 13, color: '#444' }}>ACCESORIOS</Text>
-          <ChevronDown size={14} color="#444" />
-        </TouchableOpacity>
+
 
         <View style={{ position: 'relative' }}>
           <View style={{ position: 'absolute', top: -14, left: 10, backgroundColor: '#FF4D17', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3 }}>
             <Text style={{ color: 'white', fontSize: 6.5, fontWeight: '900' }}>Especial Salud</Text>
           </View>
-          <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Text style={{ fontWeight: '700', fontSize: 13, color: '#444' }}>FARMACIA</Text>
-            <ChevronDown size={14} color="#444" />
+          <TouchableOpacity 
+            onPress={() => setActiveMenu(activeMenu === 'farmacia' ? null : 'farmacia')}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}
+          >
+            <Text style={{ fontWeight: '700', fontSize: 13, color: activeMenu === 'farmacia' ? '#F47321' : '#444' }}>FARMACIA</Text>
+            <ChevronDown size={14} color={activeMenu === 'farmacia' ? '#F47321' : '#444'} />
           </TouchableOpacity>
+          {activeMenu === 'farmacia' && renderDropdown(farmaciaCategories, undefined, true)}
         </View>
 
         <TouchableOpacity><Text style={{ fontWeight: '700', fontSize: 13, color: '#444' }}>SERVICIOS VETERINARIOS</Text></TouchableOpacity>
@@ -498,6 +598,7 @@ function DesktopSubHeader() {
     </View>
   );
 }
+
 
 function DesktopPromoBanner() {
   return (
@@ -665,9 +766,62 @@ export default function Home() {
   const currentTestimonialsX = useRef(0);
   
   const [products, setProducts] = useState<ProductItem[]>(MOCK_PRODUCTS);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const { addToCart } = useCart();
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [mobileBanners, setMobileBanners] = useState<any[]>([]);
   const [desktopBannersList, setDesktopBannersList] = useState<any[]>([]);
+  const [portadasData, setPortadasData] = useState<any[]>([]);
+
+  const handleBannerNavigation = (item: any) => {
+    if (!item) return;
+    const params = new URLSearchParams();
+    
+    if (item.categorias) {
+      const cat = Array.isArray(item.categorias) ? item.categorias[0] : item.categorias;
+      if (cat) params.append('category', cat);
+    }
+    
+    if (item.marcas) {
+      const brand = Array.isArray(item.marcas) ? item.marcas[0] : item.marcas;
+      if (brand) params.append('marca', brand);
+    }
+
+    const queryString = params.toString();
+    router.push(queryString ? `/search?${queryString}` : '/search');
+  };
+  const [hasActiveOrders, setHasActiveOrders] = useState(false);
+  const [activeOrdersCount, setActiveOrdersCount] = useState(0);
+
+  useEffect(() => {
+    let unsubscribeOrders: (() => void) | undefined;
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        const q = query(
+          collection(db, 'Orden'),
+          where('creador', '==', userRef)
+        );
+        
+        unsubscribeOrders = onSnapshot(q, (snapshot) => {
+          const activeOnes = snapshot.docs.filter(doc => {
+            const estado = (doc.data().estado || '').toLowerCase();
+            return ['pendiente', 'procesando', 'enviado', 'pago aceptado'].includes(estado);
+          });
+          setActiveOrdersCount(activeOnes.length);
+          setHasActiveOrders(activeOnes.length > 0);
+        });
+      } else {
+        setHasActiveOrders(false);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeOrders) unsubscribeOrders();
+    };
+  }, []);
 
   useEffect(() => {
     console.log("Current params.success:", params.success);
@@ -678,70 +832,67 @@ export default function Home() {
   }, [params.success]);
 
   useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'publicidad'));
-        const allBanners = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Pre-fetch all images for instant loading
-        allBanners.forEach((banner: any) => {
-          if (banner.imageUrl) {
-            Image.prefetch(banner.imageUrl);
-          }
-        });
+    // 1. Escuchar Publicidad (Sliders)
+    const unsubBanners = onSnapshot(collection(db, 'publicidad'), (snapshot) => {
+      const allBanners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      allBanners.forEach((banner: any) => {
+        if (banner.imageUrl) Image.prefetch(banner.imageUrl);
+      });
 
-        const mBanners = allBanners.filter((b: any) => b.type === 'mobile');
-        const dBanners = allBanners.filter((b: any) => b.type === 'desktop');
-        
-        if (mBanners.length > 0) setMobileBanners(mBanners);
-        else setMobileBanners(mobileHeroSlides);
+      const mBanners = allBanners.filter((b: any) => b.type === 'mobile');
+      const dBanners = allBanners.filter((b: any) => b.type === 'desktop');
+      
+      setMobileBanners(mBanners.length > 0 ? mBanners : mobileHeroSlides);
+      setDesktopBannersList(dBanners.length > 0 ? dBanners : desktopHeroSlides);
+    }, (error) => {
+      console.error("Error real-time banners:", error);
+      setMobileBanners(mobileHeroSlides);
+      setDesktopBannersList(desktopHeroSlides);
+    });
 
-        if (dBanners.length > 0) setDesktopBannersList(dBanners);
-        else setDesktopBannersList(desktopHeroSlides);
-      } catch (error) {
-        console.error("Error fetching banners:", error);
-        setMobileBanners(mobileHeroSlides);
-        setDesktopBannersList(desktopHeroSlides);
-      }
+    // 2. Escuchar Portadas (Banners Grid)
+    const unsubPortadas = onSnapshot(collection(db, 'portadas'), (snapshot) => {
+      const pList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPortadasData(pList);
+    }, (error) => {
+      console.error("Error real-time portadas:", error);
+    });
+
+    // 3. Escuchar Productos
+    const unsubProducts = onSnapshot(collection(db, 'Products'), (snapshot) => {
+      const productsList = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const formatClassification = (val: any) => {
+          if (Array.isArray(val)) return val.join(', ');
+          return val || '';
+        };
+        const imageUrl = data.foto1 || 'https://via.placeholder.com/500';
+        Image.prefetch(imageUrl);
+
+        return {
+          id: data.ID_productos || doc.id,
+          category: formatClassification(data.categoria || data.Tipo || data.animal || 'GENERAL'),
+          name: data.nombre || 'Producto sin nombre',
+          price: 'CLP $' + (data.precio || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."),
+          rating: 5,
+          image: imageUrl,
+          promo: data.estadoPromocion === true,
+          medida: data.medida || ''
+        };
+      });
+      setProducts(productsList.length > 0 ? productsList : MOCK_PRODUCTS);
+      setLoadingProducts(false);
+    }, (error) => {
+      console.error("Error real-time products:", error);
+      setLoadingProducts(false);
+    });
+
+    return () => {
+      unsubBanners();
+      unsubPortadas();
+      unsubProducts();
     };
-
-    fetchBanners();
-    const fetchProducts = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'Products'));
-        const productsList = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          
-          const formatClassification = (val: any) => {
-            if (Array.isArray(val)) return val.join(', ');
-            return val || '';
-          };
-
-          const imageUrl = data.foto1 || 'https://via.placeholder.com/500';
-          // Pre-fetch product image
-          Image.prefetch(imageUrl);
-
-          return {
-            id: data.ID_productos || doc.id,
-            category: formatClassification(data.categoria || data.Tipo || data.animal || 'GENERAL'),
-            name: data.nombre || 'Producto sin nombre',
-            price: '$' + (data.precio || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."),
-            rating: 5,
-            image: imageUrl,
-            promo: data.estadoPromocion === true,
-            medida: data.medida || ''
-          };
-        });
-
-        setProducts(productsList.length > 0 ? productsList : MOCK_PRODUCTS);
-      } catch (error) {
-        console.error("Error fetching products from Firebase: ", error);
-      } finally {
-        setLoadingProducts(false);
-      }
-    };
-
-    fetchProducts();
   }, []);
 
 
@@ -767,7 +918,7 @@ export default function Home() {
         currentOffersX.current = Math.min(maxScroll, currentOffersX.current + scrollStep);
       }
     }
-    offersScrollRef.current?.scrollTo({ x: currentOffersX.current, animated: true });
+    offersScrollRef.current?.scrollToOffset({ offset: currentOffersX.current, animated: true });
   };
 
   const handleTestimonialsScroll = (direction: 'left' | 'right') => {
@@ -802,6 +953,13 @@ export default function Home() {
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         <Header />
         <DesktopSubHeader />
+        
+        {hasActiveOrders && screenWidth < BREAKPOINT && (
+          <View style={{ maxWidth: 1400, alignSelf: 'center', width: '100%', paddingHorizontal: 40, marginTop: 20 }}>
+            <ActiveOrderBanner count={activeOrdersCount} />
+          </View>
+        )}
+
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
           
           <DesktopPromoBanner />
@@ -866,57 +1024,7 @@ export default function Home() {
               </TouchableOpacity>
             </View>
 
-            {/* CATEGORIES SECTION */}
-            <View style={{ marginTop: 60, marginBottom: 40 }}>
-              <Text style={{ fontSize: 32, fontWeight: '900', color: '#3B1E54', marginBottom: 30, letterSpacing: -0.5 }}>Comprar por categorías</Text>
-              
-              <View style={{ flexDirection: 'row', gap: 20, justifyContent: 'space-between' }}>
-                {[
-                  { id: 1, title: 'PERRO', image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=800' },
-                  { id: 2, title: 'GATO', image: 'https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?q=80&w=800' },
-                  { id: 3, title: 'FARMACIA', image: 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?q=80&w=800' },
-                  { id: 4, title: 'ACCESORIOS', image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=800' },
-                  { id: 5, title: 'OFERTAS', image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=800' },
-                ].map((cat) => (
-                  <TouchableOpacity 
-                    key={cat.id}
-                    style={{ 
-                      flex: 1, 
-                      aspectRatio: 0.85, 
-                      backgroundColor: '#EEEEEE', 
-                      borderRadius: 12, 
-                      padding: 5,
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <Image 
-                      source={{ uri: cat.image }} 
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        position: 'absolute',
-                        bottom: 40,
-                      }} 
-                      resizeMode="cover"
-                    />
-                    <View style={{ 
-                      width: '100%', 
-                      height: 50, 
-                      backgroundColor: '#3B1E54', 
-                      justifyContent: 'center', 
-                      alignItems: 'center',
-                      borderBottomLeftRadius: 8,
-                      borderBottomRightRadius: 8,
-                    }}>
-                      <Text style={{ fontWeight: '900', fontSize: 16, color: 'white' }}>{cat.title}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+
 
             {/* COMPACT DARK PREMIUM BANNERS - ROW 1 */}
             <View style={{ flexDirection: 'row', gap: 24, marginTop: 40, marginBottom: 24 }}>
@@ -926,28 +1034,39 @@ export default function Home() {
                 overflow: 'hidden', position: 'relative',
                 borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.15)'
               }}>
-                <Image 
-                   source={{ uri: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=800' }} 
-                   style={{ position: 'absolute', right: 0, top: 0, width: '60%', height: '100%', opacity: 0.9 }} 
-                   resizeMode="cover" 
-                />
-                <LinearGradient
-                  colors={['#0A0A2E', 'transparent']}
-                  start={{ x: 0.35, y: 0 }}
-                  end={{ x: 0.7, y: 0 }}
-                  style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
-                />
-                <View style={{ flex: 1, padding: 32, justifyContent: 'center', zIndex: 10 }}>
-                   <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', borderWidth: 1, borderColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, marginBottom: 12 }}>
-                      <Text style={{ color: '#22C55E', fontWeight: '900', fontSize: 10, letterSpacing: 1.2 }}>CAT EXCLUSIVE</Text>
-                   </View>
-                   <Text style={{ fontSize: 36, fontWeight: '900', color: 'white', lineHeight: 38 }}>Ahorra{'\n'}y Limpia</Text>
-                   <Text style={{ fontSize: 15, color: '#22C55E', fontWeight: '700', marginTop: 8 }}>20% OFF Arena Premium</Text>
-                   
-                   <TouchableOpacity style={{ marginTop: 24, backgroundColor: '#22C55E', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, alignSelf: 'flex-start' }}>
-                      <Text style={{ color: '#000', fontWeight: '900', fontSize: 14 }}>COMPRAR</Text>
-                   </TouchableOpacity>
-                </View>
+                {(() => {
+                  const item = portadasData.find(p => Number(p.index) === 1);
+                  const bgColor = item?.backgroundColor || '#0A0A2E';
+                  return (
+                    <View style={{ flex: 1, backgroundColor: bgColor }}>
+                      <Image 
+                        source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=800' }} 
+                        style={{ position: 'absolute', right: 0, top: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.9 }} 
+                        resizeMode="cover" 
+                      />
+                      <LinearGradient
+                        colors={[bgColor, 'transparent']}
+                        start={{ x: 0.35, y: 0 }}
+                        end={{ x: 0.7, y: 0 }}
+                        style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
+                      />
+                      <View style={{ flex: 1, padding: 32, justifyContent: 'center', zIndex: 10 }}>
+                         <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', borderWidth: 1, borderColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, marginBottom: 12 }}>
+                            <Text style={{ color: '#22C55E', fontWeight: '900', fontSize: 10, letterSpacing: 1.2 }}>{item?.badge || 'CAT EXCLUSIVE'}</Text>
+                         </View>
+                         <Text style={{ fontSize: 36, fontWeight: '900', color: 'white', lineHeight: 38 }}>{item?.title || 'Ahorra\ny Limpia'}</Text>
+                         <Text style={{ fontSize: 15, color: '#22C55E', fontWeight: '700', marginTop: 8 }}>{item?.subtitle || '20% OFF Arena Premium'}</Text>
+                         
+                         <TouchableOpacity 
+                            onPress={() => handleBannerNavigation(item)}
+                            style={{ marginTop: 24, backgroundColor: '#22C55E', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, alignSelf: 'flex-start' }}
+                          >
+                             <Text style={{ color: '#000', fontWeight: '900', fontSize: 14 }}>{item?.buttonText || 'COMPRAR'}</Text>
+                          </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })()}
               </View>
 
               {/* Compact Dark Dog Banner */}
@@ -956,29 +1075,40 @@ export default function Home() {
                 overflow: 'hidden', position: 'relative',
                 borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)'
               }}>
-                <Image 
-                   source={{ uri: 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=800' }} 
-                   style={{ position: 'absolute', right: 0, top: 0, width: '100%', height: '100%', opacity: 0.8 }} 
-                   resizeMode="cover" 
-                />
-                <LinearGradient
-                  colors={['#000000', 'transparent']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0.75, y: 0 }}
-                  style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
-                />
-                <View style={{ flex: 1, padding: 32, justifyContent: 'center', zIndex: 10 }}>
-                   <Text style={{ fontSize: 120, fontWeight: '900', color: 'rgba(34, 197, 94, 0.04)', position: 'absolute', top: -10, left: -10 }}>30</Text>
-                   <View style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, marginBottom: 12 }}>
-                      <Text style={{ color: '#000', fontWeight: '900', fontSize: 10, letterSpacing: 1.2 }}>DOG SPECIAL</Text>
-                   </View>
-                   <Text style={{ fontSize: 36, fontWeight: '900', color: 'white', lineHeight: 38 }}>Snacks{'\n'}Gourmet</Text>
-                   <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', fontWeight: '700', marginTop: 8 }}>30% Off para el Rey</Text>
-                   
-                   <TouchableOpacity style={{ marginTop: 24, backgroundColor: '#22C55E', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, alignSelf: 'flex-start' }}>
-                      <Text style={{ color: '#000', fontWeight: '900', fontSize: 14 }}>DESCUBRIR</Text>
-                   </TouchableOpacity>
-                </View>
+                {(() => {
+                  const item = portadasData.find(p => Number(p.index) === 2);
+                  const bgColor = item?.backgroundColor || '#000000';
+                  return (
+                    <View style={{ flex: 1, backgroundColor: bgColor }}>
+                      <Image 
+                        source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=800' }} 
+                        style={{ position: 'absolute', right: 0, top: 0, width: '100%', height: '100%', opacity: 0.8 }} 
+                        resizeMode="cover" 
+                      />
+                      <LinearGradient
+                        colors={[bgColor, 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0.75, y: 0 }}
+                        style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
+                      />
+                      <View style={{ flex: 1, padding: 32, justifyContent: 'center', zIndex: 10 }}>
+                         <Text style={{ fontSize: 120, fontWeight: '900', color: 'rgba(34, 197, 94, 0.04)', position: 'absolute', top: -10, left: -10 }}>30</Text>
+                         <View style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, marginBottom: 12 }}>
+                            <Text style={{ color: '#000', fontWeight: '900', fontSize: 10, letterSpacing: 1.2 }}>{item?.badge || 'DOG SPECIAL'}</Text>
+                         </View>
+                         <Text style={{ fontSize: 36, fontWeight: '900', color: 'white', lineHeight: 38 }}>{item?.title || 'Snacks\nGourmet'}</Text>
+                         <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', fontWeight: '700', marginTop: 8 }}>{item?.subtitle || '30% Off para el Rey'}</Text>
+                         
+                         <TouchableOpacity 
+                            onPress={() => handleBannerNavigation(item)}
+                            style={{ marginTop: 24, backgroundColor: '#22C55E', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, alignSelf: 'flex-start' }}
+                          >
+                            <Text style={{ color: '#000', fontWeight: '900', fontSize: 14 }}>{item?.buttonText || 'DESCUBRIR'}</Text>
+                         </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })()}
               </View>
             </View>
 
@@ -990,27 +1120,38 @@ export default function Home() {
                 overflow: 'hidden', position: 'relative',
                 borderWidth: 1, borderColor: 'rgba(255, 77, 23, 0.15)'
               }}>
-                <Image 
-                   source={{ uri: 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?q=80&w=800' }} 
-                   style={{ position: 'absolute', right: 0, bottom: 0, width: '60%', height: '100%', opacity: 0.8 }} 
-                   resizeMode="cover" 
-                />
-                <LinearGradient
-                  colors={['#1A0A0A', 'transparent']}
-                  start={{ x: 0.4, y: 0 }}
-                  end={{ x: 0.7, y: 0 }}
-                  style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
-                />
-                <View style={{ flex: 1, padding: 32, zIndex: 10, justifyContent: 'center' }}>
-                   <Text style={{ fontSize: 10, fontWeight: '900', color: '#FF4D17', letterSpacing: 2, marginBottom: 10 }}>CARE UNIT</Text>
-                   <Text style={{ fontSize: 38, fontWeight: '900', color: 'white', lineHeight: 40 }}>Salud{'\n'}al 100%</Text>
-                   <View style={{ backgroundColor: '#FF4D17', marginTop: 15, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, alignSelf: 'flex-start' }}>
-                      <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>-15% DCTO</Text>
-                   </View>
-                   <TouchableOpacity style={{ marginTop: 24, borderBottomWidth: 1.5, borderBottomColor: '#FF4D17', alignSelf: 'flex-start' }}>
-                      <Text style={{ fontSize: 15, fontWeight: '900', color: '#FF4D17' }}>Comprar Farmacia</Text>
-                   </TouchableOpacity>
-                </View>
+                {(() => {
+                  const item = portadasData.find(p => Number(p.index) === 3);
+                  const bgColor = item?.backgroundColor || '#1A0A0A';
+                  return (
+                    <View style={{ flex: 1, backgroundColor: bgColor }}>
+                      <Image 
+                        source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?q=80&w=800' }} 
+                        style={{ position: 'absolute', right: 0, bottom: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.8 }} 
+                        resizeMode="cover" 
+                      />
+                      <LinearGradient
+                        colors={[bgColor, 'transparent']}
+                        start={{ x: 0.4, y: 0 }}
+                        end={{ x: 0.7, y: 0 }}
+                        style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
+                      />
+                      <View style={{ flex: 1, padding: 32, zIndex: 10, justifyContent: 'center' }}>
+                         <Text style={{ fontSize: 10, fontWeight: '900', color: '#FF4D17', letterSpacing: 2, marginBottom: 10 }}>{item?.badge || 'CARE UNIT'}</Text>
+                         <Text style={{ fontSize: 38, fontWeight: '900', color: 'white', lineHeight: 40 }}>{item?.title || 'Salud\nal 100%'}</Text>
+                         <View style={{ backgroundColor: '#FF4D17', marginTop: 15, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, alignSelf: 'flex-start' }}>
+                            <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>{item?.subtitle || '-15% DCTO'}</Text>
+                         </View>
+                         <TouchableOpacity 
+                            onPress={() => handleBannerNavigation(item)}
+                            style={{ marginTop: 24, borderBottomWidth: 1.5, borderBottomColor: '#FF4D17', alignSelf: 'flex-start' }}
+                         >
+                            <Text style={{ fontSize: 15, fontWeight: '900', color: '#FF4D17' }}>{item?.buttonText || 'Comprar Farmacia'}</Text>
+                         </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })()}
               </View>
 
               {/* Compact Dark Accessoires Banner */}
@@ -1019,26 +1160,36 @@ export default function Home() {
                 overflow: 'hidden', position: 'relative',
                 borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.1)'
               }}>
-                <Image 
-                   source={{ uri: 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=800' }} 
-                   style={{ position: 'absolute', right: 0, top: 0, width: '60%', height: '100%', opacity: 0.8 }} 
-                   resizeMode="cover" 
-                />
-                <LinearGradient
-                  colors={['#0A0A1A', 'transparent']}
-                  start={{ x: 0.4, y: 0 }}
-                  end={{ x: 0.75, y: 0 }}
-                  style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
-                />
-                <View style={{ flex: 1, padding: 32, zIndex: 10, justifyContent: 'center' }}>
-                   <Text style={{ fontSize: 42, fontWeight: '900', color: 'white' }}>Juega.</Text>
-                   <Text style={{ fontSize: 42, fontWeight: '300', color: 'rgba(255,255,255,0.6)', marginTop: -10 }}>Vive.</Text>
-                   <Text style={{ fontSize: 15, color: '#22C55E', fontWeight: '900', marginTop: 12 }}>25% Off en Accesorios</Text>
-                   
-                   <TouchableOpacity style={{ marginTop: 24, backgroundColor: 'white', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, alignSelf: 'flex-start' }}>
-                      <Text style={{ color: '#000', fontWeight: '900', fontSize: 13 }}>VER CATÁLOGO</Text>
-                   </TouchableOpacity>
-                </View>
+                {(() => {
+                  const item = portadasData.find(p => Number(p.index) === 4);
+                  const bgColor = item?.backgroundColor || '#0A0A1A';
+                  return (
+                    <View style={{ flex: 1, backgroundColor: bgColor }}>
+                      <Image 
+                        source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=800' }} 
+                        style={{ position: 'absolute', right: 0, top: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.8 }} 
+                        resizeMode="cover" 
+                      />
+                      <LinearGradient
+                        colors={[bgColor, 'transparent']}
+                        start={{ x: 0.4, y: 0 }}
+                        end={{ x: 0.75, y: 0 }}
+                        style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }}
+                      />
+                      <View style={{ flex: 1, padding: 32, zIndex: 10, justifyContent: 'center' }}>
+                         <Text style={{ fontSize: 42, fontWeight: '900', color: 'white' }}>{item?.title ? item.title.split('.')[0] : 'Juega.'}</Text>
+                         <Text style={{ fontSize: 42, fontWeight: '300', color: 'rgba(255,255,255,0.6)', marginTop: -10 }}>{item?.title?.includes('.') ? item.title.split('.')[1] : 'Vive.'}</Text>
+                         <Text style={{ fontSize: 15, color: '#22C55E', fontWeight: '900', marginTop: 12 }}>{item?.subtitle || '25% Off en Accesorios'}</Text>
+                         <TouchableOpacity 
+                            onPress={() => handleBannerNavigation(item)}
+                            style={{ marginTop: 24, backgroundColor: 'white', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, alignSelf: 'flex-start' }}
+                         >
+                            <Text style={{ color: '#000', fontWeight: '900', fontSize: 13 }}>{item?.buttonText || 'VER CATÁLOGO'}</Text>
+                         </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })()}
               </View>
             </View>
 
@@ -1143,13 +1294,21 @@ export default function Home() {
                         key={item.id} style={{ 
                           width: 290, backgroundColor: 'white', borderRadius: 16, padding: 20,
                           shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 2,
-                          borderWidth: 1, borderColor: '#F0F0F0'
+                          borderWidth: 1, borderColor: '#F0F0F0', overflow: 'hidden'
                         }}
                       >
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <View style={{ backgroundColor: '#C41E3A', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 6 }}>
-                            <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>-25%</Text>
+                        {item.promo && (
+                          <View style={{ 
+                            position: 'absolute', top: 14, left: -28, backgroundColor: '#22C55E', 
+                            width: 110, height: 28, transform: [{ rotate: '-45deg' }], 
+                            justifyContent: 'center', alignItems: 'center', zIndex: 20,
+                            shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
+                          }}>
+                            <Text style={{ color: 'white', fontWeight: '900', fontSize: 12, letterSpacing: 1 }}>PROMO</Text>
                           </View>
+                        )}
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
+
                           <TouchableOpacity 
                             onPress={(e) => {
                               e.stopPropagation();
@@ -1170,24 +1329,57 @@ export default function Home() {
                           <Image source={{ uri: item.image }} style={{ width: '90%', height: '100%' }} resizeMode="contain" />
                         </View>
 
-                    <View style={{ alignItems: 'flex-start', marginBottom: 20, width: '100%' }}>
-                      <Text style={{ fontSize: 17, color: '#1A1A2E', fontWeight: '500', marginBottom: 10, minHeight: 48 }}>{item.name}</Text>
-                      <View style={{ minHeight: 50 }}>
-                        <Text style={{ fontSize: 20, fontWeight: '900', color: '#C41E3A' }}>{item.price}</Text>
-                        {item.medida ? <Text style={{ fontSize: 13, color: '#999', marginTop: 4 }}>Medida: {item.medida}</Text> : null}
-                      </View>
-                    </View>
-
-                    <TouchableOpacity 
-                      onPress={() => router.push(`/product/${item.id}`)}
-                      style={{ 
-                        backgroundColor: '#3B1E54', paddingVertical: 16, borderRadius: 10, alignItems: 'center', width: '100%',
-                        shadowColor: '#3B1E54', shadowOpacity: 0.2, shadowRadius: 10
-                      }}
-                    >
-                      <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>Ver detalles</Text>
-                    </TouchableOpacity>
-                  </TouchableOpacity>
+                        <View style={{ alignItems: 'flex-start', width: '100%' }}>
+                          <Text style={{ fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 4, textTransform: 'uppercase' }}>{item.category}</Text>
+                          <Text 
+                            style={{ fontSize: 16, fontWeight: '700', color: '#13132B', lineHeight: 22, height: 44, textTransform: 'uppercase' }} 
+                            numberOfLines={2}
+                          >
+                            {item.name}
+                          </Text>
+                          <Text style={{ fontSize: 20, fontWeight: '900', color: '#CD1A3B', marginTop: 15 }}>
+                            {item.price}
+                          </Text>
+                          
+                          <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, width: '100%' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 12 }}>
+                              <TouchableOpacity 
+                                onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities(prev => ({...prev, [item.id]: Math.max(1, (prev[item.id] || 1) - 1)})) }} 
+                                style={{ padding: 8 }}
+                              >
+                                <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>-</Text>
+                              </TouchableOpacity>
+                              <Text style={{ fontSize: 16, fontWeight: '800', marginHorizontal: 8 }}>{quantities[item.id] || 1}</Text>
+                              <TouchableOpacity 
+                                onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities(prev => ({...prev, [item.id]: (prev[item.id] || 1) + 1})) }} 
+                                style={{ padding: 8 }}
+                              >
+                                <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>+</Text>
+                              </TouchableOpacity>
+                            </View>
+                            <TouchableOpacity 
+                              onPress={(e) => {
+                                if (e?.stopPropagation) e.stopPropagation();
+                                const priceNum = parseInt(item.price.replace(/[$.]/g, ''));
+                                addToCart({
+                                  id: item.id,
+                                  name: item.name,
+                                  price: priceNum,
+                                  image: item.image,
+                                  quantity: quantities[item.id] || 1
+                                });
+                                setQuantities(prev => ({...prev, [item.id]: 1}));
+                              }}
+                              style={{ 
+                                flex: 1, backgroundColor: '#F47321', borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center',
+                                shadowColor: '#F47321', shadowOpacity: 0.2, shadowRadius: 8
+                              }}
+                            >
+                              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14, letterSpacing: -0.3 }}>+ Agregar</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
                     );
                   }}
                 />
@@ -1577,7 +1769,7 @@ export default function Home() {
           </View>
         </View>
 
-        <ActiveOrderBanner />
+        {hasActiveOrders && <ActiveOrderBanner count={activeOrdersCount} />}
 
         {/* Section: Promotions */}
         <View style={{ marginTop: 32 }}>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Alert } from 'react-native';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 export interface CartItem {
@@ -54,11 +55,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribeAuth();
   }, []);
 
-  const addToCart = (item: CartItem) => {
-    // Note: We don't manually update state here anymore. 
-    // The handleAddToCart in the product page calls addDoc to Firestore,
-    // and our onSnapshot listener above will automatically update the local state.
-    // This ensures consistency across refreshes and devices.
+  const addToCart = async (item: any) => {
+    try {
+      const itemData = {
+        ID_productos: String(item.ID_productos || item.id),
+        nombre: item.nombre || item.name,
+        precio: Number(item.precio || item.price),
+        foto: item.foto || item.image,
+        cantidad: Number(item.cantidad || item.quantity || 1),
+        medida: item.medida || 'Único',
+        subtotal: Number(item.precio || item.price) * Number(item.cantidad || item.quantity || 1),
+        creator: auth.currentUser ? doc(db, 'users', auth.currentUser.uid) : null,
+        fechaCreacion: new Date()
+      };
+
+      await addDoc(collection(db, 'productosseleccionados'), itemData);
+      Alert.alert("¡Agregado!", `${itemData.nombre} se añadió a tu carrito.`);
+    } catch (e) {
+      console.error("Error adding to cart in context:", e);
+      Alert.alert("Error", "No se pudo agregar al carrito. Revisa tu conexión.");
+    }
   };
 
   const removeFromCart = async (itemId: string) => {

@@ -195,7 +195,7 @@ export default function OrdersScreen() {
                 </View>
 
                 <View style={{ alignItems: isDesktop ? 'flex-end' : 'flex-start' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString()}</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString()} CLP</Text>
                   <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>{order.date}</Text>
                 </View>
               </View>
@@ -203,7 +203,7 @@ export default function OrdersScreen() {
               <View style={{ height: 1, backgroundColor: '#F9FAFB', marginVertical: 25 }} />
 
               <View style={{ flexDirection: isDesktop ? 'row' : 'column', justifyContent: 'space-between', alignItems: isDesktop ? 'center' : 'flex-start', gap: 25 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15, width: '100%' }}>
                   <View style={{ flexDirection: 'row' }}>
                     {order.items.map((item, idx) => (
                       <View key={idx} style={{ 
@@ -214,8 +214,10 @@ export default function OrdersScreen() {
                       </View>
                     ))}
                   </View>
-                  <View>
-                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>{order.items[0]?.name}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827', flexShrink: 1 }} numberOfLines={1} ellipsizeMode="tail">
+                      {order.items[0]?.name}
+                    </Text>
                     {order.items.length > 1 && (
                       <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 2 }}>y {order.items.length - 1} producto{order.items.length - 1 !== 1 ? 's' : ''} más</Text>
                     )}
