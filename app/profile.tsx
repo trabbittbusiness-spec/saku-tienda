@@ -10,7 +10,8 @@ import {
   LogOut, 
   ChevronRight,
   ArrowLeft,
-  Settings
+  Settings,
+  Calendar
 } from 'lucide-react-native';
 
 export default function ProfileScreen() {
@@ -29,7 +30,7 @@ export default function ProfileScreen() {
           <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Mi cuenta</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
           {/* Profile Card */}
           <View style={{ margin: 20, padding: 24, backgroundColor: '#FFFFFF', borderRadius: 32, borderBottomWidth: 4, borderBottomColor: '#1E1B4B', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
@@ -77,6 +78,13 @@ export default function ProfileScreen() {
               title="Mis tarjetas" 
               subtitle="Medios de pago guardados"
               onPress={() => router.push('/cards')}
+            />
+            <ProfileItem 
+              icon={<Calendar size={20} color="#6366F1" />} 
+              iconBg="#EEF2FF" 
+              title="Mis Servicios" 
+              subtitle="Agenda y citas veterinarias"
+              onPress={() => router.push('/agenda')}
             />
             <ProfileItem 
               icon={<ShieldCheck size={20} color="#D97706" />} 
@@ -178,6 +186,14 @@ export default function ProfileScreen() {
                 title="Mis tarjetas" 
                 subtitle="Medios de pago y facturación"
                 onPress={() => router.push('/cards')}
+                isDesktop
+              />
+              <ProfileItem 
+                icon={<Calendar size={20} color="#6366F1" />} 
+                iconBg="#EEF2FF" 
+                title="Mis Servicios" 
+                subtitle="Agenda y citas veterinarias"
+                onPress={() => router.push('/agenda')}
                 isDesktop
               />
               <ProfileItem 

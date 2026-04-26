@@ -25,11 +25,12 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
   const [mapCenter, setMapCenter] = useState({ lat: -33.4425, lng: -70.6400 });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !window.addEventListener) return;
     
     const handleMessage = async (e: any) => {
       try {
-        const data = JSON.parse(e.data);
+        if (!e.data) return;
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (data.type === 'map_moved') {
           const { lat, lng } = data;
           
@@ -218,17 +219,23 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
           {/* Minimal Light GPS Button */}
           <TouchableOpacity 
             onPress={() => {
-              if (navigator.geolocation) {
+              if (typeof navigator !== 'undefined' && navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                   (position) => {
                     const { latitude, longitude } = position.coords;
                     if (mapRef.current) {
-                      mapRef.current.contentWindow.postMessage(JSON.stringify({ type: 'set_center', lat: latitude, lng: longitude }), '*');
+                      // @ts-ignore
+                      const win = mapRef.current.contentWindow || mapRef.current;
+                      if (win && win.postMessage) {
+                        win.postMessage(JSON.stringify({ type: 'set_center', lat: latitude, lng: longitude }), '*');
+                      }
                     }
                   },
                   (error) => console.log('Geolocation error:', error),
                   { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
+              } else {
+                console.log('Geolocation not supported on this platform');
               }
             }}
             style={{

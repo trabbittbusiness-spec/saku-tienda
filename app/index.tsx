@@ -12,6 +12,9 @@ import {
   NativeScrollEvent,
   Modal,
   Pressable,
+  ActivityIndicator,
+  Platform,
+  Linking,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,7 +41,23 @@ import {
   ShieldCheck,
   FileText,
   CheckCircle2,
-  X
+  HeartPulse,
+  Award,
+  Quote,
+  HelpCircle,
+  Gift,
+  Shield,
+  RotateCcw,
+  Clock,
+  MessageCircle,
+  X,
+  Bone,
+  ShoppingBag,
+  Sparkles,
+  Activity,
+  Pizza,
+  Scissors,
+  User
 } from 'lucide-react-native';
 
 import Header from '../components/Header';
@@ -213,7 +232,7 @@ function MobileHeroCarousel({ screenWidth, slides = [] }: { screenWidth: number,
   );
 }
 
-const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
+const MobileProductCard = React.memo(({ item, onAuthRequired }: { item: ProductItem, onAuthRequired: () => void }) => {
   const { toggleFavorite, isFavorite } = useFavorites();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -266,8 +285,6 @@ const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
         <Heart size={20} color={liked ? '#EF4444' : '#E5E7EB'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
       </TouchableOpacity>
 
-
-
       <View style={{ width: '100%', height: 130, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
         <Image source={{ uri: item.image }} style={{ width: '90%', height: '90%' }} resizeMode="contain" />
       </View>
@@ -303,6 +320,10 @@ const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
           activeOpacity={0.8}
           onPress={(e) => {
             e.stopPropagation();
+            if (!auth.currentUser) {
+              onAuthRequired();
+              return;
+            }
             const priceNum = parseInt(item.price.replace(/[$.]/g, ''));
             addToCart({
               id: item.id,
@@ -322,13 +343,12 @@ const MobileProductCard = React.memo(({ item }: { item: ProductItem }) => {
             justifyContent: 'center'
           }}
         >
-          <Text style={{ color: 'white', fontSize: 12, fontWeight: '900' }}>+ Agregar</Text>
+          <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>+ Agregar</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 });
-
 
 function PulseAnimation() {
   const scale = useSharedValue(1);
@@ -381,14 +401,7 @@ function RippleRing({ delay }: { delay: number }) {
         -1,
         false
       ));
-      // reset to visible after each cycle
-      opacity.value = withDelay(delay, withRepeat(
-        withTiming(0, { duration: 1400 }),
-        -1,
-        false
-      ));
     };
-    // set initial opacity before starting
     opacity.value = 0.5;
     scale.value = 1;
     startAnimation();
@@ -474,73 +487,82 @@ function ActiveOrderBanner({ count }: { count: number }) {
   );
 }
 
-
 function DesktopSubHeader() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   const dogCategories = [
-    { name: 'Alimento', slug: 'Alimento' },
-    { name: 'Cuidado e Higiene', slug: 'Cuidado e higiene' },
-    { name: 'Medicamentos', slug: 'Medicamentos' },
-    { name: 'Juguetes', slug: 'Juguetes' },
-    { name: 'Accesorios', slug: 'Accesorios' },
-    { name: 'Snacks', slug: 'Snacks' }
+    { name: 'Alimento', slug: 'Alimento', icon: Bone, color: '#F47321' },
+    { name: 'Cuidado e Higiene', slug: 'Cuidado e higiene', icon: Scissors, color: '#EC4899' },
+    { name: 'Medicamentos', slug: 'Medicamentos', icon: Activity, color: '#6366F1' },
+    { name: 'Juguetes', slug: 'Juguetes', icon: Sparkles, color: '#F59E0B' },
+    { name: 'Accesorios', slug: 'Accesorios', icon: ShoppingBag, color: '#10B981' },
+    { name: 'Snacks', slug: 'Snacks', icon: Pizza, color: '#EF4444' }
   ];
-
+ 
   const catCategories = [
-    { name: 'Alimento', slug: 'Alimento' },
-    { name: 'Arenas y Areneros', slug: 'Arenas y areneros' },
-    { name: 'Cuidado e Higiene', slug: 'Cuidado e higiene' },
-    { name: 'Medicamentos', slug: 'Medicamentos' },
-    { name: 'Juguetes', slug: 'Juguetes' },
-    { name: 'Snacks', slug: 'Snacks' }
+    { name: 'Alimento', slug: 'Alimento', icon: Bone, color: '#F47321' },
+    { name: 'Arenas y Areneros', slug: 'Arenas y areneros', icon: Sparkles, color: '#06B6D4' },
+    { name: 'Cuidado e Higiene', slug: 'Cuidado e higiene', icon: Scissors, color: '#EC4899' },
+    { name: 'Medicamentos', slug: 'Medicamentos', icon: Activity, color: '#6366F1' },
+    { name: 'Juguetes', slug: 'Juguetes', icon: Sparkles, color: '#F59E0B' },
+    { name: 'Snacks', slug: 'Snacks', icon: Pizza, color: '#EF4444' }
   ];
-
+ 
   const farmaciaCategories = [
-    { name: 'Perro o gato', slug: 'Perro o gato' },
-    { name: 'Exoticos', slug: 'Exoticos' }
+    { name: 'Perro o gato', slug: 'Perro o gato', icon: Activity, color: '#6366F1' },
+    { name: 'Exoticos', slug: 'Exoticos', icon: Sparkles, color: '#10B981' }
   ];
 
   const renderDropdown = (categories: any[], animal?: string, isFarmacia: boolean = false) => (
     <View style={{ 
-      position: 'absolute', top: 30, left: 0, backgroundColor: 'white', 
-      borderRadius: 16, padding: 15, width: 220,
-      shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 },
-      borderWidth: 1, borderColor: '#F0F0F0', zIndex: 1000
+      position: 'absolute', top: 38, left: -10, backgroundColor: 'rgba(255, 255, 255, 0.98)', 
+      borderRadius: 20, padding: 10, width: 230,
+      shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 25, shadowOffset: { width: 0, height: 12 },
+      borderWidth: 1, borderColor: '#F1F5F9', zIndex: 1000,
     }}>
-      {categories.map((cat, idx) => (
-        <TouchableOpacity 
-          key={idx}
-          onPress={() => {
-            setActiveMenu(null);
-            if (isFarmacia) {
-              router.push(`/search?tipo=${cat.slug}&category=Medicamentos`);
-            } else {
-              router.push(`/search?animal=${animal}&category=${cat.slug}`);
-            }
-          }}
-          style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, backgroundColor: 'transparent' }}
-          // @ts-ignore
-          onMouseEnter={(e: any) => e.target.style.backgroundColor = '#F9FAFB'}
-          onMouseLeave={(e: any) => e.target.style.backgroundColor = 'transparent'}
-        >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: '#4B5563' }}>{cat.name}</Text>
-        </TouchableOpacity>
-      ))}
+      <View style={{ gap: 2 }}>
+        {categories.map((cat, idx) => (
+          <TouchableOpacity 
+            key={idx}
+            onPress={() => {
+              setActiveMenu(null);
+              if (isFarmacia) {
+                router.push(`/search?tipo=${cat.slug}&category=Medicamentos`);
+              } else {
+                router.push(`/search?animal=${animal}&category=${cat.slug}`);
+              }
+            }}
+            style={{ 
+              flexDirection: 'row', alignItems: 'center', gap: 10,
+              paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, 
+              backgroundColor: 'transparent'
+            }}
+          >
+            <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: `${cat.color}10`, justifyContent: 'center', alignItems: 'center' }}>
+               <cat.icon size={16} color={cat.color} strokeWidth={2.5} />
+            </View>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: '#334155' }}>{cat.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {!isFarmacia && (
-        <>
-          <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 8 }} />
+        <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F1F5F9' }}>
           <TouchableOpacity 
             onPress={() => {
               setActiveMenu(null);
               router.push(`/search?animal=${animal}`);
             }}
-            style={{ paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+            style={{ 
+              paddingVertical: 12, paddingHorizontal: 12, borderRadius: 12,
+              flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+              backgroundColor: '#F47321'
+            }}
           >
-            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F47321' }}>Ver todo {animal}</Text>
-            <ChevronRight size={14} color="#F47321" />
+            <Text style={{ fontSize: 13, fontWeight: '900', color: '#FFF' }}>VER TODO {animal?.toUpperCase()}</Text>
+            <ArrowRight size={14} color="#FFF" strokeWidth={3} />
           </TouchableOpacity>
-        </>
+        </View>
       )}
     </View>
   );
@@ -577,11 +599,29 @@ function DesktopSubHeader() {
           {activeMenu === 'gato' && renderDropdown(catCategories, 'Gato')}
         </View>
 
-
-
-        <View style={{ position: 'relative' }}>
-          <View style={{ position: 'absolute', top: -14, left: 10, backgroundColor: '#FF4D17', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3 }}>
-            <Text style={{ color: 'white', fontSize: 6.5, fontWeight: '900' }}>Especial Salud</Text>
+        <View style={{ position: 'relative', alignItems: 'center' }}>
+          <View style={{ 
+            position: 'absolute', 
+            top: -15,
+            backgroundColor: '#EF4444',
+            paddingHorizontal: 7,
+            paddingVertical: 1.5,
+            borderRadius: 4,
+            zIndex: 999,
+            shadowColor: '#000',
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Text style={{ 
+              color: 'white', 
+              fontSize: 7.5, 
+              fontWeight: '900', 
+              textTransform: 'uppercase'
+            }}>
+              ESPECIAL SALUD
+            </Text>
           </View>
           <TouchableOpacity 
             onPress={() => setActiveMenu(activeMenu === 'farmacia' ? null : 'farmacia')}
@@ -593,43 +633,9 @@ function DesktopSubHeader() {
           {activeMenu === 'farmacia' && renderDropdown(farmaciaCategories, undefined, true)}
         </View>
 
-        <TouchableOpacity><Text style={{ fontWeight: '700', fontSize: 13, color: '#444' }}>SERVICIOS VETERINARIOS</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/servicios')}><Text style={{ fontWeight: '700', fontSize: 13, color: '#444' }}>SERVICIOS VETERINARIOS</Text></TouchableOpacity>
       </View>
     </View>
-  );
-}
-
-
-function DesktopPromoBanner() {
-  return (
-    <LinearGradient
-      colors={['#F47321', '#3B1E54']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{ width: '100%', height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20 }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <View style={{ width: 40, height: 40, backgroundColor: 'white', borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
-          <Megaphone size={22} color="#F47321" />
-        </View>
-        <Text style={{ color: 'white', fontSize: 18, fontWeight: '400' }}>Ya abrimos </Text>
-        <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>¡Nuevas tiendas!</Text>
-      </View>
-
-      {/* Store Icon */}
-      <View style={{ marginLeft: 30, backgroundColor: 'white', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-         <Text style={{ color: '#3B1E54', fontWeight: '900', fontSize: 10 }}>DUAL</Text>
-      </View>
-
-      {/* Locations */}
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 20 }}>
-         <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Te estamos esperando en:</Text>
-         <View>
-           <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>• <Text style={{ fontWeight: '900' }}>Las Brisas</Text> Autop. Los Libertadores KM 16, Colina</Text>
-           <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>• <Text style={{ fontWeight: '900' }}>Los Toros</Text> Av. Concha y Toro 3909, Vivo Outlet</Text>
-         </View>
-      </View>
-    </LinearGradient>
   );
 }
 
@@ -661,20 +667,17 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
     if (slides.length <= 1) return;
     const timer = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 6000); // Cambia cada 6 segundos
+    }, 6000);
     return () => clearInterval(timer);
   }, [slides]);
 
   const currentSlide = slides[activeSlide];
   if (!currentSlide) return null;
   
-  const source = typeof currentSlide.image === 'string' 
+  const imageSource = typeof currentSlide.image === 'string' 
     ? { uri: currentSlide.image, cache: 'force-cache' } 
     : (currentSlide.imageUrl ? { uri: currentSlide.imageUrl, cache: 'force-cache' } : currentSlide.image);
 
-  const imageSource = source;
-
-  // Determine if this is a "Full Image" banner (from Publicidad) or a "Composite" banner (hardcoded)
   const isFullImage = !!currentSlide.imageUrl;
 
   return (
@@ -682,40 +685,23 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
       <View style={{ flex: 1, flexDirection: 'row' }}>
         {isFullImage ? (
           <View style={{ flex: 1 }}>
-            <Image 
-              source={imageSource}
-              style={{ width: '100%', height: '100%' }}
-              resizeMode="cover"
-            />
+            <Image source={imageSource} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
           </View>
         ) : (
           <>
-            {/* Left Side: Brand & Main Title */}
             <View style={{ width: '45%', justifyContent: 'center', paddingLeft: 100, backgroundColor: 'white' }}>
               <View style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 15, paddingVertical: 5, borderRadius: 20, marginBottom: 15 }}>
                 <Text style={{ color: 'white', fontWeight: '900', fontSize: 14 }}>{currentSlide.brand}</Text>
               </View>
               <Text style={{ fontSize: 90, fontWeight: '300', color: '#1A1A2E', lineHeight: 95 }}>{currentSlide.title}</Text>
               <Text style={{ fontSize: 105, fontWeight: '900', color: '#1A1A2E', marginTop: -25, fontStyle: 'italic', letterSpacing: -2 }}>{currentSlide.highlight}</Text>
-              
-              <Text style={{ fontSize: 18, color: '#666', marginTop: 20, fontWeight: '500', maxWidth: 350 }}>
-                {currentSlide.subtitle}
-              </Text>
-
-              <TouchableOpacity style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 50, paddingVertical: 18, borderRadius: 35, marginTop: 40, shadowColor: '#22C55E', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
+              <Text style={{ fontSize: 18, color: '#666', marginTop: 20, fontWeight: '500', maxWidth: 350 }}>{currentSlide.subtitle}</Text>
+              <TouchableOpacity style={{ backgroundColor: '#22C55E', alignSelf: 'flex-start', paddingHorizontal: 50, paddingVertical: 18, borderRadius: 35, marginTop: 40 }}>
                 <Text style={{ color: 'white', fontWeight: '900', fontSize: 20 }}>COMPRAR</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Right Side: Product Image & Discount Highlight */}
             <View style={{ width: '55%', position: 'relative', overflow: 'hidden' }}>
-              <Image 
-                source={imageSource} 
-                style={{ width: '100%', height: '100%' }} 
-                resizeMode="contain"
-              />
-              
-              {/* Discount Overlay (Only if not already prominent in image) */}
+              <Image source={imageSource} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
               {currentSlide.id !== 1 && (
                 <View style={{ position: 'absolute', right: 50, top: '25%', backgroundColor: 'rgba(255,255,255,0.9)', padding: 30, borderRadius: 100, width: 180, height: 180, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#22C55E' }}>
                    <Text style={{ fontSize: 40, fontWeight: '900', color: '#22C55E' }}>{currentSlide.discount}</Text>
@@ -725,21 +711,12 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
           </>
         )}
       </View>
-
-      {/* Modern Navigation Arrows */}
       {slides.length > 1 && (
         <View style={{ position: 'absolute', top: 0, bottom: 0, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
-          <TouchableOpacity 
-            onPress={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)}
-            style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}
-          >
+          <TouchableOpacity onPress={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center' }}>
             <ChevronLeft size={35} color="#1A1A2E" />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            onPress={() => setActiveSlide((activeSlide + 1) % slides.length)}
-            style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}
-          >
+          <TouchableOpacity onPress={() => setActiveSlide((activeSlide + 1) % slides.length)} style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center' }}>
             <ChevronRight size={35} color="#1A1A2E" />
           </TouchableOpacity>
         </View>
@@ -748,50 +725,53 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  MAIN SCREEN
-// ══════════════════════════════════════════════════════════════════════════════
-
 export default function Home() {
   const { toggleFavorite, isFavorite } = useFavorites();
   const params = useLocalSearchParams();
-
-  const scrollY = useSharedValue(0);
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = screenWidth >= BREAKPOINT;
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const offersScrollRef = useRef<ScrollView>(null);
-  const testimonialsScrollRef = useRef<ScrollView>(null);
-  const currentOffersX = useRef(0);
-  const currentTestimonialsX = useRef(0);
-  
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [subscribing, setSubscribing] = useState(false);
   const [products, setProducts] = useState<ProductItem[]>(MOCK_PRODUCTS);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const { addToCart } = useCart();
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [mobileBanners, setMobileBanners] = useState<any[]>([]);
   const [desktopBannersList, setDesktopBannersList] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const offersScrollRef = useRef<FlatList>(null);
+  const currentOffersX = useRef(0);
+  const testimonialsScrollRef = useRef<FlatList>(null);
+  const currentTestimonialsX = useRef(0);
+  const [activeOrdersCount, setActiveOrdersCount] = useState(0);
   const [portadasData, setPortadasData] = useState<any[]>([]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsubscribe();
+  }, []);
   const handleBannerNavigation = (item: any) => {
     if (!item) return;
-    const params = new URLSearchParams();
+    const searchParams = new URLSearchParams();
     
     if (item.categorias) {
       const cat = Array.isArray(item.categorias) ? item.categorias[0] : item.categorias;
-      if (cat) params.append('category', cat);
+      if (cat) searchParams.append('category', cat);
     }
     
     if (item.marcas) {
       const brand = Array.isArray(item.marcas) ? item.marcas[0] : item.marcas;
-      if (brand) params.append('marca', brand);
+      if (brand) searchParams.append('marca', brand);
     }
 
-    const queryString = params.toString();
+    const queryString = searchParams.toString();
     router.push(queryString ? `/search?${queryString}` : '/search');
   };
+
   const [hasActiveOrders, setHasActiveOrders] = useState(false);
-  const [activeOrdersCount, setActiveOrdersCount] = useState(0);
 
   useEffect(() => {
     let unsubscribeOrders: (() => void) | undefined;
@@ -823,6 +803,8 @@ export default function Home() {
     };
   }, []);
 
+  const [showNewsletterSuccess, setShowNewsletterSuccess] = useState(false);
+
   useEffect(() => {
     console.log("Current params.success:", params.success);
     if (params.success === '1') {
@@ -830,6 +812,43 @@ export default function Home() {
       router.setParams({ success: undefined });
     }
   }, [params.success]);
+
+  const handleSubscribe = async () => {
+    if (!newsletterEmail || !newsletterEmail.includes('@')) {
+      if (Platform.OS === 'web') {
+        alert('Por favor ingresa un correo electrónico válido.');
+      } else {
+        import('react-native').then(({ Alert }) => {
+          Alert.alert('Atención', 'Por favor ingresa un correo electrónico válido.');
+        });
+      }
+      return;
+    }
+    
+    setSubscribing(true);
+    try {
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      await addDoc(collection(db, 'Newsletter'), {
+        email: newsletterEmail.toLowerCase().trim(),
+        createdAt: serverTimestamp(),
+        active: true
+      });
+      
+      setShowNewsletterSuccess(true);
+      setNewsletterEmail('');
+    } catch (error) {
+      console.error('Error subscribing:', error);
+      if (Platform.OS === 'web') {
+        alert('Ocurrió un error al procesar tu suscripción.');
+      } else {
+        import('react-native').then(({ Alert }) => {
+          Alert.alert('Error', 'No se pudo completar la suscripción. Intenta más tarde.');
+        });
+      }
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   useEffect(() => {
     // 1. Escuchar Publicidad (Sliders)
@@ -894,6 +913,8 @@ export default function Home() {
       unsubProducts();
     };
   }, []);
+
+
 
 
 
@@ -962,66 +983,63 @@ export default function Home() {
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
           
-          <DesktopPromoBanner />
           <DesktopHeroSlider slides={desktopBannersList} />
 
           <View style={{ paddingHorizontal: 40 }}>
             {/* HERO CAROUSEL FOR MOBILE (In Desktop ScrollView) */}
             {!isDesktop && <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} />}
-            {isDesktop && <View style={{ height: 40 }} />}
-            {/* TRUST BAR (Image 2 Footer) */}
+            {isDesktop && <View style={{ height: 10 }} />}
+            {/* TRUST BAR (Refined Spacing & Layout) */}
             <View style={{ 
-              marginTop: 40, 
-              backgroundColor: '#F8F9FA', 
-              borderRadius: 20, 
+              marginTop: 40,
+              marginBottom: 40,
+              backgroundColor: '#FFFFFF', 
+              borderRadius: 32, 
               flexDirection: 'row', 
-              justifyContent: 'space-around', 
-              paddingVertical: 32,
-              paddingHorizontal: 20,
+              justifyContent: 'space-between', 
+              paddingVertical: 22,
+              paddingHorizontal: 40,
               borderWidth: 1,
-              borderColor: '#EEEEEE'
+              borderColor: '#F1F5F9',
+              shadowColor: '#0F172A',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.05,
+              shadowRadius: 25,
+              elevation: 4
             }}>
-              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 15, flex: 1, justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#E0E0E0' }}>
-                <View style={{ backgroundColor: '#1A1A2E', padding: 10, borderRadius: 12 }}>
-                  <Stethoscope size={20} color="white" />
-                </View>
-                <View>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#1A1A2E' }}>¿Necesitas ayuda?</Text>
-                  <Text style={{ fontSize: 13, color: '#666', fontWeight: '500' }}>Contáctanos, te ayudamos</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 15, flex: 1, justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#E0E0E0' }}>
-                <View style={{ backgroundColor: '#1A1A2E', padding: 10, borderRadius: 12 }}>
-                  <Package size={20} color="white" />
-                </View>
-                <View>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#1A1A2E' }}>Mis pedidos</Text>
-                  <Text style={{ fontSize: 13, color: '#666', fontWeight: '500' }}>Sigue tu pedido en vivo</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 15, flex: 1, justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#E0E0E0' }}>
-                <View style={{ backgroundColor: '#1A1A2E', padding: 10, borderRadius: 12 }}>
-                  <MapPin size={20} color="white" />
-                </View>
-                <View>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#1A1A2E' }}>Sucursales</Text>
-                  <Text style={{ fontSize: 13, color: '#666', fontWeight: '500' }}>22 Tiendas en el país</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 15, flex: 1, justifyContent: 'center' }}>
-                <View style={{ backgroundColor: '#1A1A2E', padding: 10, borderRadius: 12 }}>
-                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: 'white', justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 12 }}>?</Text>
+              {[
+                { icon: MapPin, title: 'Ubicación', sub: 'Concha y Toro 3909', color: '#3B1E54', bg: '#F5F3FF' },
+                { icon: Clock, title: 'Horario', sub: 'Lun-Sáb 9AM - 8PM', color: '#F47321', bg: '#FFF7ED' },
+                { icon: MessageCircle, title: 'WhatsApp', sub: 'Soporte Directo', color: '#22C55E', bg: '#ECFDF5' }
+              ].map((item, idx) => (
+                <TouchableOpacity 
+                  key={idx} 
+                  style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    gap: 24, 
+                    flex: 1, 
+                    justifyContent: 'center', 
+                    borderRightWidth: idx < 2 ? 1 : 0, 
+                    borderRightColor: '#F1F5F9' 
+                  }}
+                >
+                  <View style={{ 
+                    backgroundColor: item.bg, 
+                    width: 60, 
+                    height: 60, 
+                    borderRadius: 20, 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                  }}>
+                    <item.icon size={28} color={item.color} strokeWidth={2} />
                   </View>
-                </View>
-                <View>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#1A1A2E' }}>Preguntas frecuentes</Text>
-                  <Text style={{ fontSize: 13, color: '#666', fontWeight: '500' }}>Resuelve tus dudas</Text>
-                </View>
-              </TouchableOpacity>
+                  <View>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', marginBottom: 4 }}>{item.title}</Text>
+                    <Text style={{ fontSize: 14, color: '#64748B', fontWeight: '700' }}>{item.sub}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
             </View>
 
 
@@ -1360,6 +1378,10 @@ export default function Home() {
                             <TouchableOpacity 
                               onPress={(e) => {
                                 if (e?.stopPropagation) e.stopPropagation();
+                                if (!auth.currentUser) {
+                                  setShowAuthModal(true);
+                                  return;
+                                }
                                 const priceNum = parseInt(item.price.replace(/[$.]/g, ''));
                                 addToCart({
                                   id: item.id,
@@ -1397,22 +1419,17 @@ export default function Home() {
             </View>
 
             {/* TESTIMONIALS SECTION - DESKTOP */}
-            <View style={{ marginBottom: 100 }}>
-              <View style={{ marginBottom: 40 }}>
-                <Text style={{ fontSize: 32, fontWeight: '900', color: '#1A1A2E' }}>
+            <View style={{ marginBottom: 120 }}>
+              <View style={{ marginBottom: 50, alignItems: 'center' }}>
+                <View style={{ backgroundColor: '#F0FDF4', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 100, marginBottom: 16 }}>
+                  <Text style={{ color: '#16A34A', fontSize: 13, fontWeight: '900', letterSpacing: 1 }}>HUELLAS DE FELICIDAD</Text>
+                </View>
+                <Text style={{ fontSize: 42, fontWeight: '900', color: '#1A1A2E', textAlign: 'center' }}>
                   Lo que dicen nuestros clientes<Text style={{ color: '#22C55E' }}>.</Text>
                 </Text>
-                
-                <View style={{ marginTop: 15, flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                  <Text style={{ fontSize: 24, fontWeight: '700', color: '#1A1A2E' }}>4.7</Text>
-                  <View style={{ flexDirection: 'row', gap: 2 }}>
-                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={18} fill="#FACC15" color="#FACC15" strokeWidth={0} />)}
-                  </View>
-                </View>
-                <Text style={{ fontSize: 13, color: '#666', marginTop: 5 }}>Basado en 1327 opiniones</Text>
-                <TouchableOpacity style={{ marginTop: 10 }}>
-                  <Text style={{ fontSize: 15, color: '#22C55E', fontWeight: '700' }}>Leer todos los comentarios</Text>
-                </TouchableOpacity>
+                <Text style={{ fontSize: 18, color: '#6B7280', marginTop: 12, textAlign: 'center', maxWidth: 600 }}>
+                  Historias reales de familias que confían en Saku para el bienestar de sus mascotas.
+                </Text>
               </View>
 
               <ScrollView 
@@ -1424,48 +1441,69 @@ export default function Home() {
                 {[
                   {
                     id: 1,
-                    name: 'cesar maximiliano mella\ngonzalez',
+                    name: 'César Mella',
+                    tag: 'Papá de Toby',
                     time: 'Hace 4 meses',
-                    comment: 'Excelente atención y entrega oportuna, con buenos regalos.',
+                    comment: 'Excelente atención y entrega oportuna. Mi perro está feliz con sus nuevos juguetes y los regalitos que mandaron.',
                     avatar: 'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?q=80&w=200'
                   },
                   {
                     id: 2,
-                    name: 'Erwin Alegria',
+                    name: 'Erwin Alegría',
+                    tag: 'Cliente Frecuente',
                     time: 'Hace 2 meses',
-                    comment: 'Soy un antiguo cliente\nExcelente servicio; dependiendo la hora en la cual realice el pedido, estos se reciben en el mismo día.\nSon muy afables las personas que realizan las entrega\nSigan así !!!! .... y ojalá pudiesen otorgar algún beneficio a quienes somos Clientes Frecuentes, a fin de mantener la fidelidad...',
+                    comment: 'Increíble servicio; pedí en la mañana y llegó el mismo día. Las personas de entrega son muy amables. ¡Sigan así!',
                     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200'
                   },
                   {
                     id: 3,
-                    name: 'Alejandro Rodriguez Soria',
+                    name: 'Alejandra Rodríguez',
+                    tag: 'Mamá de Luna',
                     time: 'Hace 2 meses',
-                    comment: 'La mejor experiencia que e tenido comprando productos de mascotas 100 % confiable vino el día de la entrega vino en una bolsa con 4 regalos\nTiene una clienta más desde ahora !\nGracias !!',
+                    comment: 'La mejor experiencia comprando productos para mi gatita. 100% confiable y los regalos sorpresa son un detalle hermoso.',
                     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200'
                   },
                   {
                     id: 4,
-                    name: 'jose vial',
+                    name: 'Jose Vial',
+                    tag: 'Dueño de Bruno',
                     time: 'Hace 5 meses',
-                    comment: 'en la descripcion de la oferta dice +2 kg y lata de regalo,te adjunto el envase que corresponde con la promo...',
+                    comment: 'Excelente stock de alimentos premium. Siempre encuentro lo que necesito y a buen precio. ¡Recomendado!',
                     avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=200'
                   }
                 ].map((testimonial) => (
                   <View key={testimonial.id} style={{ 
-                    width: 320, backgroundColor: '#F8F9FA', borderRadius: 12, padding: 25,
-                    borderWidth: 1, borderColor: '#EEE'
+                    width: 360, 
+                    backgroundColor: '#FFFFFF', 
+                    borderRadius: 24, 
+                    padding: 32,
+                    borderWidth: 1, 
+                    borderColor: '#F3F4F6',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 10 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 20,
+                    elevation: 5
                   }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 15 }}>
-                      <Image source={{ uri: testimonial.avatar }} style={{ width: 50, height: 50, borderRadius: 25 }} />
+                    <View style={{ position: 'absolute', top: 20, right: 32, opacity: 0.1 }}>
+                      <Quote size={40} color="#3B1E54" />
+                    </View>
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+                      <Image source={{ uri: testimonial.avatar }} style={{ width: 60, height: 60, borderRadius: 30, borderWidth: 3, borderColor: '#F3F4F6' }} />
                       <View>
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#1A1A2E' }}>{testimonial.name}</Text>
-                        <Text style={{ fontSize: 13, color: '#999' }}>{testimonial.time}</Text>
+                        <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A1A2E' }}>{testimonial.name}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={{ fontSize: 13, color: '#22C55E', fontWeight: '800' }}>{testimonial.tag}</Text>
+                          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} />
+                          <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500' }}>{testimonial.time}</Text>
+                        </View>
                       </View>
                     </View>
-                    <View style={{ flexDirection: 'row', gap: 2, marginBottom: 15 }}>
-                      {[1, 2, 3, 4, 5].map(i => <Star key={i} size={14} fill="#FACC15" color="#FACC15" strokeWidth={0} />)}
-                    </View>
-                    <Text style={{ fontSize: 14, color: '#444', lineHeight: 20 }}>{testimonial.comment}</Text>
+                    
+                    <Text style={{ fontSize: 16, color: '#4B5563', lineHeight: 26, fontWeight: '500', fontStyle: 'italic' }}>
+                      "{testimonial.comment}"
+                    </Text>
                   </View>
                 ))}
               </ScrollView>
@@ -1492,41 +1530,53 @@ export default function Home() {
                 NOS ENCANTAN LAS MASCOTAS FELICES Y SALUDABLES
               </Text>
               <Text style={{ fontSize: 42, fontWeight: '900', color: '#1A1A2E' }}>
-                Síguenos en @drpetchile
+                Síguenos en @vet_animal_welfare_
               </Text>
             </View>
           </View>
 
           {/* FEATURES BAR - DESKTOP - FULL WIDTH */}
           <View style={{ 
-            backgroundColor: '#F7F7F7', 
-            paddingVertical: 50, 
-            paddingHorizontal: '4%', // Dynamic padding for inner content alignment
+            backgroundColor: '#F9FAFB', 
+            paddingVertical: 60, 
+            paddingHorizontal: '4%',
             flexDirection: 'row', 
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
-            marginBottom: 0,
             borderTopWidth: 1,
-            borderColor: '#EDEDED'
+            borderBottomWidth: 1,
+            borderColor: '#F3F4F6'
           }}>
             <View style={{ flexDirection: 'row', width: '100%', maxWidth: 1400, justifyContent: 'space-between' }}>
               {[
-                { icon: Truck, title: 'Despachos', sub: 'Santiago y Coquimbo' },
-                { icon: MessageSquare, title: 'SAC', sub: 'Atención al cliente' },
-                { icon: ShieldCheck, title: 'Compras seguras', sub: 'WebPay Plus' },
-                { icon: FileText, title: 'Garantía', sub: 'Políticas de garantía' }
+                { icon: Truck, title: 'Despacho Saku', sub: 'Entregas rápidas y seguras', color: '#F47321' },
+                { icon: HeartPulse, title: 'Atención Experta', sub: 'Asesoría y soporte experto', color: '#EF4444' },
+                { icon: ShieldCheck, title: 'Pago Protegido', sub: 'Seguridad total con WebPay', color: '#3B82F6' },
+                { icon: Award, title: 'Sello Premium', sub: 'Calidad garantizada 100%', color: '#F59E0B' }
               ].map((feature, idx) => (
-                <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 15, paddingLeft: idx > 0 ? 30 : 0 }}>
-                  <View style={{ width: 48, height: 48, justifyContent: 'center', alignItems: 'center' }}>
-                    <feature.icon size={32} color="#1A1A2E" strokeWidth={1} />
+                <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 20, paddingHorizontal: 20 }}>
+                  <View style={{ 
+                    width: 64, 
+                    height: 64, 
+                    borderRadius: 20, 
+                    backgroundColor: 'white', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    shadowColor: feature.color,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 10,
+                    elevation: 2
+                  }}>
+                    <feature.icon size={32} color={feature.color} strokeWidth={1.5} />
                   </View>
                   <View>
-                    <Text style={{ fontSize: 16, fontWeight: '900', color: '#1A1A2E' }}>{feature.title}</Text>
-                    <Text style={{ fontSize: 13, color: '#666' }}>{feature.sub}</Text>
+                    <Text style={{ fontSize: 17, fontWeight: '900', color: '#1A1A2E', marginBottom: 2 }}>{feature.title}</Text>
+                    <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500' }}>{feature.sub}</Text>
                   </View>
                   {idx < 3 && (
-                    <View style={{ position: 'absolute', right: 0, width: 1, height: 50, backgroundColor: '#DDD' }} />
+                    <View style={{ position: 'absolute', right: 0, width: 1, height: 40, backgroundColor: '#E5E7EB' }} />
                   )}
                 </View>
               ))}
@@ -1556,6 +1606,8 @@ export default function Home() {
                 <TextInput 
                   placeholder="Su dirección de correo electrónico"
                   placeholderTextColor="rgba(0,0,0,0.3)"
+                  value={newsletterEmail}
+                  onChangeText={setNewsletterEmail}
                   style={{ 
                     flex: 1, 
                     backgroundColor: 'white', 
@@ -1567,115 +1619,137 @@ export default function Home() {
                     color: '#1A1A2E'
                   }}
                 />
-                <TouchableOpacity style={{ 
-                  backgroundColor: '#3B1E54', 
-                  height: '100%', 
-                  paddingHorizontal: 40,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderTopRightRadius: 6,
-                  borderBottomRightRadius: 6
-                }}>
-                  <Text style={{ color: 'white', fontWeight: '900', fontSize: 15, letterSpacing: 1 }}>SUSCRIBIRSE</Text>
+                <TouchableOpacity 
+                  onPress={handleSubscribe}
+                  disabled={subscribing}
+                  style={{ 
+                    backgroundColor: '#3B1E54', 
+                    height: '100%', 
+                    paddingHorizontal: 40,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderTopRightRadius: 6,
+                    borderBottomRightRadius: 6,
+                    opacity: subscribing ? 0.7 : 1
+                  }}
+                >
+                  {subscribing ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 15, letterSpacing: 1 }}>SUSCRIBIRSE</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-            {/* LIGHT CLOUD PREMIUM FOOTER - DESKTOP */}
-            <View style={{ backgroundColor: '#FFFFFF', width: '100%', paddingTop: 90, paddingBottom: 40, paddingHorizontal: '4%' }}>
-              <View style={{ maxWidth: 1400, alignSelf: 'center', width: '100%' }}>
+            {/* MINIMALIST BOUTIQUE REDESIGNED DESKTOP FOOTER */}
+            <View style={{ backgroundColor: '#FFFFFF', width: '100%', borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 80, paddingBottom: 40 }}>
+              <View style={{ maxWidth: 1400, alignSelf: 'center', width: '100%', paddingHorizontal: '4%' }}>
                 
-                {/* Main Content Grid */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 60 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   
-                  {/* Brand & Mission */}
-                  <View style={{ flex: 1.5, paddingRight: 50 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 25 }}>
-                      <View style={{ width: 54, height: 54, backgroundColor: 'rgba(59,30,84,0.1)', borderRadius: 27, justifyContent: 'center', alignItems: 'center' }}>
-                        <DogIcon size={28} color="#3B1E54" strokeWidth={2.5} />
+                  {/* BRAND & MISSION */}
+                  <View style={{ flex: 1.5, paddingRight: 60 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 25 }}>
+                      <View style={{ width: 40, height: 40, backgroundColor: '#111827', borderRadius: 8, justifyContent: 'center', alignItems: 'center' }}>
+                        <DogIcon size={22} color="white" />
                       </View>
-                      <Text style={{ fontSize: 38, fontWeight: '900', color: '#3B1E54', letterSpacing: -1 }}>
-                        SAKU<Text style={{ color: '#F47321' }}>.</Text>
-                      </Text>
+                      <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', letterSpacing: -1 }}>SAKU<Text style={{ color: '#F47321' }}>.</Text></Text>
                     </View>
-                    <Text style={{ fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 15, letterSpacing: -0.5, lineHeight: 32 }}>
-                      Amor incondicional,{'\n'}calidad excepcional.
-                    </Text>
-                    <Text style={{ color: '#6B7280', fontSize: 16, lineHeight: 26, fontWeight: '500' }}>
-                      Cuidamos a los que más amas. El mejor ecosistema de bienestar animal en todo el país.
+                    <Text style={{ color: '#6B7280', fontSize: 16, lineHeight: 26, fontWeight: '500', marginBottom: 30 }}>
+                      Amor incondicional, calidad excepcional. El ecosistema premium para el bienestar de tu mascota.
                     </Text>
                     
-                    {/* Floating Social Pills */}
-                    <View style={{ flexDirection: 'row', gap: 15, marginTop: 40 }}>
+                    {/* SOCIALS */}
+                    <View style={{ flexDirection: 'row', gap: 15 }}>
                       {[
-                        { name: 'facebook-square' },
-                        { name: 'youtube-play' },
-                        { name: 'instagram' },
-                        { name: 'linkedin-square' }
+                        { name: 'facebook-square', url: 'https://www.facebook.com/Vetanimalcarewelfare/' },
+                        { name: 'instagram', url: 'https://www.instagram.com/vet_animal_welfare_/' }
                       ].map((social, idx) => (
-                        <TouchableOpacity key={idx} style={{ 
-                          width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF', 
-                          justifyContent: 'center', alignItems: 'center', 
-                          borderWidth: 1, borderColor: '#E5E7EB',
-                          shadowColor: '#3B1E54', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3
-                        }}>
-                          <FontAwesome name={social.name as any} size={20} color="#3B1E54" />
+                        <TouchableOpacity key={idx} onPress={() => Linking.openURL(social.url)}>
+                          <FontAwesome name={social.name as any} size={22} color="#111827" />
                         </TouchableOpacity>
                       ))}
                     </View>
                   </View>
 
-                  {/* Navigation Columns */}
-                  <View style={{ flex: 2.5, flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 40, paddingTop: 15 }}>
-                    <View>
-                      <Text style={{ color: '#111827', fontSize: 16, fontWeight: '900', letterSpacing: 0.5, marginBottom: 30 }}>MARKETPLACE</Text>
-                      <View style={{ gap: 20 }}>
-                        {['Ofertas Flash', 'Alimento Especial', 'Accesorios Premium', 'Farmacia Vet'].map(item => (
-                          <TouchableOpacity key={item}><Text style={{ color: '#4B5563', fontSize: 16, fontWeight: '500' }}>{item}</Text></TouchableOpacity>
-                        ))}
-                      </View>
+                  {/* ESSENTIAL NAVIGATION */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#111827', fontSize: 14, fontWeight: '900', letterSpacing: 1, marginBottom: 25 }}>TIENDA</Text>
+                    <View style={{ gap: 12 }}>
+                      {[
+                        { name: 'Ofertas Flash', route: '/search?promo=true' },
+                        { name: 'Alimentos', route: '/search?category=Alimento' },
+                        { name: 'Accesorios', route: '/search?category=Accesorios' },
+                        { name: 'Farmacia', route: '/search?category=Farmacia' },
+                        { name: 'Servicios', route: '/servicios' }
+                      ].map(item => (
+                        <TouchableOpacity key={item.name} onPress={() => router.push(item.route as any)}>
+                          <Text style={{ color: '#4B5563', fontSize: 15, fontWeight: '600' }}>{item.name}</Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
-                    <View>
-                      <Text style={{ color: '#111827', fontSize: 16, fontWeight: '900', letterSpacing: 0.5, marginBottom: 30 }}>SOPORTE</Text>
-                      <View style={{ gap: 20 }}>
-                        {['Preguntas Frecuentes', 'Seguimiento Pedido', 'Cambios y Devoluciones', 'Contacto Directo'].map(item => (
-                          <TouchableOpacity key={item}><Text style={{ color: '#4B5563', fontSize: 16, fontWeight: '500' }}>{item}</Text></TouchableOpacity>
-                        ))}
-                      </View>
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#111827', fontSize: 14, fontWeight: '900', letterSpacing: 1, marginBottom: 25 }}>AYUDA Y LEGAL</Text>
+                    <View style={{ gap: 12 }}>
+                      {[
+                        { name: 'Centro de Ayuda', route: '/support' },
+                        { name: 'Seguimiento', route: '/orders' },
+                        { name: 'Sobre Nosotros', route: '/company' },
+                        { name: 'Privacidad', route: '/legal' },
+                        { name: 'Términos', route: '/legal' }
+                      ].map(item => (
+                        <TouchableOpacity key={item.name} onPress={() => router.push(item.route as any)}>
+                          <Text style={{ color: '#4B5563', fontSize: 15, fontWeight: '600' }}>{item.name}</Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
-                    <View>
-                      <Text style={{ color: '#111827', fontSize: 16, fontWeight: '900', letterSpacing: 0.5, marginBottom: 30 }}>COMPAÑÍA</Text>
-                      <View style={{ gap: 20 }}>
-                        {['Nuestra Historia', 'Sustentabilidad', 'Bases Legales', 'Tiendas Físicas'].map(item => (
-                          <TouchableOpacity key={item}><Text style={{ color: '#4B5563', fontSize: 16, fontWeight: '500' }}>{item}</Text></TouchableOpacity>
-                        ))}
+                  </View>
+
+                  {/* BOUTIQUE CONTACT & TRUST */}
+                  <View style={{ flex: 1.2, backgroundColor: '#F9FAFB', borderRadius: 24, padding: 25 }}>
+                    <Text style={{ color: '#111827', fontSize: 14, fontWeight: '900', letterSpacing: 1, marginBottom: 20 }}>SOPORTE</Text>
+                    
+                    <View style={{ gap: 18, marginBottom: 25 }}>
+                      <TouchableOpacity 
+                        onPress={() => Linking.openURL('https://wa.me/56983781062')}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                      >
+                        <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#25D366', justifyContent: 'center', alignItems: 'center' }}>
+                          <FontAwesome name="whatsapp" size={16} color="white" />
+                        </View>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>+56 9 8378 1062</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        onPress={() => Linking.openURL('mailto:sakudeveloperchile@gmail.com')}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                      >
+                        <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#6366F1', justifyContent: 'center', alignItems: 'center' }}>
+                          <FontAwesome name="envelope" size={14} color="white" />
+                        </View>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>sakudeveloperchile@gmail.com</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={{ borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 20 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: '#9CA3AF', marginBottom: 12 }}>PAGOS SEGUROS</Text>
+                      <View style={{ flexDirection: 'row', gap: 10, opacity: 0.5 }}>
+                        <FontAwesome name="cc-visa" size={20} color="#111827" />
+                        <FontAwesome name="cc-mastercard" size={20} color="#111827" />
+                        <FontAwesome name="credit-card" size={20} color="#111827" />
                       </View>
                     </View>
                   </View>
+
                 </View>
 
-                {/* BOTTOM FLOATING LEGAL PILL */}
-                <View style={{ 
-                  flexDirection: 'row', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  backgroundColor: '#F9FAFB', 
-                  paddingVertical: 20,
-                  paddingHorizontal: 30,
-                  borderRadius: 100,
-                  marginTop: 20,
-                  borderWidth: 1,
-                  borderColor: '#F3F4F6'
-                }}>
-                  <Text style={{ color: '#6B7280', fontSize: 13, fontWeight: '600' }}>© {new Date().getFullYear()} SAKU CLOUD TECHNOLOGY.</Text>
-                  
-                  <View style={{ flexDirection: 'row', gap: 25, alignItems: 'center' }}>
-                    <TouchableOpacity><Text style={{ color: '#4B5563', fontSize: 13, fontWeight: '600' }}>Políticas de Privacidad</Text></TouchableOpacity>
-                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} />
-                    <TouchableOpacity><Text style={{ color: '#4B5563', fontSize: 13, fontWeight: '600' }}>Términos de Servicio</Text></TouchableOpacity>
-                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} />
-                    <TouchableOpacity><Text style={{ color: '#3B1E54', fontSize: 13, fontWeight: '800' }}>Configurar Cookies</Text></TouchableOpacity>
-                  </View>
+                {/* MINIMALIST BOTTOM BAR */}
+                <View style={{ marginTop: 60, paddingTop: 30, borderTopWidth: 1, borderTopColor: '#F9FAFB', flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ color: '#9CA3AF', fontSize: 12, fontWeight: '700' }}>© {new Date().getFullYear()} SAKU ECOMMERCE. TODO POR ELLOS.</Text>
+                  <TouchableOpacity><Text style={{ color: '#3B1E54', fontSize: 12, fontWeight: '900' }}>CONFIGURACIÓN DE COOKIES</Text></TouchableOpacity>
                 </View>
 
               </View>
@@ -1737,12 +1811,17 @@ export default function Home() {
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 10 }}>
             {[
-              { id: 1, name: 'Perro',     IconComp: DogIcon,     color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' },
-              { id: 2, name: 'Gato',      IconComp: CatIcon,     color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' },
-              { id: 3, name: 'Exóticos',  IconComp: Bird,        color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' },
-              { id: 4, name: 'Servicios', IconComp: Stethoscope, color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54' }
+              { id: 1, name: 'Perro',     IconComp: DogIcon,     color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54', route: '/search?animal=Perro' },
+              { id: 2, name: 'Gato',      IconComp: CatIcon,     color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54', route: '/search?animal=Gato' },
+              { id: 3, name: 'Exóticos',  IconComp: Bird,        color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54', route: '/search?animal=Exoticos' },
+              { id: 4, name: 'Servicios', IconComp: Stethoscope, color: '#FFFFFF', bg: '#3B1E54', border: '#3B1E54', route: '/servicios' }
             ].map((cat) => (
-              <TouchableOpacity key={cat.id} style={{ alignItems: 'center' }} activeOpacity={0.8}>
+              <TouchableOpacity 
+                key={cat.id} 
+                style={{ alignItems: 'center' }} 
+                activeOpacity={0.8}
+                onPress={() => cat.route && router.push(cat.route as any)}
+              >
                 <View 
                   style={{ 
                     width: 76, 
@@ -1790,7 +1869,10 @@ export default function Home() {
             removeClippedSubviews={true}
             contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 24 }}
             renderItem={({ item }) => (
-              <MobileProductCard item={item} />
+              <MobileProductCard 
+                item={item} 
+                onAuthRequired={() => setShowAuthModal(true)} 
+              />
             )}
           />
 
@@ -1820,102 +1902,71 @@ export default function Home() {
           />
         </TouchableOpacity>
 
-        {/* Social Follow Section */}
-        <View style={{ alignItems: 'center', marginTop: 10, marginBottom: 40, paddingHorizontal: 20 }}>
-          <Text style={{ color: '#2E852D', fontSize: 11, fontWeight: '800', letterSpacing: 0.5, marginBottom: 12, textAlign: 'center' }}>
-            NOS ENCANTAN LAS MASCOTAS FELICES Y SALUDABLES
-          </Text>
-          <Text style={{ color: '#3B1E54', fontSize: 24, fontWeight: '900', textAlign: 'center' }}>
-            Síguenos en @sakuchile
-          </Text>
-        </View>
+        {/* PREMIUM MOBILE REDESIGNED FOOTER */}
+        <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 40, borderTopWidth: 1, borderTopColor: '#F3F4F6' }}>
+          
+          {/* Brand Identity */}
+          <View style={{ alignItems: 'center', marginBottom: 40 }}>
+            <View style={{ width: 50, height: 50, backgroundColor: '#111827', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 15 }}>
+              <DogIcon size={28} color="white" />
+            </View>
+            <Text style={{ fontSize: 32, fontWeight: '900', color: '#111827', letterSpacing: -1 }}>SAKU<Text style={{ color: '#F47321' }}>.</Text></Text>
+            <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '600', marginTop: 5 }}>Amor incondicional para tu mascota</Text>
+          </View>
 
-        {/* Newsletter Section - ADAPTED FROM DESKTOP */}
-        <View style={{ height: 320, position: 'relative', overflow: 'hidden' }}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=1200' }} 
-            style={{ width: '100%', height: '100%', position: 'absolute' }} 
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={['rgba(76,29,149,0.92)', 'rgba(59,30,84,0.95)']}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, paddingHorizontal: 25, justifyContent: 'center', alignItems: 'center' }}
-          >
-            <Text style={{ color: 'white', fontSize: 30, fontWeight: '900', textAlign: 'center', marginBottom: 24, lineHeight: 36, letterSpacing: -0.5 }}>
-              Inscríbete y recibe nuestras promociones
-            </Text>
-            
-            <View style={{ width: '100%', gap: 12 }}>
-              <TextInput 
-                placeholder="Su dirección de correo electrónico"
-                placeholderTextColor="rgba(0,0,0,0.3)"
-                style={{ 
-                  backgroundColor: 'white', 
-                  width: '100%', 
-                  height: 58, 
-                  borderRadius: 8, 
-                  paddingHorizontal: 20, 
-                  fontSize: 16,
-                  color: '#1A1A2E',
-                  fontWeight: '500'
-                }}
-              />
-              
+          {/* Quick Support Actions */}
+          <View style={{ flexDirection: 'row', gap: 12, marginBottom: 40 }}>
+            <TouchableOpacity 
+              onPress={() => Linking.openURL('https://wa.me/56983781062')}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#25D366', height: 56, borderRadius: 16 }}
+            >
+              <FontAwesome name="whatsapp" size={20} color="white" />
+              <Text style={{ color: 'white', fontWeight: '900', fontSize: 14 }}>WHATSAPP</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => Linking.openURL('mailto:sakudeveloperchile@gmail.com')}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#111827', height: 56, borderRadius: 16 }}
+            >
+              <FontAwesome name="envelope" size={18} color="white" />
+              <Text style={{ color: 'white', fontWeight: '900', fontSize: 14 }}>EMAIL</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Navigation Links */}
+          <View style={{ marginBottom: 40 }}>
+            {[
+              { label: 'PRODUCTOS Y OFERTAS', route: '/search' },
+              { label: 'CENTRO DE AYUDA', route: '/support' },
+              { label: 'SOBRE NOSOTROS', route: '/company' },
+              { label: 'POLÍTICAS LEGALES', route: '/legal' }
+            ].map((item, idx) => (
               <TouchableOpacity 
-                activeOpacity={0.9}
+                key={idx} 
+                onPress={() => router.push(item.route as any)}
                 style={{ 
-                  backgroundColor: '#3B1E54', 
-                  width: '100%', 
-                  height: 58, 
-                  borderRadius: 8, 
-                  justifyContent: 'center', 
-                  alignItems: 'center'
+                  flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+                  paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' 
                 }}
               >
-                <Text style={{ color: 'white', fontSize: 15, fontWeight: '900', letterSpacing: 1 }}>SUSCRIBIRSE</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827', letterSpacing: 0.3 }}>{item.label}</Text>
+                <ChevronRight size={18} color="#D1D5DB" />
               </TouchableOpacity>
-            </View>
-          </LinearGradient>
-        </View>
-
-        {/* Main Footer Section */}
-        <View style={{ backgroundColor: '#FFFFFF', paddingVertical: 40, paddingHorizontal: 25 }}>
-          <View style={{ marginBottom: 30 }}>
-            <Text style={{ fontSize: 42, fontWeight: '900', color: '#3B1E54', letterSpacing: -1 }}>
-              SAKU<Text style={{ color: '#F47321' }}>.</Text>
-            </Text>
-            <Text style={{ fontSize: 18, color: '#666', fontStyle: 'italic', marginTop: -5 }}>Todo por tu mascota</Text>
-          </View>
-          
-          <View style={{ gap: 10, marginBottom: 40 }}>
-            <Text style={{ fontSize: 16, color: '#444', fontWeight: '500' }}>Región Metropolitana</Text>
-            <Text style={{ fontSize: 16, color: '#444', fontWeight: '500' }}>Email: contacto@doctorpet.cl</Text>
+            ))}
           </View>
 
-          <View style={{ gap: 2 }}>
-            <TouchableOpacity style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#EEE' }}>
-              <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A1A2E' }}>PRODUCTOS</Text>
-              <ChevronRight size={20} color="#2E852D" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20 }}>
-              <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A1A2E' }}>AYUDA</Text>
-              <ChevronRight size={20} color="#2E852D" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Bottom Social & Copyright */}
-        <View style={{ backgroundColor: '#FFFFFF', paddingTop: 20, paddingBottom: 60, paddingHorizontal: 20, alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', gap: 20, marginBottom: 24 }}>
-            {['facebook', 'youtube-play', 'instagram', 'linkedin'].map((social) => (
-              <TouchableOpacity key={social} style={{ width: 48, height: 48, backgroundColor: 'transparent', borderRadius: 8, justifyContent: 'center', alignItems: 'center' }}>
-                <FontAwesome name={social as any} size={28} color="#3B1E54" />
+          {/* Social Presence */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 25, marginBottom: 35 }}>
+            {[
+              { id: 'facebook-square', url: 'https://www.facebook.com/Vetanimalcarewelfare/' },
+              { id: 'instagram', url: 'https://www.instagram.com/vet_animal_welfare_/' }
+            ].map((social) => (
+              <TouchableOpacity key={social.id} onPress={() => Linking.openURL(social.url)}>
+                <FontAwesome name={social.id as any} size={24} color="#111827" />
               </TouchableOpacity>
             ))}
           </View>
           
-          <Text style={{ color: '#6B7280', fontSize: 13, textAlign: 'center', marginBottom: 8, fontWeight: '500' }}>
+          <Text style={{ color: '#9CA3AF', fontSize: 12, textAlign: 'center', fontWeight: '600' }}>
             © 2026 Saku · Todos los derechos reservados
           </Text>
         </View>
@@ -1954,6 +2005,108 @@ export default function Home() {
               }}
             >
               <Text style={{ color: 'white', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>Volver al Inicio</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Newsletter Success Modal */}
+      <Modal
+        visible={showNewsletterSuccess}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNewsletterSuccess(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Animated.View 
+            entering={ZoomIn.duration(400)}
+            style={{ 
+              backgroundColor: 'white', 
+              borderRadius: 30, 
+              padding: 40, 
+              alignItems: 'center', 
+              width: '100%', 
+              maxWidth: 400,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.2,
+              shadowRadius: 20,
+              elevation: 10
+            }}
+          >
+            <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center', marginBottom: 25 }}>
+              <CheckCircle2 size={50} color="#22C55E" />
+            </View>
+            
+            <Text style={{ fontSize: 28, fontWeight: '900', color: '#1A1A2E', textAlign: 'center', marginBottom: 15 }}>
+              ¡Suscripción Exitosa!
+            </Text>
+            
+            <Text style={{ fontSize: 16, color: '#666', textAlign: 'center', lineHeight: 24, marginBottom: 35 }}>
+              Gracias por unirte. Pronto recibirás nuestras mejores ofertas y novedades directamente en tu correo.
+            </Text>
+            
+            <TouchableOpacity 
+              onPress={() => setShowNewsletterSuccess(false)}
+              style={{ 
+                backgroundColor: '#3B1E54', 
+                width: '100%', 
+                paddingVertical: 18, 
+                borderRadius: 15, 
+                alignItems: 'center',
+                shadowColor: '#3B1E54',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>GENIAL</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* AUTH MODAL */}
+      <Modal
+        visible={showAuthModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAuthModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ 
+            backgroundColor: 'white', borderTopLeftRadius: 30, borderTopRightRadius: 30, 
+            padding: 30, paddingBottom: 50, alignItems: 'center' 
+          }}>
+            <View style={{ width: 40, height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, marginBottom: 25 }} />
+            
+            <View style={{ width: 70, height: 70, borderRadius: 35, backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+              <User size={35} color="#EF4444" />
+            </View>
+
+            <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginBottom: 10 }}>Inicia Sesión</Text>
+            <Text style={{ fontSize: 15, color: '#6B7280', textAlign: 'center', marginBottom: 30, lineHeight: 22 }}>
+              Para agregar productos al carrito y disfrutar de una experiencia completa, necesitas iniciar sesión.
+            </Text>
+
+            <TouchableOpacity 
+              onPress={() => {
+                setShowAuthModal(false);
+                router.push('/login');
+              }}
+              style={{ 
+                backgroundColor: '#111827', width: '100%', height: 56, borderRadius: 16, 
+                justifyContent: 'center', alignItems: 'center', marginBottom: 12 
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>Iniciar Sesión</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => setShowAuthModal(false)}
+              style={{ width: '100%', height: 56, justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Text style={{ color: '#6B7280', fontWeight: '700', fontSize: 15 }}>Quizás más tarde</Text>
             </TouchableOpacity>
           </View>
         </View>

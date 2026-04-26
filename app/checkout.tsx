@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable, Alert } from 'react-native';
+import { mpService } from '../lib/mercadopago';
 
 import { ArrowLeft, Lock, MapPin, Plus, CreditCard, Banknote, ShieldCheck, ChevronRight, CheckCircle2, Store, Clock, RefreshCcw, Wifi, AlertCircle, Ticket, CalendarX, X } from 'lucide-react-native';
 
@@ -13,31 +14,72 @@ import { collection, addDoc, serverTimestamp, doc, writeBatch, updateDoc, getDoc
 export default function CheckoutScreen() {
   const { width } = useWindowDimensions();
   const { cart, cartTotal, clearCart } = useCart();
+  const params = useLocalSearchParams();
   const isDesktop = width >= 1024;
   
-  const [deliveryType, setDeliveryType] = useState('home'); // 'home' or 'store'
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'card'
+  // 1. ALL STATES AT THE TOP
+  const [deliveryType, setDeliveryType] = useState('home'); 
+  const [paymentMethod, setPaymentMethod] = useState(params.method === 'card' ? 'card' : 'cash');
   const [cardDetails, setCardDetails] = useState({
     number: '',
     name: '',
     expiry: '',
-    cvv: ''
+    cvv: '',
+    rut: ''
   });
-  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<any>({
-    main: 'Nueva Providencia 1515',
-    sub: 'Providencia, RM',
-    lat: -33.4425,
-    lng: -70.6400,
-    category: 'CASA'
-  });
+  const [saveCard, setSaveCard] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showNewCardForm, setShowNewCardForm] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponModal, setCouponModal] = useState({ visible: false, title: '', message: '', type: 'error' as 'error' | 'warning' | 'success' });
+  const [savedCards, setSavedCards] = useState<any[]>([]);
+  const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastOrderData, setLastOrderData] = useState<any>(null);
+  const [errorModal, setErrorModal] = useState({ visible: false, title: '', message: '' });
+  const [savedCardCVV, setSavedCardCVV] = useState('');
+  const [isDeletingCard, setIsDeletingCard] = useState<string | null>(null);
   const [userAddresses, setUserAddresses] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [isMapModalVisible, setIsMapModalVisible] = useState(false);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+
+  // 2. HELPER FUNCTIONS
+  const showError = (title: string, message: string) => {
+    setIsLoading(false);
+    setIsProcessingPayment(false);
+    setErrorModal({ visible: true, title, message });
+  };
+
+  const fetchSavedCards = async () => {
+    if (!auth.currentUser?.uid) return;
+    setIsLoadingCards(true);
+    try {
+      const cardsSnap = await getDocs(
+        collection(db, 'users', auth.currentUser.uid, 'savedCards')
+      );
+      const cards = cardsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setSavedCards(cards);
+      // Auto-select first card if available and nothing selected
+      if (cards.length > 0 && !selectedCardId && !showNewCardForm) {
+        setSelectedCardId(cards[0].id);
+      }
+    } catch (e) {
+      console.log('Error fetching saved cards:', e);
+    } finally {
+      setIsLoadingCards(false);
+    }
+  };
 
   const fetchAddresses = async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser?.uid) return;
+    setIsLoadingAddresses(true);
     try {
-      // 1. Fetch all addresses from Direcciones collection
-      const q = query(collection(db, 'Direcciones'), where('userId', '==', auth.currentUser.uid));
+      const q = query(collection(db, 'userAddresses'), where('userId', '==', auth.currentUser.uid));
       const querySnapshot = await getDocs(q);
       const addresses = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -45,33 +87,87 @@ export default function CheckoutScreen() {
       }));
       setUserAddresses(addresses);
 
-      // 2. Fetch default address from user profile to select it
       const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
       if (userDoc.exists() && userDoc.data().direccionDefault) {
         setSelectedLocation(userDoc.data().direccionDefault);
       } else if (addresses.length > 0) {
-        // Fallback to the first address if no default is set
         setSelectedLocation(addresses[0]);
       }
     } catch (error) {
       console.log("Error loading addresses:", error);
+    } finally {
+      setIsLoadingAddresses(false);
     }
   };
 
-  // Load addresses on mount
-  React.useEffect(() => {
+  // 3. EFFECTS
+  useEffect(() => {
     fetchAddresses();
+    if (auth.currentUser) {
+      fetchSavedCards();
+      getDoc(doc(db, 'users', auth.currentUser.uid)).then(userDoc => {
+        if (userDoc.exists() && userDoc.data().rut) {
+          setCardDetails(prev => ({ ...prev, rut: userDoc.data().rut }));
+        }
+      }).catch(e => console.log('Error loading user RUT:', e));
+    }
   }, []);
 
-  const [showNewCardForm, setShowNewCardForm] = useState(false);
+  useEffect(() => {
+    if (!isLoadingCards && savedCards.length === 0) {
+      setShowNewCardForm(true);
+      setSelectedCardId(null);
+    }
+  }, [savedCards, isLoadingCards]);
 
+  const handleRutChange = (text: string) => {
+    // Basic RUT formatting (XX.XXX.XXX-X)
+    let value = text.replace(/[^0-9kK]/g, '');
+    if (value.length > 9) value = value.substring(0, 9);
+    
+    let formatted = value;
+    if (value.length > 1) {
+      const body = value.slice(0, -1);
+      const dv = value.slice(-1).toUpperCase();
+      formatted = body.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.') + '-' + dv;
+    }
+    
+    setCardDetails(prev => ({ ...prev, rut: formatted }));
+  };
 
-  const [selectedCardId, setSelectedCardId] = useState('visa-1');
-  const [isLoading, setIsLoading] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
-  const [couponModal, setCouponModal] = useState({ visible: false, title: '', message: '', type: 'error' as 'error' | 'warning' | 'success' });
+  // Booking mode logic: If we are booking a service, ignore the global cart
+  const isBookingMode = params.isBooking === 'true';
+  const bookingItem = isBookingMode ? {
+    ID_productos: params.serviceId as string,
+    nombre: params.serviceName as string,
+    precio: Number(params.servicePrice || 0),
+    foto: params.serviceImage as string,
+    cantidad: 1,
+    subtotal: Number(params.servicePrice || 0)
+  } : null;
+
+  const displayItems = isBookingMode ? [bookingItem] : cart;
+  const displaySubtotal = isBookingMode ? Number(params.servicePrice || 0) : cartTotal;
+  
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
+  const handleExpiryChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 2) {
+      formatted = `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}`;
+    }
+    setCardDetails(prev => ({ ...prev, expiry: formatted.substring(0, 5) }));
+  };
+
+  const shipping = 0;
+  const discount = appliedCoupon 
+    ? (appliedCoupon.type === 'percentage' 
+        ? (displaySubtotal * (appliedCoupon.value / 100)) 
+        : appliedCoupon.value)
+    : 0;
+  const displayTotal = displaySubtotal + shipping - discount;
+  const total = displayTotal;
 
 
   const validateCoupon = async () => {
@@ -157,26 +253,217 @@ export default function CheckoutScreen() {
   };
 
 
-  const shipping = 0;
-  const discount = appliedCoupon 
-    ? (appliedCoupon.type === 'percentage' 
-        ? (cartTotal * (appliedCoupon.value / 100)) 
-        : appliedCoupon.value)
-    : 0;
-  const total = cartTotal + shipping - discount;
+  // Removed previous shipping/discount calculation as it's now above
 
   const handlePayment = async () => {
-    if (cart.length === 0) {
-      console.log("Cannot create order: Cart is empty");
+    if (displayItems.length === 0) {
+      showError('Carrito vacío', 'Agrega productos al carrito antes de continuar.');
+      setIsLoading(false);
+      setIsProcessingPayment(false);
       return;
+    }
+
+    if (paymentMethod === 'card') {
+      // Si el formulario nuevo está visible O no hay tarjetas guardadas, usamos lógica de nueva tarjeta
+      if (showNewCardForm || savedCards.length === 0) {
+        // Nueva Tarjeta: Validamos campos del formulario
+        if (!cardDetails.number || !cardDetails.expiry || !cardDetails.cvv || !cardDetails.rut) {
+          showError('Datos incompletos', 'Por favor completa todos los campos de la tarjeta, incluyendo el RUT.');
+          setIsLoading(false);
+          setIsProcessingPayment(false);
+          return;
+        }
+      } else if (selectedCardId) {
+        // Tarjeta Guardada: Solo validamos el CVV guardado
+        if (!savedCardCVV) {
+          showError('Seguridad', 'Por favor ingresa el CVV de tu tarjeta guardada.');
+          setIsLoading(false);
+          setIsProcessingPayment(false);
+          return;
+        }
+      }
     }
     
     setIsLoading(true);
-    console.log("Starting order process for user:", auth.currentUser?.uid);
+    setIsProcessingPayment(true);
     
+    // Generate a unique reference for this transaction
+    const externalRef = `SAKU-ORD-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+
     try {
+      let cardToken = null;
+      let paymentMethodId = 'account_money'; // Default if not card
+      let issuerId = null;
+
+      // 1. If paying with card, tokenize it first
+      if (paymentMethod === 'card') {
+        try {
+          if (showNewCardForm) {
+            // New Card Path
+            const [month, year] = cardDetails.expiry.split('/');
+            const tokenData: any = await mpService.createCardToken({
+              cardNumber: cardDetails.number,
+              cardholderName: cardDetails.name,
+              cardExpirationMonth: month,
+              cardExpirationYear: year,
+              securityCode: cardDetails.cvv,
+              identificationType: 'RUT',
+              identificationNumber: cardDetails.rut.replace(/[^0-9kK]/g, '')
+            });
+
+            cardToken = tokenData.id;
+            paymentMethodId = tokenData.payment_method_id;
+          } else {
+            // Saved Card Path
+            const selectedCard = savedCards.find(c => c.id === selectedCardId);
+            if (!selectedCard?.cardId) {
+              throw new Error('Esta tarjeta no está vinculada correctamente. Por favor usa una "Nueva Tarjeta".');
+            }
+
+            const tokenData = await mpService.createCardTokenFromSaved(
+              selectedCard.cardId,
+              savedCardCVV
+            );
+            cardToken = tokenData.id;
+            paymentMethodId = tokenData.payment_method_id || selectedCard.brand || 'visa';
+          }
+
+          // Detect brand if missing (only for new cards)
+          if (!paymentMethodId && showNewCardForm) {
+            const cleanNumber = cardDetails.number.replace(/\s/g, '');
+            const bin = cleanNumber.substring(0, 6);
+            try {
+              const method = await mpService.getPaymentMethod(bin);
+              paymentMethodId = method?.id || null;
+            } catch (e) {
+              console.log('Error detecting payment method:', e);
+            }
+          }
+          
+          console.log("Token generated successfully:", cardToken);
+
+        } catch (tokenError: any) {
+          showError('Error de Tarjeta', tokenError.message || 'No se pudo procesar la tarjeta. Revisa los datos.');
+          setIsLoading(false);
+          setIsProcessingPayment(false);
+          return;
+        }
+      }
+
+      // 2. Process Payment and optionally save card
+      if (paymentMethod === 'card' && cardToken) {
+        
+        // Save card to Mercado Pago Customer AND Firestore if requested
+        if (showNewCardForm && saveCard && auth.currentUser?.uid) {
+          try {
+            const userEmail = auth.currentUser.email || `${auth.currentUser.uid}@saku-user.com`;
+            console.log('Registering card with Mercado Pago Customer for:', userEmail);
+            const mpSaveResult = await mpService.saveCard(cardToken, userEmail);
+            
+            if (mpSaveResult.success) {
+              const [expMonth, expYear] = cardDetails.expiry.split('/');
+              const cardMeta = {
+                cardId: mpSaveResult.cardId,
+                customerId: mpSaveResult.customerId,
+                last4: mpSaveResult.last_four_digits,
+                holderName: cardDetails.name,
+                expMonth,
+                expYear: expYear?.length === 2 ? `20${expYear}` : expYear,
+                brand: mpSaveResult.payment_method_id || paymentMethodId,
+                createdAt: new Date().toISOString(),
+              };
+
+              await addDoc(
+                collection(db, 'users', auth.currentUser.uid, 'savedCards'),
+                cardMeta
+              );
+              console.log('Card registered and saved to Firestore');
+              fetchSavedCards();
+            }
+          } catch (saveError) {
+            console.log('Error registering card (continuing payment):', saveError);
+          }
+        }
+
+        // Save RUT to user profile for future checkouts
+        if (auth.currentUser?.uid && cardDetails.rut) {
+          try {
+            await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+              rut: cardDetails.rut
+            });
+          } catch (e) {
+            console.log('Error saving RUT to profile:', e);
+          }
+        }
+
+        let payerId: string | undefined = undefined;
+        if (!showNewCardForm && selectedCardId) {
+          const selectedCard = savedCards.find(c => c.id === selectedCardId);
+          if (selectedCard) {
+            payerId = selectedCard.customerId;
+          }
+        }
+
+        const paymentBody = {
+          transaction_amount: displayTotal,
+          token: cardToken,
+          description: `Compra en Saku: ${displayItems.map(i => i.nombre).join(', ')}`,
+          payment_method_id: paymentMethodId,
+          issuer_id: issuerId,
+          external_reference: externalRef,
+          items: displayItems.map((item: any) => ({
+            id: item.ID_productos || '',
+            title: item.nombre || 'Producto Saku',
+            quantity: item.cantidad || 1,
+            unit_price: item.precio || 0,
+            picture_url: item.foto || ''
+          })),
+          payer: {
+            email: auth.currentUser?.email || 'anon@saku.com',
+            identification: {
+              type: 'RUT',
+              number: cardDetails.rut.replace(/[^0-9kK]/g, '')
+            },
+            ...(payerId && { id: payerId })
+          }
+        };
+        console.log('Sending payment to backend:', JSON.stringify(paymentBody, null, 2));
+        
+        const paymentResult = await mpService.processPayment(paymentBody);
+
+        if (paymentResult.status !== 'approved') {
+          const rejectionMessages: Record<string, string> = {
+            cc_rejected_insufficient_amount: '💳 Fondos insuficientes. Verifica el saldo de tu tarjeta.',
+            cc_rejected_bad_filled_card_number: '🔢 Número de tarjeta incorrecto. Revísalo e intenta nuevamente.',
+            cc_rejected_bad_filled_date: '📅 Fecha de vencimiento incorrecta.',
+            cc_rejected_bad_filled_security_code: '🔐 CVV incorrecto. Revisa el código de seguridad.',
+            cc_rejected_bad_filled_other: '⚠️ Datos de la tarjeta incorrectos. Verifica e intenta de nuevo.',
+            cc_rejected_call_for_authorize: '📞 Tu banco requiere autorización. Llama a tu banco para habilitar el pago.',
+            cc_rejected_duplicated_payment: '🔄 Pago duplicado detectado. Ya realizaste este pago.',
+            cc_rejected_high_risk: '🛡️ Pago rechazado por seguridad. Intenta con otra tarjeta.',
+            cc_rejected_max_attempts: '🚫 Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.',
+            cc_rejected_card_disabled: '🚫 Tarjeta deshabilitada. Contacta a tu banco.',
+            cc_amount_rate_limit_exceeded: '⏳ Límite de intentos alcanzado. Espera unos minutos.',
+          };
+          const friendlyMessage = rejectionMessages[paymentResult.status_detail]
+            || `❌ Pago rechazado: ${paymentResult.status_detail}`;
+          showError('Pago Rechazado', friendlyMessage);
+
+          setIsLoading(false);
+          setIsProcessingPayment(false);
+          return;
+        }
+      }
+
+      // 4. Create Order in Firestore
+      const userSnap = await getDoc(doc(db, 'users', auth.currentUser!.uid));
+      const uData = userSnap.exists() ? userSnap.data() : {};
+      const userName = [uData.display_name, uData.apellido].filter(Boolean).join(' ') || auth.currentUser?.displayName || 'Usuario';
+
       const orderData = {
-        items: cart.map(item => ({
+        nombreCliente: userName,
+        emailCliente: auth.currentUser?.email || '',
+        items: displayItems.map((item: any) => ({
           id: item.ID_productos || '',
           nombre: item.nombre || '',
           precio: item.precio || 0,
@@ -185,8 +472,8 @@ export default function CheckoutScreen() {
           subtotal: item.subtotal || 0,
           foto: item.foto || ''
         })),
-        total: total,
-        subtotal: cartTotal,
+        total: displayTotal,
+        subtotal: displaySubtotal,
         envio: shipping,
         descuento: discount,
         cuponAplicado: appliedCoupon ? {
@@ -202,10 +489,11 @@ export default function CheckoutScreen() {
           texto: `${selectedLocation.main}, ${selectedLocation.sub}`
         } : { main: 'Saku Central', sub: 'Retiro en Tienda', texto: 'Retiro en Sucursal Saku' },
         estado: 'pendiente',
-        fechaCreacion: new Date().toISOString(), // Fallback to string if serverTimestamp is tricky
+        fechaCreacion: new Date().toISOString(), 
         timestamp: serverTimestamp(),
         creadorId: auth.currentUser?.uid || null,
         creador: auth.currentUser ? doc(db, 'users', auth.currentUser.uid) : null,
+        isServiceBooking: isBookingMode, 
         codigoRetiro: (() => {
           const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
           let code = '';
@@ -216,54 +504,39 @@ export default function CheckoutScreen() {
         })()
       };
 
-      console.log("Order Data to be sent:", orderData);
-
-      // 1. Create the Order
       const docRef = await addDoc(collection(db, 'Orden'), orderData);
-      console.log("Order document created with ID:", docRef.id);
-
-      // 1.5 Create Admin Notification
-      try {
-        await addDoc(collection(db, 'Notifications'), {
-          title: 'Nuevo Pedido #' + docRef.id.slice(-4).toUpperCase(),
-          desc: `El cliente ha realizado una compra de $${total.toLocaleString()}.`,
-          time: new Date().toISOString(),
-          type: 'order',
-          read: false,
-          orderId: docRef.id,
-          timestamp: serverTimestamp()
-        });
-        console.log("Admin notification created.");
-      } catch (notifError) {
-        console.error("Error creating admin notification:", notifError);
-      }
-
-      // 2. Clear the cart in Firestore (productosseleccionados)
-      console.log("Cleaning up cart items from Firestore...");
-      const batch = writeBatch(db);
-      let itemsToBatch = 0;
-      cart.forEach((item) => {
-        if (item.firebaseId) {
-          const itemRef = doc(db, 'productosseleccionados', item.firebaseId);
-          batch.delete(itemRef);
-          itemsToBatch++;
-        }
-      });
       
-      if (itemsToBatch > 0) {
+      // Notify Admin
+      await addDoc(collection(db, 'Notifications'), {
+        title: 'Nuevo Pedido #' + docRef.id.slice(-4).toUpperCase(),
+        desc: `Compra de $${total.toLocaleString()} vía ${paymentMethod}.`,
+        time: new Date().toISOString(),
+        type: 'order',
+        read: false,
+        orderId: docRef.id,
+        timestamp: serverTimestamp()
+      });
+
+      // 5. Clear Cart
+      if (!isBookingMode) {
+        const batch = writeBatch(db);
+        cart.forEach((item) => {
+          if (item.firebaseId) {
+            batch.delete(doc(db, 'productosseleccionados', item.firebaseId));
+          }
+        });
         await batch.commit();
-        console.log(`Successfully cleared ${itemsToBatch} items from cart.`);
+        clearCart();
       }
 
-      // 3. Navigate to Home with success parameter
-      clearCart(); // Local context clear
       router.replace('/?success=1');
 
     } catch (error: any) {
-      console.error("Error creating order:", error);
-      alert("Error: " + error.message);
+      console.error("Checkout Error:", error);
+      showError('Error', 'Hubo un problema al procesar tu orden: ' + error.message);
     } finally {
       setIsLoading(false);
+      setIsProcessingPayment(false);
     }
   };
 
@@ -286,7 +559,7 @@ export default function CheckoutScreen() {
           </TouchableOpacity>
           <View style={{ alignItems: 'center' }}>
             <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Checkout</Text>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: '#9CA3AF' }}>{cart.length} productos</Text>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: '#9CA3AF' }}>{displayItems.length} {isBookingMode ? 'servicio' : 'productos'}</Text>
           </View>
         </View>
 
@@ -421,119 +694,164 @@ export default function CheckoutScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              onPress={() => setPaymentMethod('card')}
+            <View 
               style={{ 
                 borderWidth: 2, borderColor: paymentMethod === 'card' ? '#1E1B4B' : '#F9FAFB', borderRadius: 24, padding: 16, 
                 backgroundColor: paymentMethod === 'card' ? '#EEF2FF' : '#F9FAFB',
                 marginBottom: 30
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              <TouchableOpacity 
+                onPress={() => setPaymentMethod('card')}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}
+              >
                 <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
                   <CreditCard size={22} color="#9CA3AF" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Tarjeta</Text>
-                  <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '500' }}>Débito o crédito</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Tarjeta Bancaria</Text>
+                  <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '500' }}>Crédito / Débito Segura</Text>
                 </View>
                 <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: paymentMethod === 'card' ? '#1E1B4B' : '#E5E7EB', justifyContent: 'center', alignItems: 'center' }}>
                   <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>✓</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               {paymentMethod === 'card' && (
                 <View>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 20 }}>
                     <View style={{ flexDirection: 'row', gap: 12 }}>
-                      {/* Visa Card */}
+                      {isLoadingCards ? (
+                        <ActivityIndicator size="small" color="#1E1B4B" style={{ marginLeft: 20 }} />
+                      ) : (
+                        savedCards.map((card) => (
+                          <TouchableOpacity 
+                            key={card.id}
+                            onPress={() => {
+                              setSelectedCardId(card.id);
+                              setShowNewCardForm(false);
+                              setSavedCardCVV('');
+                            }}
+                            style={{ 
+                              width: 140, height: 90, borderRadius: 16, backgroundColor: '#1E1B4B', padding: 12,
+                              borderWidth: 2, borderColor: selectedCardId === card.id && !showNewCardForm ? '#10B981' : 'transparent',
+                              position: 'relative'
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <Text style={{ color: 'white', fontSize: 10, fontWeight: '700', textTransform: 'capitalize' }}>{card.brand || 'Tarjeta'}</Text>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                {selectedCardId === card.id && !showNewCardForm && (
+                                  <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                                    <Text style={{ color: 'white', fontSize: 10 }}>✓</Text>
+                                  </View>
+                                )}
+                                <TouchableOpacity 
+                                  onPress={async () => {
+                                    if (auth.currentUser) {
+                                      const { deleteDoc, doc } = await import('firebase/firestore');
+                                      await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'savedCards', card.id));
+                                      fetchSavedCards();
+                                    }
+                                  }}
+                                  style={{ padding: 2 }}
+                                >
+                                  <X size={14} color="rgba(255,255,255,0.6)" />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                            <View style={{ marginTop: 'auto' }}>
+                              <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>•••• {card.last4}</Text>
+                              <Text style={{ color: 'white', opacity: 0.7, fontSize: 10 }}>{card.expMonth}/{card.expYear}</Text>
+                            </View>
+                          </TouchableOpacity>
+                        ))
+                      )}
+
+                      {/* Add New Card Button */}
                       <TouchableOpacity 
                         onPress={() => {
-                          setSelectedCardId('visa-1');
-                          setShowNewCardForm(false);
+                          setShowNewCardForm(true);
+                          setSelectedCardId(null);
                         }}
                         style={{ 
-                          width: 140, height: 90, borderRadius: 16, backgroundColor: '#1E1B4B', padding: 12,
-                          borderWidth: 2, borderColor: selectedCardId === 'visa-1' && !showNewCardForm ? '#10B981' : 'transparent'
+                          width: 140, height: 90, borderRadius: 16, backgroundColor: '#F3F4F6', padding: 12,
+                          borderWidth: 2, borderColor: showNewCardForm ? '#10B981' : 'transparent',
+                          justifyContent: 'center', alignItems: 'center', gap: 4
                         }}
                       >
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png' }} style={{ width: 35, height: 12 }} resizeMode="contain" />
-                          {selectedCardId === 'visa-1' && !showNewCardForm && (
-                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
-                              <Text style={{ color: 'white', fontSize: 10 }}>✓</Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={{ marginTop: 'auto' }}>
-                          <Text style={{ color: 'white', fontSize: 12, fontWeight: '700' }}>Visa</Text>
-                          <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>•••• 4242</Text>
-                        </View>
-                      </TouchableOpacity>
-
-                      {/* Mastercard Card */}
-                      <TouchableOpacity 
-                        onPress={() => {
-                          setSelectedCardId('master-1');
-                          setShowNewCardForm(false);
-                        }}
-                        style={{ 
-                          width: 140, height: 90, borderRadius: 16, backgroundColor: '#7C2D12', padding: 12,
-                          borderWidth: 2, borderColor: selectedCardId === 'master-1' && !showNewCardForm ? '#10B981' : 'transparent'
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png' }} style={{ width: 35, height: 20 }} resizeMode="contain" />
-                          {selectedCardId === 'master-1' && !showNewCardForm && (
-                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
-                              <Text style={{ color: 'white', fontSize: 10 }}>✓</Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={{ marginTop: 'auto' }}>
-                          <Text style={{ color: 'white', fontSize: 12, fontWeight: '700' }}>Mastercard</Text>
-                          <Text style={{ color: 'white', fontSize: 14, fontWeight: '900' }}>•••• 5555</Text>
-                        </View>
-                      </TouchableOpacity>
-
-                      {/* New Card Button */}
-                      <TouchableOpacity 
-                        onPress={() => setShowNewCardForm(true)}
-                        style={{ 
-                          width: 120, height: 90, borderRadius: 16, backgroundColor: '#FFFFFF', 
-                          justifyContent: 'center', alignItems: 'center', gap: 6, borderStyle: 'solid', borderWidth: 2, borderColor: showNewCardForm ? '#10B981' : '#E5E7EB'
-                        }}
-                      >
-                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center' }}>
-                          <Plus size={18} color="#10B981" />
-                        </View>
-                        <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>Nueva Tarjeta</Text>
+                        <Plus size={20} color="#9CA3AF" />
+                        <Text style={{ color: '#9CA3AF', fontSize: 12, fontWeight: '700' }}>Nueva Tarjeta</Text>
                       </TouchableOpacity>
                     </View>
                   </ScrollView>
 
+                  {/* Saved Card Security Code Prompt */}
+                  {selectedCardId && !showNewCardForm && (
+                    <View style={{ marginTop: 24, padding: 20, backgroundColor: '#F9FAFB', borderRadius: 20, borderWidth: 1, borderColor: '#E5E7EB' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151', marginBottom: 12 }}>Seguridad de la tarjeta</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <View style={{ flex: 1, height: 50, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#D1D5DB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                          <TextInput 
+                            placeholder="CVV (Código de seguridad)"
+                            placeholderTextColor="#9CA3AF"
+                            value={savedCardCVV}
+                            onChangeText={setSavedCardCVV}
+                            keyboardType="numeric"
+                            maxLength={4}
+                            secureTextEntry
+                            style={{ fontSize: 14, fontWeight: '600' }}
+                          />
+                        </View>
+                        <ShieldCheck size={24} color="#10B981" />
+                      </View>
+                      <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 8 }}>Por tu seguridad, ingresa los 3 o 4 dígitos al reverso de tu tarjeta.</Text>
+                    </View>
+                  )}
+
                   {showNewCardForm && (
                     <View style={{ marginTop: 24, gap: 16 }}>
-                      {/* Card Preview */}
+                      {/* Card Preview - Mobile */}
                       <View style={{ 
-                        width: '100%', height: 180, borderRadius: 24, backgroundColor: '#1E1B4B', padding: 24,
-                        shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10
+                        width: '100%', height: 170, borderRadius: 20,
+                        backgroundColor: '#1E1B4B', padding: 20,
+                        shadowColor: '#1E1B4B', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }
                       }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <View style={{ width: 40, height: 30, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 6 }} />
-                          <Text style={{ color: 'white', fontSize: 18, fontWeight: '800', fontStyle: 'italic' }}>Visa</Text>
+                        {/* Top Row: Chip + Brand */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                            {/* Chip */}
+                            <View style={{ width: 28, height: 22, borderRadius: 4, backgroundColor: '#C9A84C', justifyContent: 'center', alignItems: 'center' }}>
+                              <View style={{ width: 18, height: 14, borderRadius: 2, borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.3)' }} />
+                            </View>
+                            <Wifi size={14} color="rgba(255,255,255,0.6)" style={{ transform: [{ rotate: '90deg' }] }} />
+                          </View>
+                          <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '800', fontStyle: 'italic', letterSpacing: 0.5 }}>SAKU</Text>
                         </View>
-                        <Text style={{ color: 'white', fontSize: 24, fontWeight: '700', marginTop: 30, letterSpacing: 2 }}>
-                          {cardDetails.number ? cardDetails.number.replace(/(.{4})/g, '$1 ') : '#### #### #### ####'}
+
+                        {/* Card Number */}
+                        <Text 
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          style={{ color: 'white', fontSize: 16, fontWeight: '700', marginTop: 14, letterSpacing: 3, fontFamily: 'monospace' }}
+                        >
+                          {cardDetails.number 
+                            ? cardDetails.number.replace(/\s/g,'').replace(/(.{4})/g, '$1 ').trim()
+                            : '•••• •••• •••• ••••'}
                         </Text>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 'auto' }}>
-                          <View>
-                            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '700' }}>TITULAR</Text>
-                            <Text style={{ color: 'white', fontSize: 14, fontWeight: '700', textTransform: 'uppercase' }}>{cardDetails.name || 'Nombre del titular'}</Text>
+
+                        {/* Bottom Row: Name + Expiry */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto' }}>
+                          <View style={{ flex: 1, marginRight: 12 }}>
+                            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontWeight: '700', letterSpacing: 1 }}>TITULAR</Text>
+                            <Text 
+                              numberOfLines={1}
+                              style={{ color: 'white', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginTop: 2 }}
+                            >{cardDetails.name || 'NOMBRE DEL TITULAR'}</Text>
                           </View>
                           <View style={{ alignItems: 'flex-end' }}>
-                            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '700' }}>VENCE</Text>
-                            <Text style={{ color: 'white', fontSize: 14, fontWeight: '700' }}>{cardDetails.expiry || 'MM/YY'}</Text>
+                            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, fontWeight: '700', letterSpacing: 1 }}>VENCE</Text>
+                            <Text style={{ color: 'white', fontSize: 11, fontWeight: '700', marginTop: 2 }}>{cardDetails.expiry || 'MM/YY'}</Text>
                           </View>
                         </View>
                       </View>
@@ -546,6 +864,8 @@ export default function CheckoutScreen() {
                           placeholderTextColor="#9CA3AF"
                           value={cardDetails.number || ''}
                           onChangeText={(text) => setCardDetails(prev => ({ ...prev, number: text }))}
+                          keyboardType="numeric"
+                          maxLength={19}
                           style={{ flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600' }}
                         />
                       </View>
@@ -560,13 +880,25 @@ export default function CheckoutScreen() {
                         />
                       </View>
 
+                      <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                        <TextInput 
+                          placeholder="RUT del titular (ej: 12.345.678-9)"
+                          placeholderTextColor="#9CA3AF"
+                          value={cardDetails.rut || ''}
+                          onChangeText={handleRutChange}
+                          style={{ fontSize: 15, fontWeight: '600' }}
+                        />
+                      </View>
+
                       <View style={{ flexDirection: 'row', gap: 12 }}>
                         <View style={{ flex: 1, height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
                           <TextInput 
                             placeholder="MM/YY"
                             placeholderTextColor="#9CA3AF"
                             value={cardDetails.expiry || ''}
-                            onChangeText={(text) => setCardDetails(prev => ({ ...prev, expiry: text }))}
+                            onChangeText={handleExpiryChange}
+                            keyboardType="numeric"
+                            maxLength={5}
                             style={{ fontSize: 15, fontWeight: '600' }}
                           />
                         </View>
@@ -576,25 +908,51 @@ export default function CheckoutScreen() {
                             placeholderTextColor="#9CA3AF"
                             value={cardDetails.cvv || ''}
                             onChangeText={(text) => setCardDetails(prev => ({ ...prev, cvv: text }))}
+                            keyboardType="numeric"
+                            maxLength={4}
                             style={{ fontSize: 15, fontWeight: '600' }}
                           />
                         </View>
                       </View>
 
                       <TouchableOpacity 
-                        onPress={() => setShowNewCardForm(false)}
+                        onPress={() => setSaveCard(!saveCard)}
+                        activeOpacity={0.7}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 }}
+                      >
+                        <View style={{ 
+                          width: 22, height: 22, borderRadius: 6, borderWidth: 2, 
+                          borderColor: saveCard ? '#10B981' : '#D1D5DB',
+                          backgroundColor: saveCard ? '#10B981' : 'transparent',
+                          justifyContent: 'center', alignItems: 'center'
+                        }}>
+                          {saveCard && <Text style={{ color: 'white', fontSize: 12 }}>✓</Text>}
+                        </View>
+                        <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '700' }}>Guardar mi tarjeta para futuras compras</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        onPress={handlePayment}
+                        disabled={isProcessingPayment}
                         style={{ 
-                          backgroundColor: '#10B981', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8
+                          backgroundColor: '#10B981', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8,
+                          opacity: isProcessingPayment ? 0.6 : 1
                         }}
                       >
-                        <CreditCard size={20} color="white" />
-                        <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Guardar Tarjeta</Text>
+                        {isProcessingPayment ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          <>
+                            <Lock size={18} color="white" />
+                            <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Pagar Ahora</Text>
+                          </>
+                        )}
                       </TouchableOpacity>
                     </View>
                   )}
                 </View>
               )}
-            </TouchableOpacity>
+            </View>
           </View>
 
           {/* Discount Code */}
@@ -633,7 +991,7 @@ export default function CheckoutScreen() {
             <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', marginBottom: 20 }}>Resumen de Orden</Text>
             
             <View style={{ gap: 15, marginBottom: 25 }}>
-              {cart.map((item) => (
+              {displayItems.map((item: any) => (
                 <View key={item.firebaseId || `${item.ID_productos}-${item.medida}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: '#FFF9F5', justifyContent: 'center', alignItems: 'center' }}>
                     <Image source={{ uri: item.foto }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
@@ -650,7 +1008,7 @@ export default function CheckoutScreen() {
             <View style={{ gap: 12, borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '700' }}>Subtotal</Text>
-                <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>${cartTotal.toLocaleString()}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: '#111827' }}>${displaySubtotal.toLocaleString()}</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '700' }}>Envío</Text>
@@ -665,7 +1023,7 @@ export default function CheckoutScreen() {
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
                 <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Total</Text>
-                <Text style={{ fontSize: 28, fontWeight: '900', color: '#F47321' }}>${total.toLocaleString()}</Text>
+                <Text style={{ fontSize: 28, fontWeight: '900', color: '#F47321' }}>${displayTotal.toLocaleString()}</Text>
               </View>
 
               <TouchableOpacity 
@@ -679,7 +1037,9 @@ export default function CheckoutScreen() {
                 {isLoading ? (
                   <ActivityIndicator color="white" />
                 ) : (
-                  <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>PEDIR CONTRA ENTREGA</Text>
+                  <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>
+                    {paymentMethod === 'card' ? 'FINALIZAR PAGO SEGURO' : 'PEDIR CONTRA ENTREGA'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -942,7 +1302,7 @@ export default function CheckoutScreen() {
                 <View style={{ marginTop: 24, padding: 32, backgroundColor: '#F9FAFB', borderRadius: 24 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Tus Tarjetas Guardadas</Text>
-                    <TouchableOpacity onPress={() => setCardDetails({ number: '', name: '', expiry: '', cvv: '' })}>
+                    <TouchableOpacity onPress={() => setCardDetails({ number: '', name: '', expiry: '', cvv: '', rut: cardDetails.rut })}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <RefreshCcw size={12} color="#EF4444" />
                         <Text style={{ fontSize: 12, fontWeight: '800', color: '#EF4444' }}>Limpiar Datos de Pago</Text>
@@ -950,104 +1310,258 @@ export default function CheckoutScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <View style={{ flexDirection: 'row', gap: 16, marginBottom: 32 }}>
-                    <TouchableOpacity 
-                      onPress={() => setShowNewCardForm(true)}
-                      style={{ 
-                        width: 120, height: 120, borderRadius: 20, backgroundColor: '#FFFFFF', 
-                        justifyContent: 'center', alignItems: 'center', gap: 8, borderStyle: 'solid', borderWidth: 2, borderColor: showNewCardForm ? '#10B981' : '#E5E7EB'
-                      }}
-                    >
-                      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center' }}>
-                        <Plus size={20} color="#10B981" />
-                      </View>
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>Nueva Tarjeta</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 32 }}>
+                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          setShowNewCardForm(true);
+                          setSelectedCardId(null);
+                        }}
+                        style={{ 
+                          width: 140, height: 90, borderRadius: 16, backgroundColor: '#FFFFFF', 
+                          justifyContent: 'center', alignItems: 'center', gap: 8, borderStyle: 'solid', borderWidth: 2, borderColor: showNewCardForm ? '#10B981' : '#E5E7EB'
+                        }}
+                      >
+                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center' }}>
+                          <Plus size={20} color="#10B981" />
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>Nueva Tarjeta</Text>
+                      </TouchableOpacity>
 
-                  <View style={{ flexDirection: 'row', gap: 32, alignItems: 'flex-start' }}>
-                    <View style={{ flex: 1, gap: 16 }}>
-                      <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-                        <CreditCard size={20} color="#10B981" />
-                        <TextInput 
-                          placeholder="Número de tarjeta"
-                          placeholderTextColor="#9CA3AF"
-                          value={cardDetails.number || ''}
-                          onChangeText={(text) => setCardDetails(prev => ({ ...prev, number: text }))}
-                          style={{ flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600' }}
-                        />
-                      </View>
+                      {isLoadingCards ? (
+                        <ActivityIndicator size="small" color="#1E1B4B" style={{ marginLeft: 20 }} />
+                      ) : (
+                        savedCards.map((card) => (
+                          <TouchableOpacity 
+                            key={card.id}
+                            onPress={() => {
+                              setSelectedCardId(card.id);
+                              setShowNewCardForm(false);
+                              setSavedCardCVV('');
+                            }}
+                            style={{ 
+                              width: 140, height: 90, borderRadius: 16, backgroundColor: '#1E1B4B', padding: 12,
+                              borderWidth: 2, borderColor: selectedCardId === card.id && !showNewCardForm ? '#10B981' : 'transparent',
+                              position: 'relative'
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <Text style={{ color: 'white', fontSize: 10, fontWeight: '700', textTransform: 'capitalize' }}>{card.brand || 'Tarjeta'}</Text>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                {selectedCardId === card.id && !showNewCardForm && (
+                                  <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                                    <Text style={{ color: 'white', fontSize: 10 }}>✓</Text>
+                                  </View>
+                                )}
+                                <TouchableOpacity 
+                                  onPress={async () => {
+                                    if (auth.currentUser) {
+                                      const { deleteDoc, doc } = await import('firebase/firestore');
+                                      await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'savedCards', card.id));
+                                      fetchSavedCards();
+                                    }
+                                  }}
+                                  style={{ padding: 2 }}
+                                >
+                                  <X size={14} color="rgba(255,255,255,0.6)" />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                            <Text style={{ color: 'white', fontSize: 12, fontWeight: '900', marginTop: 12, letterSpacing: 2 }}>
+                              **** {card.last4}
+                            </Text>
+                            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, marginTop: 4 }}>
+                              Vence: {card.expMonth}/{card.expYear.toString().slice(-2)}
+                            </Text>
+                          </TouchableOpacity>
+                        ))
+                      )}
+                    </View>
+                  </ScrollView>
 
-                      <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
-                        <TextInput 
-                          placeholder="Nombre en la tarjeta"
-                          placeholderTextColor="#9CA3AF"
-                          value={cardDetails.name || ''}
-                          onChangeText={(text) => setCardDetails(prev => ({ ...prev, name: text }))}
-                          style={{ fontSize: 15, fontWeight: '600' }}
-                        />
-                      </View>
-
-                      <View style={{ flexDirection: 'row', gap: 12 }}>
-                        <View style={{ flex: 1, height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                  {/* FORMULARIO DE NUEVA TARJETA (CONDICIONAL) */}
+                  {showNewCardForm && (
+                    <View style={{ flexDirection: 'row', gap: 32, alignItems: 'flex-start' }}>
+                      <View style={{ flex: 1, gap: 16 }}>
+                        <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
+                          <CreditCard size={20} color="#10B981" />
                           <TextInput 
-                            placeholder="MM/YY"
+                            placeholder="Número de tarjeta"
                             placeholderTextColor="#9CA3AF"
-                            value={cardDetails.expiry || ''}
-                            onChangeText={(text) => setCardDetails(prev => ({ ...prev, expiry: text }))}
+                            value={cardDetails.number || ''}
+                            onChangeText={(text) => setCardDetails(prev => ({ ...prev, number: text }))}
+                            keyboardType="numeric"
+                            maxLength={19}
+                            style={{ flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600' }}
+                          />
+                        </View>
+
+                        <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                          <TextInput 
+                            placeholder="Nombre en la tarjeta"
+                            placeholderTextColor="#9CA3AF"
+                            value={cardDetails.name || ''}
+                            onChangeText={(text) => setCardDetails(prev => ({ ...prev, name: text }))}
                             style={{ fontSize: 15, fontWeight: '600' }}
                           />
                         </View>
-                        <View style={{ flex: 1, height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+
+                        <View style={{ height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                          <TextInput 
+                            placeholder="RUT del titular (ej: 12.345.678-9)"
+                            placeholderTextColor="#9CA3AF"
+                            value={cardDetails.rut || ''}
+                            onChangeText={handleRutChange}
+                            style={{ fontSize: 15, fontWeight: '600' }}
+                          />
+                        </View>
+
+                        <View style={{ flexDirection: 'row', gap: 12 }}>
+                          <View style={{ flex: 1, height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                            <TextInput 
+                              placeholder="MM/YY"
+                              placeholderTextColor="#9CA3AF"
+                              value={cardDetails.expiry || ''}
+                              onChangeText={handleExpiryChange}
+                              keyboardType="numeric"
+                              maxLength={5}
+                              style={{ fontSize: 15, fontWeight: '600' }}
+                            />
+                          </View>
+                          <View style={{ flex: 1, height: 56, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 16, justifyContent: 'center' }}>
+                            <TextInput 
+                              placeholder="CVV"
+                              placeholderTextColor="#9CA3AF"
+                              value={cardDetails.cvv || ''}
+                              onChangeText={(text) => setCardDetails(prev => ({ ...prev, cvv: text }))}
+                              keyboardType="numeric"
+                              maxLength={4}
+                              style={{ fontSize: 15, fontWeight: '600' }}
+                            />
+                          </View>
+                        </View>
+
+                        <TouchableOpacity 
+                          onPress={() => setSaveCard(!saveCard)}
+                          activeOpacity={0.7}
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }}
+                        >
+                          <View style={{ 
+                            width: 22, height: 22, borderRadius: 6, borderWidth: 2, 
+                            borderColor: saveCard ? '#10B981' : '#D1D5DB',
+                            backgroundColor: saveCard ? '#10B981' : 'transparent',
+                            justifyContent: 'center', alignItems: 'center'
+                          }}>
+                            {saveCard && <Text style={{ color: 'white', fontSize: 12 }}>✓</Text>}
+                          </View>
+                          <Text style={{ fontSize: 14, fontWeight: '600', color: '#6B7280' }}>Guardar mi tarjeta para futuras compras</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          onPress={handlePayment}
+                          disabled={isProcessingPayment}
+                          style={{ 
+                            backgroundColor: '#10B981', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8,
+                            opacity: isProcessingPayment ? 0.6 : 1
+                          }}
+                        >
+                          {isProcessingPayment ? (
+                            <ActivityIndicator color="white" />
+                          ) : (
+                            <>
+                              <Lock size={18} color="white" />
+                              <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Pagar Ahora</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Card Preview - Desktop */}
+                      <View style={{ 
+                        width: 310, height: 190, borderRadius: 20,
+                        backgroundColor: '#1E1B4B', padding: 22,
+                        shadowColor: '#1E1B4B', shadowOpacity: 0.45, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }
+                      }}>
+                        {/* Top Row */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                            <View style={{ width: 30, height: 24, borderRadius: 4, backgroundColor: '#C9A84C', justifyContent: 'center', alignItems: 'center' }}>
+                              <View style={{ width: 20, height: 16, borderRadius: 2, borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.3)' }} />
+                            </View>
+                            <Wifi size={15} color="rgba(255,255,255,0.5)" style={{ transform: [{ rotate: '90deg' }] }} />
+                          </View>
+                          <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14, fontWeight: '900', fontStyle: 'italic', letterSpacing: 1 }}>SAKU</Text>
+                        </View>
+
+                        {/* Card Number */}
+                        <Text 
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          style={{ color: 'white', fontSize: 17, fontWeight: '700', marginTop: 16, letterSpacing: 3, fontFamily: 'monospace' }}
+                        >
+                          {cardDetails.number 
+                            ? cardDetails.number.replace(/\s/g,'').replace(/(.{4})/g, '$1 ').trim()
+                            : '•••• •••• •••• ••••'}
+                        </Text>
+
+                        {/* Bottom Row */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto' }}>
+                          <View style={{ flex: 1, marginRight: 16 }}>
+                            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, fontWeight: '700', letterSpacing: 1 }}>TITULAR</Text>
+                            <Text 
+                              numberOfLines={1}
+                              style={{ color: 'white', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginTop: 2 }}
+                            >{cardDetails.name || 'NOMBRE DEL TITULAR'}</Text>
+                          </View>
+                          <View style={{ alignItems: 'flex-end' }}>
+                            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, fontWeight: '700', letterSpacing: 1 }}>VENCE</Text>
+                            <Text style={{ color: 'white', fontSize: 12, fontWeight: '700', marginTop: 2 }}>{cardDetails.expiry || 'MM/YY'}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* CVV PARA TARJETA GUARDADA (CONDICIONAL) */}
+                  {!showNewCardForm && savedCards.length > 0 && selectedCardId && (
+                    <View style={{ marginTop: 24, padding: 24, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 12 }}>Código de Seguridad</Text>
+                      <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+                        <View style={{ flex: 1, height: 56, backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1, borderColor: '#D1D5DB', paddingHorizontal: 16, justifyContent: 'center' }}>
                           <TextInput 
                             placeholder="CVV"
                             placeholderTextColor="#9CA3AF"
-                            value={cardDetails.cvv || ''}
-                            onChangeText={(text) => setCardDetails(prev => ({ ...prev, cvv: text }))}
+                            value={savedCardCVV}
+                            onChangeText={setSavedCardCVV}
+                            keyboardType="numeric"
+                            maxLength={4}
                             style={{ fontSize: 15, fontWeight: '600' }}
+                            secureTextEntry
                           />
                         </View>
+                        <Text style={{ flex: 2, fontSize: 13, color: '#6B7280', fontWeight: '500' }}>
+                          Ingresa el código de 3 o 4 dígitos de tu tarjeta seleccionada para confirmar la compra.
+                        </Text>
                       </View>
-
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }}>
-                         <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 1, borderColor: '#D1D5DB' }} />
-                         <Text style={{ fontSize: 14, fontWeight: '600', color: '#6B7280' }}>Guardar mi tarjeta para futuras compras</Text>
-                      </View>
-                      
                       <TouchableOpacity 
+                        onPress={handlePayment}
+                        disabled={isProcessingPayment}
                         style={{ 
-                          backgroundColor: '#10B981', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8
+                          backgroundColor: '#10B981', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24,
+                          opacity: isProcessingPayment ? 0.6 : 1
                         }}
                       >
-                        <Lock size={18} color="white" />
-                        <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Finalizar Compra Segura</Text>
+                        {isProcessingPayment ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          <>
+                            <Lock size={18} color="white" />
+                            <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Confirmar Pago Seguro</Text>
+                          </>
+                        )}
                       </TouchableOpacity>
                     </View>
-
-                    {/* Card Preview (Desktop) */}
-                    <View style={{ 
-                      width: 320, height: 200, borderRadius: 24, backgroundColor: '#1E1B4B', padding: 32,
-                      shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 15, shadowOffset: { width: 0, height: 10 }
-                    }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Wifi size={24} color="white" style={{ transform: [{ rotate: '90deg' }] }} />
-                        <Text style={{ color: 'white', fontSize: 20, fontWeight: '800', fontStyle: 'italic' }}>Tarjeta</Text>
-                      </View>
-                      <Text style={{ color: 'white', fontSize: 22, fontWeight: '700', marginTop: 40, letterSpacing: 3 }}>
-                        {cardDetails.number ? cardDetails.number.replace(/(.{4})/g, '$1 ') : '#### #### #### ####'}
-                      </Text>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 'auto' }}>
-                        <View>
-                          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '700' }}>TITULAR</Text>
-                          <Text style={{ color: 'white', fontSize: 13, fontWeight: '700', textTransform: 'uppercase' }}>{cardDetails.name || 'NOMBRE DEL TITULAR'}</Text>
-                        </View>
-                        <View style={{ alignItems: 'flex-end' }}>
-                          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '700' }}>VENCE</Text>
-                          <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>{cardDetails.expiry || 'MM/YY'}</Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
+                  )}
                 </View>
               )}
             </View>
@@ -1208,7 +1722,39 @@ export default function CheckoutScreen() {
         </Pressable>
       </Modal>
 
-      {/* MAP MODAL */}
+      {/* PAYMENT ERROR MODAL */}
+      <Modal
+        visible={errorModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setErrorModal({ ...errorModal, visible: false })}
+      >
+        <Pressable 
+          style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}
+          onPress={() => setErrorModal({ ...errorModal, visible: false })}
+        >
+          <View 
+            style={{ 
+              backgroundColor: '#fff', borderRadius: 32, width: '100%', maxWidth: 400, padding: 32, alignItems: 'center',
+              shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.15, shadowRadius: 40, elevation: 10
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+              <AlertCircle size={36} color="#EF4444" />
+            </View>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>{errorModal.title}</Text>
+            <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '500', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>{errorModal.message}</Text>
+            <TouchableOpacity 
+              onPress={() => setErrorModal({ ...errorModal, visible: false })}
+              style={{ width: '100%', backgroundColor: '#EF4444', borderRadius: 16, height: 54, justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Text style={{ color: 'white', fontSize: 15, fontWeight: '800' }}>Entendido</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
       <LocationMapModal
         isOpen={isMapModalOpen}
         onClose={() => setIsMapModalOpen(false)}

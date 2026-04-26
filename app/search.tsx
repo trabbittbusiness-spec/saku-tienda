@@ -104,24 +104,35 @@ export default function SearchScreen() {
   const [sortOrder, setSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  const availableAnimals = Array.from(new Set(products.map(p => p.animal).filter(Boolean)));
-  const availableMarcas = Array.from(new Set(products.map(p => p.marca).filter(Boolean)));
-  const availableCategorias = Array.from(new Set(products.map(p => p.categoriaReal).filter(Boolean)));
-  const availableTipos = Array.from(new Set(products.map(p => p.tipo).filter(Boolean)));
+  const availableAnimals = Array.from(new Set((products || []).map(p => p.animal).filter(Boolean)));
+  const availableMarcas = Array.from(new Set((products || []).map(p => p.marca).filter(Boolean)));
+  const availableCategorias = Array.from(new Set((products || []).map(p => p.categoriaReal).filter(Boolean)));
+  const availableTipos = Array.from(new Set((products || []).map(p => p.tipo).filter(Boolean)));
 
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.category.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredProducts = (products || []).filter(p => {
+    if (!p) return false;
+    const name = String(p.name || '');
+    const categoryName = String(p.category || '');
+    const pAnimal = String(p.animal || '');
+    const pMarca = String(p.marca || '');
+    const pCategoriaReal = String(p.categoriaReal || '');
+    const pTipo = String(p.tipo || '');
+
+    const matchesSearch = name.toLowerCase().includes(String(searchQuery || '').toLowerCase()) || 
+                         categoryName.toLowerCase().includes(String(searchQuery || '').toLowerCase());
     
-    const matchesAnimal = selectedAnimals.length === 0 || selectedAnimals.includes(p.animal);
-    const matchesMarca = selectedMarcas.length === 0 || selectedMarcas.includes(p.marca);
-    const matchesCategoria = selectedCategorias.length === 0 || selectedCategorias.includes(p.categoriaReal);
-    const matchesTipo = selectedTipos.length === 0 || selectedTipos.includes(p.tipo);
-    const matchesPromo = selectedPromo === 'Todos' ? true : (selectedPromo === 'Sí' ? p.promo : !p.promo);
+    const matchesAnimal = selectedAnimals.length === 0 || selectedAnimals.includes(pAnimal);
+    const matchesMarca = selectedMarcas.length === 0 || selectedMarcas.includes(pMarca);
+    const matchesCategoria = selectedCategorias.length === 0 || selectedCategorias.includes(pCategoriaReal);
+    const matchesTipo = selectedTipos.length === 0 || selectedTipos.includes(pTipo);
+    const matchesPromo = selectedPromo === 'Todos' ? true : (selectedPromo === 'Sí' ? !!p.promo : !p.promo);
 
     return matchesSearch && matchesAnimal && matchesMarca && matchesCategoria && matchesTipo && matchesPromo;
   }).sort((a, b) => {
-    if (sortOrder === 'asc') return a.numericPrice - b.numericPrice;
-    if (sortOrder === 'desc') return b.numericPrice - a.numericPrice;
+    const priceA = a.numericPrice || 0;
+    const priceB = b.numericPrice || 0;
+    if (sortOrder === 'asc') return priceA - priceB;
+    if (sortOrder === 'desc') return priceB - priceA;
     return 0;
   });
 
@@ -339,11 +350,10 @@ export default function SearchScreen() {
                   <TouchableOpacity 
                     onPress={(e) => {
                       if (e?.stopPropagation) e.stopPropagation();
-                      const priceNum = parseInt(prod.price.replace(/[$.]/g, ''));
                       addToCart({
                         id: prod.id,
                         name: prod.name,
-                        price: priceNum,
+                        price: prod.numericPrice || 0,
                         image: prod.image,
                         quantity: quantities[prod.id] || 1
                       });
@@ -637,11 +647,10 @@ export default function SearchScreen() {
                         <TouchableOpacity 
                           onPress={(e) => {
                             if (e?.stopPropagation) e.stopPropagation();
-                            const priceNum = parseInt(prod.price.replace(/[$.]/g, ''));
                             addToCart({
                               id: prod.id,
                               name: prod.name,
-                              price: priceNum,
+                              price: prod.numericPrice || 0,
                               image: prod.image,
                               quantity: quantities[prod.id] || 1
                             });

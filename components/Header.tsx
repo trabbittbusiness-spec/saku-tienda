@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Pressable, Modal, ScrollView, Image } from 'react-native';
-import { BellDot, ChevronDown, MapPin, Search, ShoppingCart, Heart, Store, Truck, Dog as DogIcon, LogOut, User, CreditCard, Shield, ChevronRight, X, Trash2, Minus, Plus, ArrowRight, Bell, ShoppingBag, Home, Briefcase, Star, Check, Navigation } from 'lucide-react-native';
+import { BellDot, ChevronDown, MapPin, Search, ShoppingCart, Heart, Store, Truck, Dog as DogIcon, LogOut, User, CreditCard, Shield, ChevronRight, X, Trash2, Minus, Plus, ArrowRight, Bell, ShoppingBag, Home, Briefcase, Star, Check, Navigation, Clock, Package, Calendar } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, interpolate } from 'react-native-reanimated';
 
@@ -761,6 +761,7 @@ const Header = React.memo(function Header() {
                     <View style={{ paddingHorizontal: 8 }}>
                       {[
                         { title: 'Mis órdenes', sub: 'Historial y seguimiento', Icon: ShoppingBag, color: '#EC4899', bg: '#FDF2F8', route: '/orders' },
+                        { title: 'Mis Servicios', sub: 'Agenda y citas veterinarias', Icon: Calendar, color: '#6366F1', bg: '#EEF2FF', route: '/agenda' },
                         { title: 'Mis direcciones', sub: 'Direcciones guardadas', Icon: MapPin, color: '#F59E0B', bg: '#FFFBEB', route: '/addresses' },
                         { title: 'Mi cuenta', sub: 'Datos personales y perfil', Icon: User, color: '#10B981', bg: '#ECFDF5', route: '/account' },
                         { title: 'Mis tarjetas', sub: 'Medios de pago guardados', Icon: CreditCard, color: '#6366F1', bg: '#EEF2FF', route: '/cards' },
@@ -830,7 +831,7 @@ const Header = React.memo(function Header() {
           onClose={() => setIsMapModalOpen(false)}
           onSave={(location) => {
             setSelectedLocation(location);
-            setIsMapModalOpen(false);
+            handleSaveNewAddress(location);
           }}
         />
 
