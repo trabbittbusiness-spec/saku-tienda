@@ -4,16 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { ChevronLeft, Clock, Star, Heart, Share2, ShieldCheck, CheckCircle2, Volume2, VolumeX, Play, X, Award, FileText, Package, CreditCard, Navigation, Search, Shield, Lock } from 'lucide-react-native';
-// Safely import Video and ResizeMode to avoid crashes in environments without expo-av
-let Video: any = View;
-let ResizeMode: any = { COVER: 'cover', CONTAIN: 'contain', STRETCH: 'stretch', REPEAT: 'repeat', CENTER: 'center' };
-try {
-  const ExpoAV = require('expo-av');
-  Video = ExpoAV.Video;
-  ResizeMode = ExpoAV.ResizeMode;
-} catch (e) {
-  console.warn('expo-av could not be loaded:', e);
-}
+import { Video, ResizeMode } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../../components/Header';
 import { useFavorites } from '../../context/FavoritesContext';
