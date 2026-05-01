@@ -10,7 +10,7 @@ export default function CompanyScreen() {
   const Feature = ({ icon: Icon, title, desc }: any) => (
     <View style={{ flex: 1, alignItems: 'center', padding: 20 }}>
       <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-        <Icon size={32} color="#F47321" />
+        <Icon size={32} color="#63348C" />
       </View>
       <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', marginBottom: 10, textAlign: 'center' }}>{title}</Text>
       <Text style={{ fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 22, fontWeight: '500' }}>{desc}</Text>
@@ -54,7 +54,7 @@ export default function CompanyScreen() {
           
           {/* History Section */}
           <View style={{ marginTop: 40, marginBottom: 60 }}>
-            <Text style={{ fontSize: 32, fontWeight: '900', color: '#3B1E54', marginBottom: 20, textAlign: 'center' }}>Nuestra Historia</Text>
+            <Text style={{ fontSize: 32, fontWeight: '900', color: '#63348C', marginBottom: 20, textAlign: 'center' }}>Nuestra Historia</Text>
             <Text style={{ fontSize: 18, color: '#4B5563', lineHeight: 30, textAlign: 'center', fontWeight: '500' }}>
               Fundada en 2024, Saku nació de una idea simple: las mascotas merecen lo mejor. Comenzamos como una pequeña tienda local y hoy nos convertimos en el ecosistema líder en bienestar animal en Chile, integrando productos premium con servicios veterinarios de alta calidad.
             </Text>

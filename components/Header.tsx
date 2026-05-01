@@ -12,6 +12,7 @@ import { useFavorites } from '../context/FavoritesContext';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, query, collection, where, updateDoc, serverTimestamp, addDoc, arrayUnion } from 'firebase/firestore';
+import AuthModal from './AuthModal';
 
 
 const BREAKPOINT = 768;
@@ -29,9 +30,10 @@ const Header = React.memo(function Header() {
   const [isAddressPickerOpen, setIsAddressPickerOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState({
-    main: 'Nueva Providencia 1515',
-    sub: 'Providencia, RM'
+    main: '',
+    sub: ''
   });
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { cartCount, cart, removeFromCart, updateQuantity, cartTotal } = useCart();
   const { favorites } = useFavorites();
   const insets = useSafeAreaInsets();
@@ -116,6 +118,7 @@ const Header = React.memo(function Header() {
         setDefaultAddrId(null);
         setActiveOrders([]);
         setNotifications([]);
+        setSelectedLocation({ main: '', sub: '' });
       }
     });
     return unsubscribeAuth;
@@ -162,12 +165,12 @@ const Header = React.memo(function Header() {
 
   const getNotifStyle = (notif: any) => {
     // Global coupon notification
-    if (notif._tipo === 'global') return { bg: '#F5F3FF', border: '#DDD6FE', iconBg: '#EDE9FE', iconColor: '#7C3AED', Icon: ShoppingBag };
+    if (notif._tipo === 'global') return { bg: '#F5F3FF', border: '#DDD6FE', iconBg: '#EDE9FE', iconColor: '#63348C', Icon: ShoppingBag };
     const s = (notif.estado || '').toLowerCase();
-    if (s === 'enviado') return { bg: '#FFF7ED', border: '#FED7AA', iconBg: '#FFEDD5', iconColor: '#F47321', Icon: Truck };
-    if (s === 'entregado') return { bg: '#F0FDF4', border: '#BBF7D0', iconBg: '#DCFCE7', iconColor: '#10B981', Icon: ShoppingBag };
+    if (s === 'enviado') return { bg: '#F5F3FF', border: '#DDD6FE', iconBg: '#EDE9FE', iconColor: '#63348C', Icon: Truck };
+    if (s === 'entregado') return { bg: '#F0FDF4', border: '#BBF7D0', iconBg: '#DCFCE7', iconColor: '#63348C', Icon: ShoppingBag };
     if (s === 'cancelado') return { bg: '#FFF1F2', border: '#FECDD3', iconBg: '#FFE4E6', iconColor: '#EF4444', Icon: X };
-    return { bg: '#EEF2FF', border: '#C7D2FE', iconBg: '#E0E7FF', iconColor: '#6366F1', Icon: Bell };
+    return { bg: '#EEF2FF', border: '#C7D2FE', iconBg: '#E0E7FF', iconColor: '#63348C', Icon: Bell };
   };
 
   const getRelativeTime = (ts: any) => {
@@ -296,6 +299,7 @@ const Header = React.memo(function Header() {
   if (isDesktop) {
     // ── DESKTOP HEADER (Reference Perfect) ──────────────────────────────────
     return (
+      <>
       <View
         style={{
           backgroundColor: '#FFFFFF',
@@ -307,7 +311,7 @@ const Header = React.memo(function Header() {
           borderBottomWidth: 1,
           borderBottomColor: '#F0F0F0',
           borderTopWidth: 4,
-          borderTopColor: '#1E40AF', // Blue top line from image
+          borderTopColor: '#63348C', // Blue top line from image
           zIndex: 999, // FIX: Ensure header is always on top of page content
           elevation: 50,
         }}
@@ -319,7 +323,7 @@ const Header = React.memo(function Header() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}
         >
           <View style={{
-            backgroundColor: '#3B1E54',
+            backgroundColor: '#63348C',
             width: 44,
             height: 44,
             borderRadius: 12,
@@ -333,7 +337,7 @@ const Header = React.memo(function Header() {
             />
           </View>
           <Text style={{ fontSize: 24, fontWeight: '900', color: '#1A1A2E', letterSpacing: -1 }}>
-            SAKU<Text style={{ color: '#F47321' }}>.</Text>
+            SAKU<Text style={{ color: '#63348C' }}>.</Text>
           </Text>
         </TouchableOpacity>
 
@@ -365,7 +369,13 @@ const Header = React.memo(function Header() {
               />
             )}
             <TouchableOpacity
-              onPress={() => setIsAddressPickerOpen(!isAddressPickerOpen)}
+              onPress={() => {
+                if (!user) {
+                  setShowAuthModal(true);
+                  return;
+                }
+                setIsAddressPickerOpen(!isAddressPickerOpen);
+              }}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -382,7 +392,7 @@ const Header = React.memo(function Header() {
                 numberOfLines={1}
                 style={{ fontSize: 15, color: '#1A1A2E', fontWeight: '800', flexShrink: 1 }}
               >
-                {selectedLocation.main || 'Selecciona tu dirección'}
+                {selectedLocation.main || 'Agregar ubicación'}
               </Text>
               <ChevronDown size={14} color="#555" strokeWidth={2.5} style={{ flexShrink: 0 }} />
             </TouchableOpacity>
@@ -407,8 +417,8 @@ const Header = React.memo(function Header() {
                           style={{ 
                             flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
                             paddingVertical: 14, paddingHorizontal: 16, 
-                            backgroundColor: isSelected ? '#FFF7ED' : '#FFFFFF', 
-                            borderRadius: 16, borderWidth: 1, borderColor: isSelected ? '#F4732140' : '#F9FAFB'
+                            backgroundColor: isSelected ? '#FFF7F0' : '#FFFFFF', 
+                            borderRadius: 16, borderWidth: 1, borderColor: isSelected ? '#F47321' : '#F9FAFB'
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
@@ -421,7 +431,7 @@ const Header = React.memo(function Header() {
                             </View>
                           </View>
                           {isSelected && (
-                            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center' }}>
                               <Check size={14} color="white" strokeWidth={3} />
                             </View>
                           )}
@@ -466,7 +476,7 @@ const Header = React.memo(function Header() {
             </Text>
             <View
               style={{
-                backgroundColor: '#F47321',
+                backgroundColor: '#111827',
                 width: 40,
                 height: 40,
                 borderRadius: 20,
@@ -482,272 +492,300 @@ const Header = React.memo(function Header() {
 
         {/* Right Side: Status & Icons */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          {/* Active Order Capsule */}
-          {activeOrders.length > 0 && (
-            <View style={{ position: 'relative', zIndex: 80 }}>
-              {isActiveOrderOpen && (
-                <Pressable
-                  style={{ position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 75 }}
-                  onPress={() => setIsActiveOrderOpen(false)}
-                />
-              )}
-              <TouchableOpacity
-                onPress={() => setIsActiveOrderOpen(!isActiveOrderOpen)}
-                activeOpacity={0.8}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: '#FFFFFF', 
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 16,
-                    gap: 10,
-                    borderWidth: 1.5,
-                    borderColor: '#E1F8F0',
-                    shadowColor: '#10B981',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 10,
-                  }}
-                >
-                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#E1F8F0', justifyContent: 'center', alignItems: 'center' }}>
-                    <Truck size={18} color="#10B981" strokeWidth={2.5} />
-                  </View>
-                  
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontSize: 14, color: '#111827', fontWeight: '900' }}>
-                      {activeOrders.length} {activeOrders.length === 1 ? 'Orden' : 'Órdenes'}
-                    </Text>
-                    <View style={{ paddingHorizontal: 8, paddingVertical: 2, backgroundColor: '#10B981', borderRadius: 8 }}>
-                      <Text style={{ color: 'white', fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>Activa</Text>
-                    </View>
-                  </View>
-                  
-                  <ChevronDown size={14} color="#9CA3AF" strokeWidth={3} />
-                </View>
-              </TouchableOpacity>
-
-              {isActiveOrderOpen && (
-                <View style={{
-                  position: 'absolute', top: 60, right: 0, width: 380,
-                  backgroundColor: '#FFFFFF', borderRadius: 32, padding: 24,
-                  shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.15, shadowRadius: 40,
-                  borderWidth: 1, borderColor: '#F3F4F6', zIndex: 85
-                }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                    <View>
-                      <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>Tus Pedidos</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' }} />
-                        <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '700' }}>{activeOrders.length} en proceso</Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity 
-                      onPress={() => setIsActiveOrderOpen(false)} 
-                      style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6' }}
-                    >
-                      <X size={18} color="#9CA3AF" />
-                    </TouchableOpacity>
-                  </View>
-
-                  <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
-                    <View style={{ gap: 16 }}>
-                      {activeOrders.map((order) => (
-                        <TouchableOpacity 
-                          key={order.id} 
-                          onPress={() => { setIsActiveOrderOpen(false); router.push(`/orders/${order.id}` as any); }}
-                          activeOpacity={0.7}
-                          style={{ 
-                            backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16, 
-                            borderWidth: 1, borderColor: '#F3F4F6',
-                            shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
-                          }}
-                        >
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                            <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                              {order.items && order.items[0]?.foto ? (
-                                <Image source={{ uri: order.items[0].foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                              ) : (
-                                <Package size={28} color="#D1D5DB" />
-                              )}
-                            </View>
-                            <View style={{ flex: 1 }}>
-                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 16, fontWeight: '900', color: '#111827', width: '70%' }}>
-                                  #{order.ID_orden || order.id}
-                                </Text>
-                                <Text style={{ fontSize: 13, fontWeight: '900', color: '#F47321' }}>${(order.total || 0).toLocaleString()} CLP</Text>
-                              </View>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                                <View style={{ backgroundColor: '#F0FDF4', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981', textTransform: 'capitalize' }}>{order.estado}</Text>
-                                </View>
-                                <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>• {order.tipoEntrega === 'store' ? 'Retiro' : 'Envío'}</Text>
-                              </View>
-                            </View>
-                          </View>
-                          
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 12, gap: 4 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F47321' }}>Seguir pedido</Text>
-                            <ArrowRight size={14} color="#F47321" strokeWidth={3} />
-                          </View>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </ScrollView>
-
-                  <TouchableOpacity 
-                    onPress={() => { setIsActiveOrderOpen(false); router.push('/orders' as any); }}
-                    style={{ 
-                      marginTop: 20, backgroundColor: '#F9FAFB', borderRadius: 16, padding: 14, 
-                      alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6' 
-                    }}
-                  >
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Ver todo el historial</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* Icon Set */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 10 }}>
-            <TouchableOpacity 
-              onPress={() => router.push('/')}
-              style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#FFF3EB', justifyContent: 'center', alignItems: 'center' }}
-            >
-              <Store size={20} color="#F47321" strokeWidth={1.8} />
-            </TouchableOpacity>
-
+          {!user ? (
             <TouchableOpacity
-              style={{ position: 'relative', width: 40, height: 40, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
-              onPress={() => setIsCartOpen(true)}
-            >
-              <ShoppingCart size={20} color="#4B5563" strokeWidth={1.8} />
-              {cartCount > 0 && (
-                <View style={{
-                  position: 'absolute', top: -3, right: -3, backgroundColor: '#F47321',
-                  borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 2, borderColor: '#FFFFFF'
-                }}>
-                  <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{cartCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              onPress={() => router.push('/favorites')}
-              style={{ position: 'relative', width: 40, height: 40, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
-            >
-              <Heart size={20} color="#4B5563" strokeWidth={1.8} />
-              {favorites.length > 0 && (
-                <View style={{
-                  position: 'absolute', top: -3, right: -3, backgroundColor: '#EF4444',
-                  borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 2, borderColor: '#FFFFFF'
-                }}>
-                  <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{favorites.length}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={{ position: 'relative', width: 40, height: 40, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }} 
-              onPress={() => setIsNotificationsOpen(true)}
-            >
-              <BellDot size={20} color="#4B5563" strokeWidth={1.8} />
-              {unreadCount > 0 && (
-                <View style={{
-                  position: 'absolute', top: -3, right: -3, backgroundColor: '#EF4444',
-                  borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 2, borderColor: '#FFFFFF'
-                }}>
-                  <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{unreadCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* User Menu Container */}
-          <View style={{ position: 'relative', zIndex: 100 }}>
-            {/* Transparent overlay for clicking outside */}
-            {isAccountMenuOpen && (
-              <Pressable
-                style={{
-                  position: 'absolute', top: -5000, left: -5000, width: 10000, height: 10000, zIndex: 90
-                }}
-                onPress={() => setIsAccountMenuOpen(false)}
-              />
-            )}
-
-            <TouchableOpacity
-              onPress={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+              onPress={() => router.push('/login')}
               style={{
+                backgroundColor: '#22C55E',
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 25,
                 flexDirection: 'row',
                 alignItems: 'center',
-                borderWidth: 1.5,
-                borderColor: '#EFEFEF',
-                borderRadius: 30,
-                padding: 5,
-                paddingHorizontal: 12,
-                gap: 10,
-                zIndex: 95,
+                gap: 8,
+                shadowColor: '#22C55E',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 10,
+                elevation: 4
               }}
             >
-              <View style={{ gap: 4 }}>
-                <View style={{ width: 18, height: 2, backgroundColor: '#333', borderRadius: 1 }} />
-                <View style={{ width: 18, height: 2, backgroundColor: '#333', borderRadius: 1 }} />
-                <View style={{ width: 18, height: 2, backgroundColor: '#333', borderRadius: 1 }} />
-              </View>
-              <View style={{
-                width: 36, height: 36, borderRadius: 18, backgroundColor: '#1A1A2E',
-                justifyContent: 'center', alignItems: 'center'
-              }}>
-                {user ? (
-                  <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>{userName ? userName.charAt(0).toUpperCase() : 'U'}</Text>
-                ) : (
-                  <User size={18} color="white" />
-                )}
-              </View>
+              <User size={20} color="white" strokeWidth={2.5} />
+              <Text style={{ color: 'white', fontWeight: '900', fontSize: 15 }}>Iniciar Sesión</Text>
             </TouchableOpacity>
+          ) : (
+            <>
+              {/* Active Order Capsule */}
+              {activeOrders.length > 0 && (
+                <View style={{ position: 'relative', zIndex: 80 }}>
+                  {isActiveOrderOpen && (
+                    <Pressable
+                      style={{ position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 75 }}
+                      onPress={() => setIsActiveOrderOpen(false)}
+                    />
+                  )}
+                  <TouchableOpacity
+                    onPress={() => setIsActiveOrderOpen(!isActiveOrderOpen)}
+                    activeOpacity={0.8}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: '#FFFFFF', 
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 16,
+                        gap: 10,
+                        borderWidth: 1.5,
+                        borderColor: '#E1F8F0',
+                        shadowColor: '#63348C',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 10,
+                      }}
+                    >
+                      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#E0F2FE', justifyContent: 'center', alignItems: 'center' }}>
+                        <Truck size={18} color="#0284C7" strokeWidth={2.5} />
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 14, color: '#111827', fontWeight: '900' }}>
+                          {activeOrders.length} {activeOrders.length === 1 ? 'Orden' : 'Órdenes'}
+                        </Text>
+                        <View style={{ paddingHorizontal: 8, paddingVertical: 2, backgroundColor: '#0284C7', borderRadius: 8 }}>
+                          <Text style={{ color: 'white', fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>Activa</Text>
+                        </View>
+                      </View>
+                      
+                      <ChevronDown size={14} color="#9CA3AF" strokeWidth={3} />
+                    </View>
+                  </TouchableOpacity>
 
-            {/* ACCOUNT POPOVER WIDGET */}
-            {isAccountMenuOpen && (
-              <View style={{
-                position: 'absolute',
-                top: 60,
-                right: 0,
-                backgroundColor: 'white',
-                width: 320,
-                borderRadius: 24,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.1,
-                shadowRadius: 30,
-                elevation: 20,
-                zIndex: 100,
-                padding: 8,
-              }}>
-                {/* Top Up-Arrow (Triangle) */}
-                <View style={{
-                  position: 'absolute',
-                  top: -10,
-                  right: 32,
-                  width: 0,
-                  height: 0,
-                  borderLeftWidth: 12,
-                  borderRightWidth: 12,
-                  borderBottomWidth: 12,
-                  borderLeftColor: 'transparent',
-                  borderRightColor: 'transparent',
-                  borderBottomColor: 'white',
-                }} />
+                  {isActiveOrderOpen && (
+                    <View style={{
+                      position: 'absolute', top: 60, right: 0, width: 380,
+                      backgroundColor: '#FFFFFF', borderRadius: 32, padding: 24,
+                      shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.15, shadowRadius: 40,
+                      borderWidth: 1, borderColor: '#F3F4F6', zIndex: 85
+                    }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <View>
+                          <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>Tus Pedidos</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F59E0B' }} />
+                            <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '700' }}>{activeOrders.length} en proceso</Text>
+                          </View>
+                        </View>
+                        <TouchableOpacity 
+                          onPress={() => setIsActiveOrderOpen(false)} 
+                          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6' }}
+                        >
+                          <X size={18} color="#9CA3AF" />
+                        </TouchableOpacity>
+                      </View>
 
-                {/* Conditional Content based on Auth State */}
-                {user ? (
-                  <>
+                      <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+                        <View style={{ gap: 16 }}>
+                          {activeOrders.map((order) => (
+                            <TouchableOpacity 
+                              key={order.id} 
+                              onPress={() => { setIsActiveOrderOpen(false); router.push(`/orders/${order.id}` as any); }}
+                              activeOpacity={0.7}
+                              style={{ 
+                                backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16, 
+                                borderWidth: 1, borderColor: '#F3F4F6',
+                                shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
+                              }}
+                            >
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                                <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+                                  {order.items && order.items[0]?.foto ? (
+                                    <Image source={{ uri: order.items[0].foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                                  ) : (
+                                    <Package size={28} color="#D1D5DB" />
+                                  )}
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 16, fontWeight: '900', color: '#111827', width: '65%' }}>
+                                      #{order.ID_orden || order.id}
+                                    </Text>
+                                    <Text style={{ fontSize: 13, fontWeight: '900', color: '#111827' }}>${(order.total || 0).toLocaleString("de-DE")} CLP</Text>
+                                  </View>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                    <View style={{ backgroundColor: '#FFF7ED', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#FFEDD5' }}>
+                                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#D97706', textTransform: 'capitalize' }}>{order.estado}</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>• {order.tipoEntrega === 'store' ? 'Retiro' : 'Envío'}</Text>
+                                  </View>
+                                </View>
+                              </View>
+                              
+                              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 12, gap: 4 }}>
+                                <Text style={{ fontSize: 13, fontWeight: '800', color: '#3B82F6' }}>Seguir pedido</Text>
+                                <ArrowRight size={14} color="#3B82F6" strokeWidth={3} />
+                              </View>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </ScrollView>
+
+                      <TouchableOpacity 
+                        onPress={() => { setIsActiveOrderOpen(false); router.push('/orders' as any); }}
+                        style={{ 
+                          marginTop: 20, backgroundColor: '#F9FAFB', borderRadius: 16, padding: 14, 
+                          alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6' 
+                        }}
+                      >
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Ver todo el historial</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Icon Set */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 10 }}>
+                <TouchableOpacity 
+                  onPress={() => router.push('/')}
+                  style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#FFF3EB', justifyContent: 'center', alignItems: 'center' }}
+                >
+                  <Store size={20} color="#F47321" strokeWidth={1.8} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{ position: 'relative', width: 40, height: 40, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
+                  onPress={() => setIsCartOpen(true)}
+                >
+                  <ShoppingCart size={20} color="#4B5563" strokeWidth={1.8} />
+                  {cartCount > 0 && (
+                    <View style={{
+                      position: 'absolute', top: -3, right: -3, backgroundColor: '#EF4444',
+                      borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+                      borderWidth: 2, borderColor: '#FFFFFF'
+                    }}>
+                      <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{cartCount}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  onPress={() => router.push('/favorites')}
+                  style={{ position: 'relative', width: 40, height: 40, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
+                >
+                  <Heart size={20} color="#4B5563" strokeWidth={1.8} />
+                  {favorites.length > 0 && (
+                    <View style={{
+                      position: 'absolute', top: -3, right: -3, backgroundColor: '#EF4444',
+                      borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+                      borderWidth: 2, borderColor: '#FFFFFF'
+                    }}>
+                      <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{favorites.length}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={{ position: 'relative', width: 40, height: 40, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }} 
+                  onPress={() => setIsNotificationsOpen(true)}
+                >
+                  <BellDot size={20} color="#4B5563" strokeWidth={1.8} />
+                  {unreadCount > 0 && (
+                    <View style={{
+                      position: 'absolute', top: -3, right: -3, backgroundColor: '#EF4444',
+                      borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center',
+                      borderWidth: 2, borderColor: '#FFFFFF'
+                    }}>
+                      <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{unreadCount}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* User Menu Container */}
+              <View style={{ position: 'relative', zIndex: 100 }}>
+                {/* Transparent overlay for clicking outside */}
+                {isAccountMenuOpen && (
+                  <Pressable
+                    style={{
+                      position: 'absolute', top: -5000, left: -5000, width: 10000, height: 10000, zIndex: 90
+                    }}
+                    onPress={() => setIsAccountMenuOpen(false)}
+                  />
+                )}
+
+                {!auth.currentUser ? (
+                  <TouchableOpacity 
+                    onPress={() => router.push('/login')}
+                    style={{ 
+                      backgroundColor: '#22C55E', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20,
+                      shadowColor: '#22C55E', shadowOpacity: 0.2, shadowRadius: 10
+                    }}
+                  >
+                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 14 }}>Iniciar Sesión</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderWidth: 1.5,
+                      borderColor: '#EFEFEF',
+                      borderRadius: 30,
+                      padding: 5,
+                      paddingHorizontal: 12,
+                      gap: 10,
+                      zIndex: 95,
+                    }}
+                  >
+                    <View style={{ gap: 4 }}>
+                      <View style={{ width: 18, height: 2, backgroundColor: '#333', borderRadius: 1 }} />
+                      <View style={{ width: 18, height: 2, backgroundColor: '#333', borderRadius: 1 }} />
+                      <View style={{ width: 18, height: 2, backgroundColor: '#333', borderRadius: 1 }} />
+                    </View>
+                    <View style={{
+                      width: 36, height: 36, borderRadius: 18, backgroundColor: '#63348C',
+                      justifyContent: 'center', alignItems: 'center'
+                    }}>
+                      <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>{userName ? userName.charAt(0).toUpperCase() : 'U'}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+                {/* ACCOUNT POPOVER WIDGET */}
+                {isAccountMenuOpen && (
+                  <View style={{
+                    position: 'absolute',
+                    top: 60,
+                    right: 0,
+                    backgroundColor: 'white',
+                    width: 320,
+                    borderRadius: 24,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 10 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 30,
+                    elevation: 20,
+                    zIndex: 100,
+                    padding: 8,
+                  }}>
+                    {/* Top Up-Arrow (Triangle) */}
+                    <View style={{
+                      position: 'absolute',
+                      top: -10,
+                      right: 32,
+                      width: 0,
+                      height: 0,
+                      borderLeftWidth: 12,
+                      borderRightWidth: 12,
+                      borderBottomWidth: 12,
+                      borderLeftColor: 'transparent',
+                      borderRightColor: 'transparent',
+                      borderBottomColor: 'white',
+                    }} />
+
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15, padding: 16, marginBottom: 5 }}>
                       <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#1A1A2E', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowOffset: { width: 0, height: 3 }, shadowRadius: 5 }}>
                         <Text style={{ color: 'white', fontSize: 22, fontWeight: '900' }}>{userName ? userName.charAt(0).toUpperCase() : 'U'}</Text>
@@ -761,10 +799,9 @@ const Header = React.memo(function Header() {
                     <View style={{ paddingHorizontal: 8 }}>
                       {[
                         { title: 'Mis órdenes', sub: 'Historial y seguimiento', Icon: ShoppingBag, color: '#EC4899', bg: '#FDF2F8', route: '/orders' },
-                        { title: 'Mis Servicios', sub: 'Agenda y citas veterinarias', Icon: Calendar, color: '#6366F1', bg: '#EEF2FF', route: '/agenda' },
+                        { title: 'Mis Servicios', sub: 'Agenda y citas veterinarias', Icon: Calendar, color: '#63348C', bg: '#EEF2FF', route: '/agenda' },
                         { title: 'Mis direcciones', sub: 'Direcciones guardadas', Icon: MapPin, color: '#F59E0B', bg: '#FFFBEB', route: '/addresses' },
-                        { title: 'Mi cuenta', sub: 'Datos personales y perfil', Icon: User, color: '#10B981', bg: '#ECFDF5', route: '/account' },
-                        { title: 'Mis tarjetas', sub: 'Medios de pago guardados', Icon: CreditCard, color: '#6366F1', bg: '#EEF2FF', route: '/cards' },
+                        { title: 'Mi cuenta', sub: 'Datos personales y perfil', Icon: User, color: '#63348C', bg: '#F5F3FF', route: '/account' },
                         { title: 'Seguridad', sub: 'Contraseña y 2FA', Icon: Shield, color: '#D97706', bg: '#FEF3C7', route: '/security' },
                       ].map((item, i) => (
                         <TouchableOpacity
@@ -794,7 +831,7 @@ const Header = React.memo(function Header() {
                         onPress={async () => {
                           setIsAccountMenuOpen(false);
                           await signOut(auth);
-                          router.replace('/login');
+                          router.replace('/?logout=true');
                         }}
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 12, marginBottom: 5 }}
                       >
@@ -804,25 +841,11 @@ const Header = React.memo(function Header() {
                         <Text style={{ fontSize: 16, fontWeight: '800', color: '#EF4444', marginBottom: 2 }}>Cerrar sesión</Text>
                       </TouchableOpacity>
                     </View>
-                  </>
-                ) : (
-                  <View style={{ padding: 20 }}>
-                    <Text style={{ fontSize: 20, fontWeight: '900', color: '#1A1A2E', marginBottom: 8 }}>¡Hola!</Text>
-                    <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '500', marginBottom: 24 }}>Inicia sesión para ver tus órdenes, guardar favoritos y administrar tu cuenta.</Text>
-                    <TouchableOpacity 
-                      onPress={() => {
-                        setIsAccountMenuOpen(false);
-                        router.push('/login');
-                      }}
-                      style={{ backgroundColor: '#10B981', paddingVertical: 14, borderRadius: 14, alignItems: 'center', shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 }}
-                    >
-                      <Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>Iniciar Sesión</Text>
-                    </TouchableOpacity>
                   </View>
                 )}
               </View>
-            )}
-          </View>
+            </>
+          )}
         </View>
 
         {/* MAP ADDRESS MODAL */}
@@ -847,7 +870,7 @@ const Header = React.memo(function Header() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>Mi Carrito</Text>
-                  <View style={{ backgroundColor: '#F47321', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
+                  <View style={{ backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
                     <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>{cartCount}</Text>
                   </View>
                 </View>
@@ -856,12 +879,12 @@ const Header = React.memo(function Header() {
                   <TouchableOpacity 
                     onPress={() => { setIsCartOpen(false); router.push('/orders' as any); }}
                     style={{ 
-                      flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F3F4F6', 
+                      flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#EFF6FF', 
                       paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 
                     }}
                   >
-                    <ShoppingBag size={16} color="#4B5563" />
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: '#4B5563' }}>Órdenes</Text>
+                    <ShoppingBag size={16} color="#3B82F6" />
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: '#3B82F6' }}>Órdenes</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setIsCartOpen(false)} style={{ width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
                     <X size={20} color="#4B5563" />
@@ -886,7 +909,7 @@ const Header = React.memo(function Header() {
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <View style={{ width: '80%' }}>
                             <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>{item.nombre}</Text>
-                            {item.medida && <Text style={{ fontSize: 13, color: '#F47321', fontWeight: '700', marginTop: 2 }}>Formato: {item.medida}</Text>}
+                            {item.medida && <Text style={{ fontSize: 13, color: '#3B82F6', fontWeight: '700', marginTop: 2 }}>Formato: {item.medida}</Text>}
                           </View>
                           <TouchableOpacity 
                             onPress={() => removeFromCart(item.firebaseId || item.ID_productos)}
@@ -897,8 +920,8 @@ const Header = React.memo(function Header() {
                         </View>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 12 }}>
                           <View>
-                            <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>${(item.precio || 0).toLocaleString()} CLP c/u</Text>
-                            <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginTop: 2 }}>${(item.subtotal || 0).toLocaleString()} CLP</Text>
+                            <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>${(item.precio || 0).toLocaleString("de-DE")} CLP c/u</Text>
+                            <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginTop: 2 }}>${(item.subtotal || 0).toLocaleString("de-DE")} CLP</Text>
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, padding: 4 }}>
                             <TouchableOpacity 
@@ -910,7 +933,7 @@ const Header = React.memo(function Header() {
                             <Text style={{ fontWeight: '900', fontSize: 15, width: 36, textAlign: 'center', color: '#111827' }}>{item.cantidad}</Text>
                             <TouchableOpacity 
                               onPress={() => updateQuantity(item.firebaseId || item.ID_productos, item.cantidad + 1)}
-                              style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#F47321', justifyContent: 'center', alignItems: 'center', shadowColor: '#F47321', shadowOpacity: 0.2, shadowRadius: 5 }}
+                              style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', shadowColor: '#111827', shadowOpacity: 0.2, shadowRadius: 5 }}
                             >
                               <Plus size={14} color="#FFFFFF" strokeWidth={3} />
                             </TouchableOpacity>
@@ -927,19 +950,19 @@ const Header = React.memo(function Header() {
                 <View style={{ padding: 25, borderTopWidth: 1, borderTopColor: '#F3F4F6', backgroundColor: '#FFFFFF' }}>
                   <TouchableOpacity 
                     onPress={() => { setIsCartOpen(false); router.push('/checkout' as any); }}
-                    style={{ backgroundColor: '#22C55E', borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#22C55E', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }, elevation: 10 }}
+                    style={{ backgroundColor: '#10B981', borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#10B981', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }, elevation: 10 }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                       <View style={{ width: 44, height: 44, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 14, justifyContent: 'center', alignItems: 'center' }}>
                         <ShoppingCart size={22} color="white" strokeWidth={2.5} />
                       </View>
                       <View>
-                        <Text style={{ color: 'white', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 }}>IR AL CHECKOUT</Text>
+                        <Text style={{ color: 'white', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>IR AL CHECKOUT</Text>
                         <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '700' }}>Proceso seguro y rápido</Text>
                       </View>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                      <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>${cartTotal.toLocaleString()} CLP</Text>
+                      <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>${cartTotal.toLocaleString("de-DE")} CLP</Text>
                       <ArrowRight size={24} color="white" strokeWidth={3} />
                     </View>
                   </TouchableOpacity>
@@ -953,6 +976,16 @@ const Header = React.memo(function Header() {
           </View>
         )}
       </View>
+      <LocationMapModal
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
+        onSave={handleSaveNewAddress}
+      />
+      <AuthModal 
+        isVisible={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
+      </>
     );
   }
 
@@ -960,7 +993,7 @@ const Header = React.memo(function Header() {
   return (
     <>
     <LinearGradient
-      colors={['#FF8F40', '#F47321']} // Soft Lighter Orange (Top) to Saku Orange (Bottom)
+      colors={['#FB923C', '#F47321']} // Bright Orange to Saku Orange
       style={{
         paddingTop: insets.top + 16,
         paddingBottom: 180,
@@ -981,12 +1014,18 @@ const Header = React.memo(function Header() {
             ENTREGAR A
           </Text>
           <TouchableOpacity 
-            onPress={() => setIsAddressPickerOpen(!isAddressPickerOpen)}
+            onPress={() => {
+              if (!user) {
+                setShowAuthModal(true);
+                return;
+              }
+              setIsAddressPickerOpen(!isAddressPickerOpen);
+            }}
             style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}
           >
             <MapPin size={16} color="white" strokeWidth={2.5} />
             <Text numberOfLines={1} style={{ color: 'white', fontWeight: '900', fontSize: 17, marginLeft: 6, marginRight: 4, flexShrink: 1 }}>
-              {selectedLocation.main || 'Selecciona tu dirección'}
+              {selectedLocation.main || 'Agregar ubicación'}
             </Text>
             <ChevronDown size={18} color="white" strokeWidth={2.5} />
           </TouchableOpacity>
@@ -1054,11 +1093,11 @@ const Header = React.memo(function Header() {
                           flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
                           paddingVertical: 14, paddingHorizontal: 16, 
                           backgroundColor: isSelected ? '#FFF7ED' : '#FFFFFF', 
-                          borderRadius: 18, borderWidth: 1, borderColor: isSelected ? '#F4732140' : '#F9FAFB'
+                          borderRadius: 18, borderWidth: 1, borderColor: isSelected ? '#63348C40' : '#F9FAFB'
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-                          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: isSelected ? '#F47321' : '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: isSelected ? '#63348C' : '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
                             <MapPin size={20} color={isSelected ? 'white' : '#9CA3AF'} strokeWidth={2} />
                           </View>
                           <View style={{ flex: 1 }}>
@@ -1067,7 +1106,7 @@ const Header = React.memo(function Header() {
                           </View>
                         </View>
                         {isSelected && (
-                          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
+                          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#63348C', justifyContent: 'center', alignItems: 'center' }}>
                             <Check size={16} color="white" strokeWidth={3} />
                           </View>
                         )}
@@ -1083,8 +1122,8 @@ const Header = React.memo(function Header() {
                 onPress={() => { setIsAddressPickerOpen(false); setIsMapModalOpen(true); }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: '#F0FDF4', borderRadius: 18 }}
               >
-                <Plus size={20} color="#10B981" strokeWidth={3} />
-                <Text style={{ fontSize: 15, fontWeight: '900', color: '#10B981' }}>Agregar nueva dirección</Text>
+                <Plus size={20} color="#63348C" strokeWidth={3} />
+                <Text style={{ fontSize: 15, fontWeight: '900', color: '#63348C' }}>Agregar nueva dirección</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -1101,9 +1140,13 @@ const Header = React.memo(function Header() {
 
     {/* MOBILE NOTIFICATIONS DRAWER */}
     {renderNotificationsDrawer()}
+
+    <AuthModal 
+      isVisible={showAuthModal} 
+      onClose={() => setShowAuthModal(false)} 
+    />
     </>
   );
 });
 
 export default Header;
-

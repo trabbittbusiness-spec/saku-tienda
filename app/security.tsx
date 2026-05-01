@@ -16,15 +16,15 @@ const PasswordInput = ({ label, placeholder, value, onChangeText, show, onToggle
       <View style={{ 
         flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', 
         borderWidth: 2, 
-        borderColor: isFocused ? '#3B1E54' : '#E5E7EB', // Dark blue/purple on focus
+        borderColor: isFocused ? '#111827' : '#E5E7EB', // Dark blue/purple on focus
         borderRadius: 16, paddingHorizontal: 16, height: 56, gap: 12,
-        shadowColor: isFocused ? '#3B1E54' : 'transparent',
+        shadowColor: isFocused ? '#111827' : 'transparent',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: isFocused ? 0.1 : 0,
         shadowRadius: 10,
         elevation: isFocused ? 2 : 0
       }}>
-        <Lock size={18} color={isFocused ? '#3B1E54' : '#9CA3AF'} />
+        <Lock size={18} color={isFocused ? '#111827' : '#9CA3AF'} />
         <TextInput 
           style={[{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827' }, { outlineStyle: 'none' } as any]} 
           placeholder={placeholder}
@@ -36,7 +36,7 @@ const PasswordInput = ({ label, placeholder, value, onChangeText, show, onToggle
           onBlur={() => setIsFocused(false)}
         />
         <TouchableOpacity onPress={onToggleShow}>
-          {show ? <Eye size={20} color={isFocused ? '#3B1E54' : '#9CA3AF'} /> : <EyeOff size={20} color={isFocused ? '#3B1E54' : '#9CA3AF'} />}
+          {show ? <Eye size={20} color={isFocused ? '#111827' : '#9CA3AF'} /> : <EyeOff size={20} color={isFocused ? '#111827' : '#9CA3AF'} />}
         </TouchableOpacity>
       </View>
     </View>
@@ -201,9 +201,9 @@ export default function SecurityScreen() {
                 onPress={handleUpdatePassword}
                 disabled={loading}
                 style={{ 
-                  backgroundColor: '#10B981', height: 56, paddingHorizontal: 40, borderRadius: 16, 
+                  backgroundColor: '#111827', height: 56, paddingHorizontal: 40, borderRadius: 16, 
                   flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, 
-                  shadowColor: '#10B981', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
+                  shadowColor: '#111827', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
                 }}
               >
                 {loading ? (
@@ -232,8 +232,8 @@ export default function SecurityScreen() {
                 flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 60
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, flex: 1 }}>
-                  <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' }}>
-                    <Fingerprint size={24} color="#6366F1" />
+                  <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center' }}>
+                    <Fingerprint size={24} color="#10B981" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Desbloqueo con Huella/FaceID</Text>

@@ -136,7 +136,7 @@ export default function AgendaScreen() {
              {isDesktop && (
                <TouchableOpacity 
                  onPress={() => router.push('/servicios')}
-                 style={{ backgroundColor: '#F47321', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                 style={{ backgroundColor: '#10B981', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
                >
                  <CalendarIcon size={20} color="white" />
                  <Text style={{ color: 'white', fontWeight: '900', fontSize: 15 }}>Agendar Nuevo</Text>
@@ -153,7 +153,7 @@ export default function AgendaScreen() {
 
           {loading ? (
             <View style={{ paddingVertical: 100, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#F47321" />
+               <ActivityIndicator size="large" color="#111827" />
             </View>
           ) : filteredBookings.length === 0 ? (
             <View style={{ paddingVertical: 80, alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 32, borderWidth: 1, borderColor: '#F1F5F9' }}>
@@ -195,14 +195,14 @@ export default function AgendaScreen() {
                        <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                             <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A1A2E' }}>{item.serviceName}</Text>
-                            <View style={{ backgroundColor: item.status === 'Pendientes' ? '#F47321' : '#10B981', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                              <Text style={{ color: 'white', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>{item.status}</Text>
+                            <View style={{ backgroundColor: item.status === 'Pendientes' ? '#FFFBEB' : '#F0FDF4', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                              <Text style={{ color: item.status === 'Pendientes' ? '#D97706' : '#10B981', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>{item.status}</Text>
                             </View>
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                            <View style={{ backgroundColor: '#F0FDF4', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                              <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>{item.petName}</Text>
-                            </View>
+                            <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                               <Text style={{ fontSize: 12, fontWeight: '800', color: '#3B82F6' }}>{item.petName}</Text>
+                             </View>
                             <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600' }}>• {item.vetName || 'Saku Vet'}</Text>
                           </View>
                        </View>

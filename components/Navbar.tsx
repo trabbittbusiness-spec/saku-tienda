@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { ShoppingBag, Search, User, Heart, Home } from 'lucide-react-native';
+import { ShoppingBag, Search, User, Heart, Home, LogIn } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { usePathname, router } from 'expo-router';
+import { auth } from '../lib/firebase';
 
 const PremiumNavbar = React.memo(function PremiumNavbar() {
   const pathname = usePathname();
@@ -11,10 +12,17 @@ const PremiumNavbar = React.memo(function PremiumNavbar() {
 
   const NAV_ITEMS = [
     { name: 'Inicio',    icon: Home,        path: '/',        badge: 0 },
-    { name: 'Favoritos', icon: Heart,       path: '/favorites', badge: 0 },
+    ...(auth.currentUser ? [
+      { name: 'Favoritos', icon: Heart,       path: '/favorites', badge: 0 },
+    ] : []),
     { name: 'Buscar',    icon: Search,      path: '/search',  badge: 0 },
     { name: 'Carrito',   icon: ShoppingBag, path: '/cart',    badge: cartCount },
-    { name: 'Perfil',    icon: User,        path: '/profile', badge: 0 },
+    { 
+      name: auth.currentUser ? 'Perfil' : 'Entrar',    
+      icon: auth.currentUser ? User : LogIn,        
+      path: auth.currentUser ? '/profile' : '/login', 
+      badge: 0 
+    },
   ];
 
   return (
@@ -57,7 +65,7 @@ const PremiumNavbar = React.memo(function PremiumNavbar() {
                   width: 46,
                   height: 46,
                   borderRadius: 23,
-                  backgroundColor: isActive ? '#1A1A2E' : 'transparent',
+                  backgroundColor: isActive ? '#F47321' : 'transparent',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: 2,
@@ -99,7 +107,7 @@ const PremiumNavbar = React.memo(function PremiumNavbar() {
               style={{
                 fontSize: 10,
                 fontWeight: isActive ? '700' : '500',
-                color: isActive ? '#1A1A2E' : '#B0B0B0',
+                color: isActive ? '#F47321' : '#B0B0B0',
               }}
             >
               {item.name}

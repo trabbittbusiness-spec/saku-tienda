@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, ScrollView, useWindowDimensions, T
 import { ArrowLeft, Star, Heart, ShoppingCart, Truck, Store, Plus, Minus, ChevronRight, ShoppingBag } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Header from '../../components/Header';
+import AuthModal from '../../components/AuthModal';
 import LoadingScreen from '../../components/LoadingScreen';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
@@ -18,13 +19,14 @@ export default function ProductDetailsScreen() {
   const isDesktop = width >= 1024;
   
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState('1kg');
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
   const [product, setProduct] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = React.useRef<any>(null);
   const [scrollX, setScrollX] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -74,10 +76,12 @@ export default function ProductDetailsScreen() {
             description: data.descripcion || 'Sin descripción',
             images: images,
             sizes: sizesArray,
-            promo: data.estadoPromocion === true
+            variants: data.variants || [],
+            promo: data.estadoPromocion === true,
+            type: 'product'
           });
           
-          setSelectedSize(sizesArray[0]);
+          setSelectedVariantIndex(0);
 
           // Fetch Related Products
           try {
@@ -125,14 +129,19 @@ export default function ProductDetailsScreen() {
   const handleAddToCart = async () => {
     if (loading || !product) return;
 
+    if (!auth.currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+
     const itemData = {
       ID_productos: product.id,
       nombre: product.name,
-      precio: product.price,
+      precio: product.variants && product.variants.length > 0 ? product.variants[selectedVariantIndex].price : product.price,
       foto: product.images[0],
       cantidad: quantity,
-      medida: selectedSize,
-      subtotal: product.price * quantity,
+      medida: product.variants && product.variants.length > 0 ? product.variants[selectedVariantIndex].label : (product.sizes ? product.sizes[0] : ''),
+      subtotal: (product.variants && product.variants.length > 0 ? product.variants[selectedVariantIndex].price : product.price) * quantity,
       creator: auth.currentUser ? doc(db, 'users', auth.currentUser.uid) : null,
       fechaCreacion: new Date()
     };
@@ -193,6 +202,10 @@ export default function ProductDetailsScreen() {
             <Text style={{ fontWeight: '800' }}>Volver</Text>
           </TouchableOpacity>
         </View>
+        <AuthModal 
+          isVisible={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+        />
       </View>
     );
   }
@@ -205,12 +218,12 @@ export default function ProductDetailsScreen() {
           <View style={{ width: '100%', height: 420, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             {!loading && product?.promo && (
               <View style={{ 
-                position: 'absolute', top: 25, left: -30, backgroundColor: '#22C55E', 
+                position: 'absolute', top: 25, left: -30, backgroundColor: '#10B981', 
                 width: 120, height: 32, transform: [{ rotate: '-45deg' }], 
                 justifyContent: 'center', alignItems: 'center', zIndex: 20,
                 shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
               }}>
-                <Text style={{ color: 'white', fontWeight: '900', fontSize: 14, letterSpacing: 1 }}>PROMO</Text>
+                <Text style={{ color: 'white', fontWeight: '900', fontSize: 14, letterSpacing: 1 }}>OFERTA</Text>
               </View>
             )}
             {loading ? (
@@ -252,20 +265,15 @@ export default function ProductDetailsScreen() {
               </>
             ) : (
               <>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <View style={{ marginBottom: 10 }}>
                   <Text style={{ fontSize: 11, fontWeight: '900', color: '#9CA3AF', letterSpacing: 1 }}>{product.category}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Star size={14} color="#F59E0B" fill="#F59E0B" />
-                    <Text style={{ fontSize: 13, fontWeight: '900', color: '#111827' }}>5</Text>
-                    <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '600' }}>(234)</Text>
-                  </View>
                 </View>
 
                 <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', lineHeight: 28, marginBottom: 15 }}>{product.name}</Text>
                 
-                <Text style={{ fontSize: 24, fontWeight: '900', color: '#CD1A3B', marginTop: 8 }}>
-                ${(product.price || 0).toLocaleString()} CLP
-              </Text>
+                <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', marginTop: 8 }}>
+                  ${((product.variants && product.variants.length > 0 ? product.variants[selectedVariantIndex].price : product.price) || 0).toLocaleString("de-DE")} CLP
+                </Text>
               </>
             )}
 
@@ -275,19 +283,25 @@ export default function ProductDetailsScreen() {
               <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
                 {loading ? (
                   <View style={{ width: 100, height: 48, backgroundColor: '#F3F4F6', borderRadius: 14 }} />
-                ) : (
-                  product.sizes.map((size: string) => (
+                ) : product.variants && product.variants.length > 0 ? (
+                  product.variants.map((v: any, i: number) => (
                     <TouchableOpacity 
-                      key={size}
-                      onPress={() => setSelectedSize(size)}
+                      key={i}
+                      onPress={() => setSelectedVariantIndex(i)}
                       style={{ 
-                        flex: 1, minWidth: 80, height: 48, borderRadius: 14, borderWidth: 1, justifyContent: 'center', alignItems: 'center',
-                        borderColor: selectedSize === size ? '#1E1B4B' : '#E5E7EB',
-                        backgroundColor: selectedSize === size ? '#1E1B4B' : '#FFFFFF'
+                        flex: 1, minWidth: 80, height: 48, borderRadius: 8, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center',
+                        borderColor: '#7C3AED',
+                        backgroundColor: selectedVariantIndex === i ? '#7C3AED' : '#FFFFFF'
                       }}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: selectedSize === size ? 'white' : '#6B7280' }}>{size}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: selectedVariantIndex === i ? '#FFFFFF' : '#7C3AED', textTransform: 'uppercase' }}>{v.label}</Text>
                     </TouchableOpacity>
+                  ))
+                ) : (
+                  product.sizes.map((size: string) => (
+                    <View key={size} style={{ flex: 1, minWidth: 80, height: 48, borderRadius: 8, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center', borderColor: '#7C3AED', backgroundColor: '#FFFFFF' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#7C3AED', textTransform: 'uppercase' }}>{size}</Text>
+                    </View>
                   ))
                 )}
               </View>
@@ -392,7 +406,7 @@ export default function ProductDetailsScreen() {
                     {/* Info */}
                     <View style={{ marginTop: 10 }}>
                       <Text style={{ fontSize: 12, fontWeight: '700', color: '#111827', height: 32 }} numberOfLines={2}>{item.name}</Text>
-                      <Text style={{ fontSize: 16, fontWeight: '900', color: '#DC2626', marginTop: 4 }}>${item.price.toLocaleString()}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '900', color: '#DC2626', marginTop: 4 }}>${item.price.toLocaleString("de-DE")}</Text>
                       
                       <TouchableOpacity 
                         onPress={() => router.push(`/product/${item.id}`)}
@@ -439,12 +453,13 @@ export default function ProductDetailsScreen() {
             onPress={handleAddToCart}
             style={{ 
               flex: 1, backgroundColor: loading ? '#E5E7EB' : '#F47321', borderRadius: 16, height: 60, 
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+              shadowColor: '#F47321', shadowOpacity: 0.2, shadowRadius: 8
             }}
           >
             <ShoppingCart size={20} color="white" />
             <Text style={{ color: 'white', fontSize: 15, fontWeight: '900' }}>
-              {loading ? 'Cargando...' : `Agregar • $${(product.price * quantity).toLocaleString()}`}
+              {loading ? 'Cargando...' : `Agregar • $${((product.variants && product.variants.length > 0 ? product.variants[selectedVariantIndex].price : product.price) * quantity).toLocaleString("de-DE")}`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -492,7 +507,7 @@ export default function ProductDetailsScreen() {
                   <ShoppingBag size={64} color="#9CA3AF" strokeWidth={1.5} />
                   <View style={{ 
                     position: 'absolute', top: -5, right: -12, 
-                    backgroundColor: '#F47321', width: 34, height: 34, borderRadius: 17,
+                    backgroundColor: '#63348C', width: 34, height: 34, borderRadius: 17,
                     justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#FFFFFF'
                   }}>
                     <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>
@@ -505,6 +520,10 @@ export default function ProductDetailsScreen() {
             </Animated.View>
           </View>
         )}
+        <AuthModal 
+          isVisible={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+        />
       </View>
     );
   }
@@ -571,7 +590,8 @@ export default function ProductDetailsScreen() {
                     name: product.name,
                     price: product.price,
                     image: product.images[0],
-                    category: product.category
+                    category: product.category,
+                    type: 'product'
                   })}
                   style={{ 
                     position: 'absolute', top: 24, right: 24, width: 44, height: 44, borderRadius: 22, 
@@ -594,7 +614,7 @@ export default function ProductDetailsScreen() {
                     onPress={() => setSelectedImage(i)}
                     style={{ 
                       width: 70, height: 70, borderRadius: 12, borderWidth: 2, 
-                      borderColor: selectedImage === i ? '#F47321' : 'transparent',
+                      borderColor: selectedImage === i ? '#10B981' : 'transparent',
                       padding: 4, backgroundColor: '#FFFFFF'
                     }}
                   >
@@ -617,18 +637,10 @@ export default function ProductDetailsScreen() {
             ) : (
               <>
                 <Text style={{ fontSize: 12, fontWeight: '800', color: '#9CA3AF', letterSpacing: 1.5, marginBottom: 8 }}>{product.category}</Text>
-                <Text style={{ fontSize: 32, fontWeight: '900', color: '#111827', lineHeight: 40, marginBottom: 16 }}>{product.name}</Text>
-                
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Star size={16} color="#F59E0B" fill="#F59E0B" />
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#F59E0B' }}>{product.rating}</Text>
-                  </View>
-                  <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>{product.reviews} valoraciones</Text>
-                </View>
+                <Text style={{ fontSize: 32, fontWeight: '900', color: '#111827', lineHeight: 40, marginBottom: 24 }}>{product.name}</Text>
 
-                <Text style={{ fontSize: 42, fontWeight: '900', color: '#1E1B4B', marginBottom: 24 }}>
-                  ${product.price.toLocaleString()} CLP
+                <Text style={{ fontSize: 42, fontWeight: '900', color: '#111827', marginBottom: 24 }}>
+                  ${((product.variants && product.variants.length > 0 ? product.variants[selectedVariantIndex].price : product.price) || 0).toLocaleString("de-DE")} CLP
                 </Text>
 
                 <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '500', lineHeight: 24, marginBottom: 32 }}>
@@ -642,19 +654,25 @@ export default function ProductDetailsScreen() {
               <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
                 {loading ? (
                   <View style={{ width: 120, height: 45, backgroundColor: '#F3F4F6', borderRadius: 14 }} />
-                ) : (
-                  product.sizes.map((size: string) => (
+                ) : product.variants && product.variants.length > 0 ? (
+                  product.variants.map((v: any, i: number) => (
                     <TouchableOpacity 
-                      key={size}
-                      onPress={() => setSelectedSize(size)}
+                      key={i}
+                      onPress={() => setSelectedVariantIndex(i)}
                       style={{ 
-                        paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, borderWidth: 1,
-                        borderColor: selectedSize === size ? '#1E1B4B' : '#E5E7EB',
-                        backgroundColor: selectedSize === size ? '#1E1B4B' : '#FFFFFF'
+                        paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8, borderWidth: 1.5,
+                        borderColor: '#7C3AED',
+                        backgroundColor: selectedVariantIndex === i ? '#7C3AED' : '#FFFFFF'
                       }}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: selectedSize === size ? 'white' : '#6B7280' }}>{size}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: selectedVariantIndex === i ? '#FFFFFF' : '#7C3AED', textTransform: 'uppercase' }}>{v.label}</Text>
                     </TouchableOpacity>
+                  ))
+                ) : (
+                  product.sizes.map((size: string) => (
+                    <View key={size} style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8, borderWidth: 1.5, borderColor: '#7C3AED', backgroundColor: '#FFFFFF' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#7C3AED', textTransform: 'uppercase' }}>{size}</Text>
+                    </View>
                   ))
                 )}
               </View>
@@ -685,7 +703,7 @@ export default function ProductDetailsScreen() {
               >
                 <ShoppingCart size={20} color="white" />
                 <Text style={{ color: 'white', fontSize: 15, fontWeight: '900' }}>
-                  {loading ? 'Cargando...' : `Agregar al carrito — $${(product.price * quantity).toLocaleString()} CLP`}
+                  {loading ? 'Cargando...' : `Agregar al carrito — $${(product.price * quantity).toLocaleString("de-DE")} CLP`}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -693,7 +711,7 @@ export default function ProductDetailsScreen() {
             <View style={{ backgroundColor: '#F9FAFB', borderRadius: 24, padding: 24, gap: 16, borderWidth: 1, borderColor: '#F3F4F6' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                 <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' }}>
-                  <Truck size={20} color="#6366F1" />
+                  <Truck size={20} color="#63348C" />
                 </View>
                 <View>
                   <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>Despacho Express</Text>
@@ -702,7 +720,7 @@ export default function ProductDetailsScreen() {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                 <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#F5F3FF', justifyContent: 'center', alignItems: 'center' }}>
-                  <Store size={20} color="#8B5CF6" />
+                  <Store size={20} color="#63348C" />
                 </View>
                 <View>
                   <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>Retiro en Tienda</Text>
@@ -787,7 +805,7 @@ export default function ProductDetailsScreen() {
                 >
                   {item.promo && (
                     <View style={{ 
-                      position: 'absolute', top: 12, left: -22, backgroundColor: '#22C55E', 
+                      position: 'absolute', top: 12, left: -22, backgroundColor: '#63348C', 
                       width: 90, height: 24, transform: [{ rotate: '-45deg' }], 
                       justifyContent: 'center', alignItems: 'center', zIndex: 20,
                       shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
@@ -814,7 +832,7 @@ export default function ProductDetailsScreen() {
 
                   <View style={{ marginTop: 12 }}>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827', height: 40 }} numberOfLines={2}>{item.name}</Text>
-                    <Text style={{ fontSize: 20, fontWeight: '900', color: '#DC2626', marginTop: 8 }}>${item.price.toLocaleString()}</Text>
+                    <Text style={{ fontSize: 20, fontWeight: '900', color: '#DC2626', marginTop: 8 }}>${item.price.toLocaleString("de-DE")}</Text>
                     <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>Medida: {item.brand || '1 unidad'}</Text>
 
                     <TouchableOpacity 
@@ -881,7 +899,7 @@ export default function ProductDetailsScreen() {
                 <ShoppingBag size={64} color="#9CA3AF" strokeWidth={1.5} />
                 <View style={{ 
                   position: 'absolute', top: -5, right: -12, 
-                  backgroundColor: '#F47321', width: 34, height: 34, borderRadius: 17,
+                  backgroundColor: '#63348C', width: 34, height: 34, borderRadius: 17,
                   justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#FFFFFF'
                 }}>
                   <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>
@@ -894,6 +912,10 @@ export default function ProductDetailsScreen() {
           </Animated.View>
         </View>
       )}
-    </View>
-  );
+        <AuthModal 
+          isVisible={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+        />
+      </View>
+    );
 }

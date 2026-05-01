@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, useWindowDimensions, ActivityIndicator, Platform, StyleSheet, StatusBar, Alert } from 'react-native';
 import { Search, Heart, ChevronRight, Star, Clock, MapPin, Phone, MessageSquare, ArrowLeft, Stethoscope, Scissors, Syringe, ClipboardList, AlertCircle, Calendar, Zap, ShieldCheck, Waves, Info, ChevronLeft } from 'lucide-react-native';
 import Header from '../components/Header';
+import { useFavorites } from '../context/FavoritesContext';
 import { useRouter } from 'expo-router';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -9,19 +10,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CATEGORY_ICONS: any = {
-  'default': { icon: Stethoscope, color: '#6366F1', bg: '#EEF2FF' },
+  'default': { icon: Stethoscope, color: '#63348C', bg: '#EEF2FF' },
   'urgencias': { icon: AlertCircle, color: '#EF4444', bg: '#FEF2F2' },
   'peluquería': { icon: Scissors, color: '#EC4899', bg: '#FDF2F8' },
-  'vacunas': { icon: Syringe, color: '#10B981', bg: '#ECFDF5' },
+  'vacunas': { icon: Syringe, color: '#63348C', bg: '#ECFDF5' },
   'consulta': { icon: ClipboardList, color: '#F59E0B', bg: '#FFFBEB' },
   'spa': { icon: Waves, color: '#06B6D4', bg: '#ECFEFF' },
 };
 
 const FALLBACK_THEMES = [
-  { color: '#6366F1', bg: '#EEF2FF', icon: Stethoscope },
-  { color: '#8B5CF6', bg: '#F5F3FF', icon: ClipboardList },
+  { color: '#63348C', bg: '#EEF2FF', icon: Stethoscope },
+  { color: '#63348C', bg: '#F5F3FF', icon: ClipboardList },
   { color: '#EC4899', bg: '#FDF2F8', icon: Heart },
-  { color: '#10B981', bg: '#ECFDF5', icon: ShieldCheck },
+  { color: '#63348C', bg: '#ECFDF5', icon: ShieldCheck },
 ];
 
 export default function VeterinaryServicesScreen() {
@@ -36,6 +37,7 @@ export default function VeterinaryServicesScreen() {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('Todas');
   const [isBooking, setIsBooking] = useState<string | null>(null);
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   useEffect(() => {
     // Listen for services
@@ -97,22 +99,22 @@ export default function VeterinaryServicesScreen() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FDFDFF' }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <StatusBar barStyle={isDesktop ? 'dark-content' : 'light-content'} />
 
       {/* 0. CONDITIONAL HEADER */}
       {isDesktop && <Header />}
 
-      <ScrollView showsVerticalScrollIndicator={true} stickyHeaderIndices={isDesktop ? [] : [1]}>
+      <ScrollView showsVerticalScrollIndicator={true}>
         {/* 1. HERO SECTION */}
-        <View style={{ height: isDesktop ? 300 : 200, backgroundColor: '#3B1E54', overflow: 'hidden' }}>
+        <View style={{ height: isDesktop ? 300 : 200, backgroundColor: '#63348C', overflow: 'hidden', marginBottom: -24 }}>
           <Image
             source={{ uri: 'https://images.unsplash.com/photo-1576201836106-db1758fd1c97?q=80&w=1200' }}
             style={{ width: '100%', height: '100%', opacity: 0.6 }}
             resizeMode="cover"
           />
           <LinearGradient
-            colors={['rgba(59,30,84,0.8)', 'transparent']}
+            colors={['rgba(99,52,140,0.8)', 'transparent']}
             style={StyleSheet.absoluteFill}
           />
 
@@ -140,7 +142,7 @@ export default function VeterinaryServicesScreen() {
 
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: isDesktop ? 48 : 32, fontWeight: '900', color: '#fff', letterSpacing: -1, lineHeight: isDesktop ? 54 : 38 }}>
-                    Cuidado <Text style={{ color: '#F47321' }}>Superior</Text>{'\n'}Para Tu Mascota
+                    Cuidado <Text style={{ color: '#F97316' }}>Superior</Text>{'\n'}Para Tu Mascota
                   </Text>
                   <Text style={{ fontSize: isDesktop ? 18 : 14, color: 'rgba(255,255,255,0.8)', marginTop: 8, fontWeight: '500', lineHeight: 22 }}>
                     Reserva servicios veterinarios de alta calidad en segundos.
@@ -151,11 +153,15 @@ export default function VeterinaryServicesScreen() {
           </View>
         </View>
 
-        {/* 2. SEARCH & QUICK ACTIONS BAR */}
+        {/* 2. SEARCH & QUICK ACTIONS BAR (STICKY) */}
         <View style={{
-          marginTop: isDesktop ? -40 : -30,
+          backgroundColor: '#FFFFFF',
+          paddingTop: 24,
+          paddingBottom: 15,
           paddingHorizontal: isDesktop ? '4%' : 20,
-          zIndex: 100
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          zIndex: 100,
         }}>
           <View style={{
             flexDirection: isDesktop ? 'row' : 'column',
@@ -171,9 +177,9 @@ export default function VeterinaryServicesScreen() {
               alignItems: 'center',
               paddingHorizontal: 20,
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.1,
-              shadowRadius: 20,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 15,
               elevation: 5,
               borderWidth: 1,
               borderColor: '#F1F5F9',
@@ -188,29 +194,31 @@ export default function VeterinaryServicesScreen() {
               />
             </View>
 
-            {/* Emergency Action */}
-            <TouchableOpacity style={{
-              backgroundColor: '#EF4444',
-              borderRadius: 24,
-              height: 58,
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: isDesktop ? 30 : 20,
-              gap: 10,
-              shadowColor: '#EF4444',
-              shadowOpacity: 0.2,
-              shadowRadius: 15,
-              elevation: 5,
-              minWidth: isDesktop ? 220 : undefined
-            }}>
-              <AlertCircle size={22} color="#fff" strokeWidth={2.5} />
-              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 }}>URGENCIAS 24/7</Text>
-            </TouchableOpacity>
+            {/* Emergency Action (Only Desktop) */}
+            {isDesktop && (
+              <TouchableOpacity style={{
+                backgroundColor: '#EF4444',
+                borderRadius: 24,
+                height: 58,
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 30,
+                gap: 10,
+                shadowColor: '#EF4444',
+                shadowOpacity: 0.2,
+                shadowRadius: 15,
+                elevation: 5,
+                minWidth: 220
+              }}>
+                <AlertCircle size={22} color="#fff" strokeWidth={2.5} />
+                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 }}>URGENCIAS 24/7</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
         {/* 3. CATEGORIES SECTION */}
-        <View style={{ marginTop: 40, paddingHorizontal: isDesktop ? '4%' : 15 }}>
+        <View style={{ marginTop: 10, paddingHorizontal: isDesktop ? '4%' : 15 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={isDesktop} contentContainerStyle={{ gap: 20, paddingBottom: 15, paddingLeft: 5 }}>
             <TouchableOpacity
               onPress={() => setSelectedCat('Todas')}
@@ -248,7 +256,7 @@ export default function VeterinaryServicesScreen() {
         <View style={{ paddingHorizontal: isDesktop ? '4%' : 15, marginTop: 30, paddingBottom: 120 }}>
 
           {loading ? (
-            <ActivityIndicator size="large" color="#3B1E54" style={{ marginTop: 50 }} />
+            <ActivityIndicator size="large" color="#63348C" style={{ marginTop: 50 }} />
           ) : (
             <>
               {/* Results Header */}
@@ -258,7 +266,7 @@ export default function VeterinaryServicesScreen() {
                     {selectedCat === 'Todas' ? 'Nuestros Servicios' : `${categories.find(c => c.id === selectedCat)?.nombre}`}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                    <ShieldCheck size={14} color="#10B981" />
+                    <ShieldCheck size={14} color="#63348C" />
                     <Text style={{ color: '#64748B', fontWeight: '700', fontSize: 13 }}>Profesionales Saku</Text>
                   </View>
                 </View>
@@ -267,41 +275,75 @@ export default function VeterinaryServicesScreen() {
               {/* Service Grid */}
               <View style={{ flexDirection: isDesktop ? 'row' : 'column', flexWrap: 'wrap', gap: 20 }}>
                 {filteredServices.length > 0 ? (
-                  filteredServices.map(s => (
+                  filteredServices.map(s => {
+                    // Price range helper
+                    const getDisplayPrice = (svc: any): string => {
+                      if (!svc?.weightRanges || svc.weightRanges.length === 0) {
+                        return `$${(svc?.precio || 0).toLocaleString("de-DE")}`;
+                      }
+                      const prices = svc.weightRanges.map((r: any) => r.price).filter((p: number) => !isNaN(p));
+                      if (prices.length === 0) return `$${(svc?.precio || 0).toLocaleString("de-DE")}`;
+                      const min = Math.min(...prices);
+                      const max = Math.max(...prices);
+                      if (min === max) return `$${min.toLocaleString("de-DE")}`;
+                      return `$${min.toLocaleString("de-DE")} - $${max.toLocaleString("de-DE")}`;
+                    };
+                    return (
                     <TouchableOpacity
                       key={s.id}
                       style={[styles.serviceCard, { width: isDesktop ? '31.5%' : '100%' }]}
+                      activeOpacity={0.9}
+                      onPress={() => router.push(`/servicio/${s.id}` as any)}
                     >
                       <View style={styles.serviceImageWrapper}>
                         <Image source={{ uri: s.foto1 || 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?q=80&w=500' }} style={{ width: '100%', height: isDesktop ? 220 : 180 }} />
                         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)']} style={StyleSheet.absoluteFill} />
 
-                        <TouchableOpacity style={styles.favoriteCircle}>
-                          <Heart size={18} color="#fff" />
+                        <TouchableOpacity 
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite({
+                              id: s.id,
+                              name: s.nombre,
+                              price: s.precio,
+                              image: s.foto1 || 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?q=80&w=500',
+                              description: s.descripcion,
+                              duration: s.duracion || 'Consultar',
+                              type: 'service'
+                            });
+                          }}
+                          style={[styles.favoriteCircle, isFavorite(s.id) && { backgroundColor: '#FFFFFF' }]}
+                        >
+                          <Heart size={18} color={isFavorite(s.id) ? "#EF4444" : "#fff"} fill={isFavorite(s.id) ? "#EF4444" : "transparent"} />
                         </TouchableOpacity>
 
                         <View style={styles.priceTag}>
-                          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '900' }}>${(s.precio || 0).toLocaleString()}</Text>
+                          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '900' }}>{getDisplayPrice(s)}</Text>
                         </View>
                       </View>
 
-                      <View style={{ padding: 15 }}>
-                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#1E293B', marginBottom: 4 }}>{s.nombre}</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                            <Star size={12} color="#F59E0B" fill="#F59E0B" />
-                            <Text style={{ fontSize: 13, fontWeight: '800', color: '#1E293B' }}>4.9</Text>
+                      <View style={{ padding: 15, flex: 1, justifyContent: 'space-between' }}>
+                        <View>
+                          <Text style={{ fontSize: 18, fontWeight: '800', color: '#1E293B', marginBottom: 4 }}>{s.nombre}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <View style={{ backgroundColor: '#F1F5F9', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#63348C', textTransform: 'uppercase' }}>
+                                {s.categoriaIds && s.categoriaIds.length > 0 
+                                  ? categories.find(c => c.id === s.categoriaIds[0])?.nombre || 'General'
+                                  : 'Servicio'}
+                              </Text>
+                            </View>
+                            <Text style={{ color: '#CBD5E1' }}>•</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                              <Clock size={12} color="#64748B" />
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: '#64748B' }}>{s.duracion || 'Consultar'}</Text>
+                            </View>
                           </View>
-                          <Text style={{ color: '#CBD5E1' }}>•</Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                            <Clock size={12} color="#64748B" />
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#64748B' }}>45 min</Text>
-                          </View>
-                        </View>
 
-                        <Text style={{ fontSize: 13, color: '#64748B', marginTop: 12, lineHeight: 18 }} numberOfLines={2}>
-                          {s.descripcion || 'Servicio profesional para el bienestar de tu mascota.'}
-                        </Text>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginTop: 12, lineHeight: 18 }} numberOfLines={3}>
+                            {s.descripcion || 'Servicio profesional para el bienestar de tu mascota.'}
+                          </Text>
+                        </View>
 
                         <TouchableOpacity
                           style={[styles.actionButton, isBooking === s.id && { opacity: 0.7 }]}
@@ -319,13 +361,14 @@ export default function VeterinaryServicesScreen() {
                         </TouchableOpacity>
                       </View>
                     </TouchableOpacity>
-                  ))
+                    )
+                  })
                 ) : (
                   <View style={{ flex: 1, alignItems: 'center', paddingVertical: 60, width: '100%' }}>
                     <Stethoscope size={50} color="#CBD5E1" strokeWidth={1.5} />
                     <Text style={{ fontSize: 18, fontWeight: '800', color: '#1E293B', marginTop: 15 }}>Sin servicios</Text>
                     <TouchableOpacity onPress={() => { setSelectedCat('Todas'); setSearch(''); }} style={{ marginTop: 20 }}>
-                      <Text style={{ color: '#F47321', fontWeight: '900' }}>Ver todo</Text>
+                      <Text style={{ color: '#63348C', fontWeight: '900' }}>Ver todo</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -358,8 +401,8 @@ const styles = StyleSheet.create({
     borderColor: '#fff'
   },
   circleActive: {
-    backgroundColor: '#3B1E54',
-    borderColor: '#F47321',
+    backgroundColor: '#63348C',
+    borderColor: '#63348C',
   },
   categoryLabel: {
     fontSize: 12,
@@ -369,7 +412,7 @@ const styles = StyleSheet.create({
     width: '100%'
   },
   labelActive: {
-    color: '#3B1E54',
+    color: '#63348C',
   },
   serviceCard: {
     backgroundColor: '#fff',
@@ -378,7 +421,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
     shadowColor: '#000',
-    shadowOpacity: 0.04, shadowRadius: 15, elevation: 3
+    shadowOpacity: 0.04, shadowRadius: 15, elevation: 3,
+    minHeight: 460
   },
   serviceImageWrapper: {
     position: 'relative',
@@ -399,13 +443,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 12,
     right: 12,
-    backgroundColor: '#10B981',
+    backgroundColor: '#63348C',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
   actionButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#63348C',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

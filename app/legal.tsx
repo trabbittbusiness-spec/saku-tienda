@@ -39,9 +39,9 @@ export default function LegalScreen() {
           
           <View style={{ flexDirection: 'row', gap: 15, marginBottom: 40 }}>
             {[
-              { label: 'Términos', icon: FileText, color: '#6366F1' },
-              { label: 'Privacidad', icon: Shield, color: '#10B981' },
-              { label: 'Bases', icon: Scale, color: '#F47321' }
+              { label: 'Términos', icon: FileText, color: '#63348C' },
+              { label: 'Privacidad', icon: Shield, color: '#63348C' },
+              { label: 'Bases', icon: Scale, color: '#63348C' }
             ].map((item, idx) => (
               <View key={idx} style={{ flex: 1, backgroundColor: '#F9FAFB', borderRadius: 16, padding: 15, alignItems: 'center' }}>
                 <item.icon size={24} color={item.color} />

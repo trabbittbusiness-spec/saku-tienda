@@ -67,7 +67,7 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
 
     const emailTemplate = (isOwner) => `
       <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #F3F4F6; border-radius: 24px; overflow: hidden; background-color: #fff;">
-        <div style="background-color: ${order.isServiceBooking ? '#6366F1' : '#10B981'}; padding: 40px 20px; text-align: center;">
+        <div style="background-color: ${order.isServiceBooking ? '#63348C' : '#10B981'}; padding: 40px 20px; text-align: center;">
           <h1 style="color: #fff; margin: 0; font-size: 24px;">
             ${order.isServiceBooking 
               ? (isOwner ? '¡Nuevo Servicio Reservado!' : '¡Reserva Confirmada!')
@@ -103,8 +103,8 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
           <div style="margin-top: 30px;">
             <p style="font-size: 14px; color: #6B7280;"><b>Método de Pago:</b> ${order.metodoPago === 'card' ? 'Tarjeta Bancaria' : 'Efectivo'}</p>
             ${order.isServiceBooking ? `
-            <div style="background-color: #EEF2FF; padding: 20px; border-radius: 16px; margin-top: 20px; border-left: 4px solid #6366F1;">
-              <h3 style="margin: 0 0 10px 0; color: #3B1E54; font-size: 16px;">Detalles de la Cita</h3>
+            <div style="background-color: #EEF2FF; padding: 20px; border-radius: 16px; margin-top: 20px; border-left: 4px solid #63348C;">
+              <h3 style="margin: 0 0 10px 0; color: #63348C; font-size: 16px;">Detalles de la Cita</h3>
               <p style="font-size: 14px; color: #1E293B; margin: 4px 0;"><b>Servicio:</b> ${order.items && order.items[0] ? order.items[0].nombre : 'Servicio Saku'}</p>
               <p style="font-size: 14px; color: #1E293B; margin: 4px 0;"><b>Fecha:</b> ${order.fechaReserva ? new Date(order.fechaReserva.toDate ? order.fechaReserva.toDate() : (order.fechaReserva._seconds * 1000)).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}</p>
               <p style="font-size: 14px; color: #1E293B; margin: 4px 0;"><b>Hora:</b> ${order.horaReserva || ''}</p>
@@ -356,7 +356,7 @@ exports.onNewsletterCampaignCreated = onDocumentCreated({
 
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #F3F4F6; border-radius: 24px; overflow: hidden; background-color: #fff;">
-        <div style="background-color: #3B1E54; padding: 40px 20px; text-align: center;">
+        <div style="background-color: #63348C; padding: 40px 20px; text-align: center;">
           <h1 style="color: #fff; margin: 0; font-size: 24px;">${campaign.title}</h1>
         </div>
         <div style="padding: 30px;">

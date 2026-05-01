@@ -101,7 +101,7 @@ export default function CardsScreen() {
                 <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>Nueva tarjeta</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                    <Text style={{ fontSize: 14 }}>🔒</Text>
-                   <Text style={{ fontSize: 14, fontWeight: '700', color: '#10B981' }}>Conexión cifrada y segura</Text>
+                   <Text style={{ fontSize: 14, fontWeight: '700', color: '#63348C' }}>Conexión cifrada y segura</Text>
                 </View>
               </View>
 
@@ -130,7 +130,7 @@ export default function CardsScreen() {
 
               <TouchableOpacity 
                 onPress={() => setShowAddForm(false)}
-                style={{ backgroundColor: '#10B981', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}
+                style={{ backgroundColor: '#63348C', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}
               >
                 <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Guardar tarjeta</Text>
               </TouchableOpacity>
@@ -266,7 +266,7 @@ export default function CardsScreen() {
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' }}>
-                  <CreditCard size={20} color="#6366F1" />
+                  <CreditCard size={20} color="#63348C" />
                 </View>
                 <View>
                   <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Visa terminada en 1234</Text>

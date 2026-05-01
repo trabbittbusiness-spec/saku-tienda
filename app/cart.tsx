@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image } from 'react-native';
-import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus } from 'lucide-react-native';
+import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
+import { auth } from '../lib/firebase';
+import AuthModal from '../components/AuthModal';
 
 export default function CartScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart();
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
   const isDesktop = width >= 1024;
 
   React.useEffect(() => {
@@ -26,10 +29,10 @@ export default function CartScreen() {
             flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20
           }}>
             <TouchableOpacity 
-              onPress={() => router.back()}
-              style={{ position: 'absolute', left: 20, width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}
+              onPress={() => router.push('/')}
+              style={{ position: 'absolute', left: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
             >
-              <ArrowLeft size={18} color="#111827" />
+              <ChevronLeft size={24} color="#111827" strokeWidth={3} />
             </TouchableOpacity>
             <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Mi Carrito</Text>
           </View>
@@ -79,10 +82,10 @@ export default function CartScreen() {
           borderBottomWidth: 1, borderBottomColor: '#F3F4F6'
         }}>
           <TouchableOpacity 
-            onPress={() => router.back()}
-            style={{ position: 'absolute', left: 20, width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => router.push('/')}
+            style={{ position: 'absolute', left: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
           >
-            <ArrowLeft size={24} color="#111827" />
+            <ChevronLeft size={24} color="#111827" strokeWidth={3} />
           </TouchableOpacity>
           <View style={{ alignItems: 'center' }}>
             <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>Mi Carrito</Text>
@@ -116,7 +119,7 @@ export default function CartScreen() {
                       {item.nombre}
                     </Text>
                     {item.medida && item.medida !== 'Único' && (
-                      <Text style={{ fontSize: 11, color: '#F47321', fontWeight: '800', marginTop: 2 }}>
+                      <Text style={{ fontSize: 11, color: '#63348C', fontWeight: '800', marginTop: 2 }}>
                         FORMATO: {item.medida}
                       </Text>
                     )}
@@ -130,12 +133,12 @@ export default function CartScreen() {
                 </View>
 
                 <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>
-                  ${(item.precio || 0).toLocaleString()} CLP c/u
+                  ${(item.precio || 0).toLocaleString("de-DE")} CLP c/u
                 </Text>
                 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 8 }}>
                   <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>
-                    ${(item.subtotal || 0).toLocaleString()} CLP
+                    ${(item.subtotal || 0).toLocaleString("de-DE")} CLP
                   </Text>
                   
                   {/* Quantity Selector */}
@@ -151,7 +154,7 @@ export default function CartScreen() {
                     </Text>
                     <TouchableOpacity 
                       onPress={() => updateQuantity(item.ID_productos, item.cantidad + 1)}
-                      style={{ backgroundColor: '#F47321', paddingHorizontal: 12, paddingVertical: 8 }}
+                      style={{ backgroundColor: '#63348C', paddingHorizontal: 12, paddingVertical: 8 }}
                     >
                       <Plus size={14} color="white" />
                     </TouchableOpacity>
@@ -168,11 +171,17 @@ export default function CartScreen() {
           paddingHorizontal: 20, zIndex: 100 
         }}>
           <TouchableOpacity 
-            onPress={() => router.push('/checkout')}
+            onPress={() => {
+              if (!auth.currentUser) {
+                setShowAuthModal(true);
+                return;
+              }
+              router.push('/checkout');
+            }}
             style={{ 
-              backgroundColor: '#22C55E', borderRadius: 24, padding: 20,
+              backgroundColor: '#10B981', borderRadius: 24, padding: 20,
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-              shadowColor: '#22C55E', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }
+              shadowColor: '#10B981', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }
             }}
           >
             <View>
@@ -180,7 +189,7 @@ export default function CartScreen() {
               <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '700' }}>{cart.length} productos</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-              <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>${cartTotal.toLocaleString()} CLP</Text>
+              <Text style={{ color: 'white', fontSize: 20, fontWeight: '900' }}>${cartTotal.toLocaleString("de-DE")} CLP</Text>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
                 <ArrowLeft size={18} color="white" style={{ transform: [{ rotate: '180deg' }] }} />
               </View>
@@ -215,5 +224,13 @@ export default function CartScreen() {
     );
   }
 
-  return renderContent();
+  return (
+    <>
+      {renderContent()}
+      <AuthModal 
+        isVisible={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
+    </>
+  );
 }

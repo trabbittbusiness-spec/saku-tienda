@@ -17,8 +17,8 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState({
-    main: 'Nueva Providencia 1515',
-    sub: 'Providencia, RM',
+    main: '',
+    sub: '',
     lat: -33.4425,
     lng: -70.6400
   });
@@ -48,10 +48,13 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
             
             setSelectedLocation({
               main: (route && streetNumber) ? `${route} ${streetNumber}` : (addressParts[0] || 'Ubicación seleccionada'),
-              sub: addressParts.slice(1, 3).map(s => s.trim()).join(', ') || '',
+              sub: addressParts.slice(1).map(s => s.trim()).join(', ') || '',
+              fullAddress: result.formatted_address,
               lat: lat,
               lng: lng
             });
+
+
           }
         }
       } catch (err) {}
@@ -245,7 +248,7 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
               shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12,
             }}
           >
-            <Navigation size={22} color="#3B82F6" strokeWidth={2.5} />
+            <Navigation size={22} color="#63348C" strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
 
@@ -343,9 +346,11 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
                                 setSelectedLocation({
                                   main: mainText,
                                   sub: subText || place.description,
+                                  fullAddress: data.results[0].formatted_address,
                                   lat: lat,
                                   lng: lng
                                 });
+
                               }
                             } catch (error) {
                               console.log('Error fetching geocoding:', error);
@@ -383,9 +388,9 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
             <View>
               {/* Detected Location */}
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: isDesktop ? 32 : 24 }}>
-                <View style={{ width: 4, height: isDesktop ? 50 : 40, backgroundColor: '#F47321', borderRadius: 4 }} />
+                <View style={{ width: 4, height: isDesktop ? 50 : 40, backgroundColor: '#63348C', borderRadius: 4 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: isDesktop ? 26 : 20, fontWeight: '800', color: '#111827', letterSpacing: -0.5 }} numberOfLines={1}>{selectedLocation.main}</Text>
+                  <Text style={{ fontSize: isDesktop ? 26 : 20, fontWeight: '800', color: '#111827', letterSpacing: -0.5 }} numberOfLines={1}>{selectedLocation.main || 'Agregar ubicación'}</Text>
                   <Text style={{ fontSize: isDesktop ? 15 : 13, color: '#6B7280', fontWeight: '600', marginTop: 2 }} numberOfLines={1}>{selectedLocation.sub}</Text>
                 </View>
               </View>
@@ -406,11 +411,11 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
                         flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6,
                         paddingVertical: isDesktop ? 16 : 12, borderRadius: 16,
                         backgroundColor: isActive ? '#FFF7ED' : '#F9FAFB',
-                        borderWidth: 1.5, borderColor: isActive ? '#F47321' : '#F3F4F6',
+                        borderWidth: 1.5, borderColor: isActive ? '#63348C' : '#F3F4F6',
                       }}
                     >
-                      <cat.icon size={isDesktop ? 20 : 18} color={isActive ? '#F47321' : '#9CA3AF'} strokeWidth={isActive ? 2.5 : 2} />
-                      <Text style={{ fontSize: isDesktop ? 12 : 10, fontWeight: '800', color: isActive ? '#F47321' : '#6B7280', letterSpacing: 0.5 }}>{cat.label}</Text>
+                      <cat.icon size={isDesktop ? 20 : 18} color={isActive ? '#63348C' : '#9CA3AF'} strokeWidth={isActive ? 2.5 : 2} />
+                      <Text style={{ fontSize: isDesktop ? 12 : 10, fontWeight: '800', color: isActive ? '#63348C' : '#6B7280', letterSpacing: 0.5 }}>{cat.label}</Text>
                     </Pressable>
                   );
                 })}
@@ -418,16 +423,16 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
             </View>
           </ScrollView>
 
-          {/* Green CTA */}
+          {/* Primary Action Button */}
           <TouchableOpacity
             onPress={() => {
               if (onSave) onSave({ ...selectedLocation, category: selectedCategory });
               onClose();
             }}
             style={{
-              backgroundColor: '#10B981', borderRadius: 20, paddingVertical: isDesktop ? 20 : 16,
+              backgroundColor: '#63348C', borderRadius: 20, paddingVertical: isDesktop ? 20 : 16,
               flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-              shadowColor: '#10B981', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 20,
+              shadowColor: '#63348C', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 20,
               marginTop: isDesktop ? 24 : 12
             }}
           >

@@ -8,6 +8,9 @@ export interface Product {
   category?: string;
   brand?: string;
   rating?: number;
+  type?: 'product' | 'service';
+  description?: string;
+  duration?: string;
 }
 
 interface FavoritesContextType {

@@ -57,20 +57,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = async (item: any) => {
     try {
-      const itemData = {
-        ID_productos: String(item.ID_productos || item.id),
-        nombre: item.nombre || item.name,
-        precio: Number(item.precio || item.price),
-        foto: item.foto || item.image,
-        cantidad: Number(item.cantidad || item.quantity || 1),
-        medida: item.medida || 'Único',
-        subtotal: Number(item.precio || item.price) * Number(item.cantidad || item.quantity || 1),
-        creator: auth.currentUser ? doc(db, 'users', auth.currentUser.uid) : null,
-        fechaCreacion: new Date()
-      };
+      const productId = String(item.ID_productos || item.id);
+      const itemName = item.nombre || item.name;
+      const itemPrice = Number(item.precio || item.price);
+      const itemMedida = item.medida || 'Único';
+      const quantityToAdd = Number(item.cantidad || item.quantity || 1);
 
-      await addDoc(collection(db, 'productosseleccionados'), itemData);
-      Alert.alert("¡Agregado!", `${itemData.nombre} se añadió a tu carrito.`);
+      // Revisar si ya existe un producto con el mismo ID y nombre (que incluye la variante si la hay)
+      const existingItem = cart.find(i => i.ID_productos === productId && i.nombre === itemName);
+
+      if (existingItem && existingItem.firebaseId) {
+        // Si existe, actualizar la cantidad sumándola
+        const newQuantity = existingItem.cantidad + quantityToAdd;
+        await updateDoc(doc(db, 'productosseleccionados', existingItem.firebaseId), {
+          cantidad: newQuantity,
+          subtotal: newQuantity * existingItem.precio
+        });
+        Alert.alert("¡Actualizado!", `Se agregaron más unidades de ${itemName} a tu carrito.`);
+      } else {
+        // Si no existe, crear uno nuevo
+        const itemData = {
+          ID_productos: productId,
+          nombre: itemName,
+          precio: itemPrice,
+          foto: item.foto || item.image,
+          cantidad: quantityToAdd,
+          medida: itemMedida,
+          subtotal: itemPrice * quantityToAdd,
+          creator: auth.currentUser ? doc(db, 'users', auth.currentUser.uid) : null,
+          fechaCreacion: new Date()
+        };
+
+        await addDoc(collection(db, 'productosseleccionados'), itemData);
+        Alert.alert("¡Agregado!", `${itemName} se añadió a tu carrito.`);
+      }
     } catch (e) {
       console.error("Error adding to cart in context:", e);
       Alert.alert("Error", "No se pudo agregar al carrito. Revisa tu conexión.");

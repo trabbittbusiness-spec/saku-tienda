@@ -87,7 +87,7 @@ export default function OrderDetailsScreen() {
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ fontSize: 18, fontWeight: '800' }}>Orden no encontrada</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
-          <Text style={{ color: '#F47321', fontWeight: '900' }}>Volver</Text>
+          <Text style={{ color: '#63348C', fontWeight: '900' }}>Volver</Text>
         </TouchableOpacity>
       </View>
     );
@@ -136,11 +136,11 @@ export default function OrderDetailsScreen() {
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
                 >
                   <Text style={{ fontSize: isDesktop ? 28 : 20, fontWeight: '900', color: '#111827' }} numberOfLines={1}>{order.id}</Text>
-                  {copied ? <Check size={16} color="#10B981" /> : <Copy size={16} color="#9CA3AF" />}
+                  {copied ? <Check size={16} color="#63348C" /> : <Copy size={16} color="#9CA3AF" />}
                 </TouchableOpacity>
-                <View style={{ backgroundColor: '#10B98120', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981' }} />
-                  <Text style={{ fontSize: 11, fontWeight: '900', color: '#10B981' }}>{order.status.toUpperCase()}</Text>
+                <View style={{ backgroundColor: order.status === 'entregado' ? '#F0FDF4' : order.status === 'enviado' ? '#EFF6FF' : '#FFFBEB', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: order.status === 'entregado' ? '#10B981' : order.status === 'enviado' ? '#3B82F6' : '#D97706' }} />
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: order.status === 'entregado' ? '#10B981' : order.status === 'enviado' ? '#3B82F6' : '#D97706' }}>{order.status.toUpperCase()}</Text>
                 </View>
               </View>
               <Text style={{ fontSize: isDesktop ? 14 : 12, color: '#9CA3AF', fontWeight: '600', marginTop: 8 }}>{order.type} • {order.date}</Text>
@@ -162,7 +162,7 @@ export default function OrderDetailsScreen() {
                         justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: isActive ? '#111827' : '#F3F4F6'
                       }}>
                         {isCurrent ? (
-                           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' }} />
+                           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6' }} />
                         ) : (
                            <step.icon size={16} color={isActive ? '#FFFFFF' : '#9CA3AF'} strokeWidth={3} />
                         )}
@@ -225,7 +225,7 @@ export default function OrderDetailsScreen() {
               </View>
 
               {/* Card Footer Decoration */}
-              <View style={{ height: 8, backgroundColor: '#10B981' }} />
+              <View style={{ height: 8, backgroundColor: '#111827' }} />
             </View>
           </View>
 
@@ -245,7 +245,7 @@ export default function OrderDetailsScreen() {
                     <Image source={{ uri: item.image }} style={{ width: 40, height: 40, borderRadius: 8 }} />
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: isDesktop ? 13 : 12, fontWeight: '800', color: '#111827' }} numberOfLines={1}>{item.name}</Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 1 }}>x{item.qty} • ${item.price.toLocaleString()} CLP</Text>
+                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 1 }}>x{item.qty} • ${item.price.toLocaleString("de-DE")} CLP</Text>
                     </View>
                   </View>
                 ))}
@@ -263,8 +263,8 @@ export default function OrderDetailsScreen() {
                       {order.type.includes('Retiro') ? 'Sucursal de Retiro' : 'Dirección de Entrega'}
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
-                       <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
-                          {order.type.includes('Retiro') ? <Store size={14} color="#111827" /> : <MapPin size={14} color="#111827" />}
+                       <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center' }}>
+                          {order.type.includes('Retiro') ? <Store size={14} color="#F47321" /> : <MapPin size={14} color="#F47321" />}
                        </View>
                        <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }}>{order.branch.name}</Text>
@@ -277,8 +277,8 @@ export default function OrderDetailsScreen() {
                 <View>
                    <Text style={{ color: '#9CA3AF', fontSize: 10, fontWeight: '800', letterSpacing: 0.5, marginBottom: 8, textTransform: 'uppercase' }}>Método de Pago</Text>
                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
-                         <Banknote size={14} color="#111827" />
+                      <View style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center' }}>
+                         <Banknote size={14} color="#10B981" />
                       </View>
                       <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }}>{order.payment}</Text>
                    </View>
@@ -290,7 +290,7 @@ export default function OrderDetailsScreen() {
                 <View style={{ gap: 8 }}>
                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>Subtotal</Text>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }}>${order.subtotal.toLocaleString()} CLP</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }}>${order.subtotal.toLocaleString("de-DE")} CLP</Text>
                    </View>
                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>Envío</Text>
@@ -300,7 +300,7 @@ export default function OrderDetailsScreen() {
 
                 <View style={{ backgroundColor: '#F9FAFB', padding: 15, borderRadius: 16, alignItems: 'center' }}>
                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 2, letterSpacing: 0.5, textTransform: 'uppercase' }}>Total Pagado</Text>
-                   <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString()} CLP</Text>
+                   <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString("de-DE")} CLP</Text>
                 </View>
               </View>
             </View>

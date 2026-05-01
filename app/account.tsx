@@ -45,7 +45,7 @@ export default function AccountScreen() {
             setName(fullName || currentUser.displayName || 'Usuario');
             setPhone(data.phone_number || '');
             setPhotoUrl(data.photo_url || '');
-            // Si tuvieras RUT u otros campos, los pondrías aquí
+            setRut(data.rut || '');
           } else {
             setName(currentUser.displayName || 'Usuario');
           }
@@ -54,7 +54,7 @@ export default function AccountScreen() {
           setName(currentUser.displayName || 'Usuario');
         }
       } else {
-        router.replace('/login');
+        router.replace('/?logout=true');
       }
       setLoading(false);
     });
@@ -64,7 +64,7 @@ export default function AccountScreen() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.replace('/login');
+      router.replace('/?logout=true');
     } catch (e) {
       console.error(e);
     }
@@ -118,7 +118,8 @@ export default function AccountScreen() {
       await updateDoc(doc(db, 'users', user.uid), {
         display_name,
         apellido,
-        phone_number: phone
+        phone_number: phone,
+        rut
       });
       showNotification('Datos guardados correctamente');
     } catch (error) {
@@ -132,7 +133,7 @@ export default function AccountScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color="#111827" />
       </View>
     );
   }
@@ -143,7 +144,7 @@ export default function AccountScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         {notification && (
-          <Animated.View entering={FadeInUp} exiting={FadeOutUp} style={{ position: 'absolute', top: 50, alignSelf: 'center', backgroundColor: notification.type === 'success' ? '#10B981' : '#EF4444', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: notification.type === 'success' ? '#10B981' : '#EF4444', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, zIndex: 100 }}>
+          <Animated.View entering={FadeInUp} exiting={FadeOutUp} style={{ position: 'absolute', top: 50, alignSelf: 'center', backgroundColor: notification.type === 'success' ? '#63348C' : '#EF4444', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: notification.type === 'success' ? '#63348C' : '#EF4444', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, zIndex: 100 }}>
             <CheckCircle size={20} color="white" />
             <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>{notification.message}</Text>
           </Animated.View>
@@ -178,11 +179,6 @@ export default function AccountScreen() {
             </View>
             <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827', marginTop: 20 }}>{name}</Text>
             <Text style={{ fontSize: 15, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>{email}</Text>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: 20, gap: 8 }}>
-              <PawPrint size={16} color="#10B981" />
-              <Text style={{ fontSize: 15, fontWeight: '900', color: '#10B981' }}>240 puntos Saku</Text>
-            </View>
           </View>
 
           {/* Form Fields */}
@@ -241,7 +237,7 @@ export default function AccountScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       {notification && (
-        <Animated.View entering={FadeInUp} exiting={FadeOutUp} style={{ position: 'absolute', top: 50, alignSelf: 'center', backgroundColor: notification.type === 'success' ? '#10B981' : '#EF4444', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: notification.type === 'success' ? '#10B981' : '#EF4444', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, zIndex: 100 }}>
+        <Animated.View entering={FadeInUp} exiting={FadeOutUp} style={{ position: 'absolute', top: 50, alignSelf: 'center', backgroundColor: notification.type === 'success' ? '#63348C' : '#EF4444', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: notification.type === 'success' ? '#63348C' : '#EF4444', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, zIndex: 100 }}>
           <CheckCircle size={20} color="white" />
           <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>{notification.message}</Text>
         </Animated.View>
@@ -285,11 +281,6 @@ export default function AccountScreen() {
                 </View>
                 <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginTop: 15 }}>{name}</Text>
                 <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '500', marginTop: 2 }}>{email}</Text>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 16, gap: 6 }}>
-                   <PawPrint size={14} color="#10B981" />
-                   <Text style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>240 puntos Saku</Text>
-                </View>
              </View>
 
              <View style={{ height: 1, backgroundColor: '#F3F4F6', marginBottom: 25 }} />
@@ -301,7 +292,7 @@ export default function AccountScreen() {
                 <Text style={{ fontSize: 15, fontWeight: '700', color: '#4B5563' }}>Cuenta verificada</Text>
              </View>
              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Clock size={18} color="#6366F1" />
+                <Clock size={18} color="#3B82F6" />
                 <Text style={{ fontSize: 15, fontWeight: '700', color: '#4B5563' }}>Miembro activo</Text>
              </View>
 

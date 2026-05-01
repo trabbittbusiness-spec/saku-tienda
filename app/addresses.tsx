@@ -79,7 +79,7 @@ export default function AddressesScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color="#111827" />
       </View>
     );
   }
@@ -132,7 +132,7 @@ export default function AddressesScreen() {
                     activeOpacity={0.8}
                     style={{ 
                       flexDirection: 'row', alignItems: 'center', padding: isDesktop ? 24 : 18,
-                      backgroundColor: isDefault ? '#F9FAFB' : '#FFFFFF', 
+                      backgroundColor: isDefault ? '#FFF7F0' : '#FFFFFF', 
                       borderRadius: 24, borderWidth: 1, borderColor: isDefault ? '#F47321' : '#F3F4F6',
                     }}
                   >

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, useWindowDimensions, ActivityIndicator, Modal } from 'react-native';
-import { Search, Heart, ShoppingBag, ArrowUpDown, Check, X, ChevronDown, ChevronUp, Filter } from 'lucide-react-native';
+import { Search, Heart, ShoppingBag, ShoppingCart, ArrowUpDown, Check, X, ChevronDown, ChevronUp, Filter, ChevronLeft } from 'lucide-react-native';
 import Header from '../components/Header';
+import AuthModal from '../components/AuthModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFavorites } from '../context/FavoritesContext';
 import { useCart } from '../context/CartContext';
+import { useProducts } from '../context/ProductsContext';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 
 /* 1. Datos simulados de respaldo */
 const MOCK_PRODUCTS = [
@@ -44,11 +46,11 @@ const FilterAccordion = ({ title, options, selected, onToggle, isExpanded, onTog
             return (
               <TouchableOpacity key={idx} onPress={() => onToggle(opt)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                 {typeof selected === 'string' ? (
-                  <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: isSelected ? '#F47321' : '#D1D5DB', alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                     {isSelected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F47321' }} />}
+                  <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: isSelected ? '#10B981' : '#D1D5DB', alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                     {isSelected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />}
                   </View>
                 ) : (
-                  <View style={{ width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: isSelected ? '#F47321' : '#D1D5DB', backgroundColor: isSelected ? '#F47321' : 'transparent', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                  <View style={{ width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: isSelected ? '#10B981' : '#D1D5DB', backgroundColor: isSelected ? '#10B981' : 'transparent', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
                     {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
                   </View>
                 )}
@@ -62,12 +64,147 @@ const FilterAccordion = ({ title, options, selected, onToggle, isExpanded, onTog
   )
 };
 
+const SearchProductCardBody = React.memo(({ prod, isDesktop, isFavorite, toggleFavorite, addToCart, setShowAuthModal, cart }: any) => {
+  const [selectedVarIndex, setSelectedVarIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const currentVariant = prod.variants && prod.variants.length > 0 ? prod.variants[selectedVarIndex] : null;
+  const displayPrice = currentVariant 
+    ? 'CLP $' + Math.round(currentVariant.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    : prod.price;
+
+  const cartQty = cart
+    .filter((item: any) => String(item.ID_productos) === String(prod.id))
+    .reduce((acc: number, item: any) => acc + (item.cantidad || 0), 0);
+
+  return (
+    <>
+      {prod.promo && (
+        <View style={{ 
+          position: 'absolute', top: 0, left: 0, backgroundColor: '#22C55E', 
+          paddingHorizontal: isDesktop ? 16 : 12, paddingVertical: isDesktop ? 8 : 6, 
+          borderBottomRightRadius: isDesktop ? 16 : 12, zIndex: 20,
+        }}>
+          <Text style={{ color: 'white', fontWeight: '900', fontSize: isDesktop ? 11 : 10, letterSpacing: 0.5 }}>OFERTA</Text>
+        </View>
+      )}
+      <View style={{ position: 'absolute', top: isDesktop ? 20 : 10, right: isDesktop ? 20 : 10, zIndex: 10 }}>
+        <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); toggleFavorite(prod); }}>
+          <Heart size={isDesktop ? 24 : 20} color={isFavorite ? '#EF4444' : (isDesktop ? '#D1D5DB' : '#9CA3AF')} fill={isFavorite ? '#EF4444' : 'transparent'} strokeWidth={2} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: isDesktop ? 20 : 16, overflow: 'hidden', marginBottom: isDesktop ? 20 : 12 }}>
+        <Image source={{ uri: prod.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+      </View>
+
+      <Text style={{ fontSize: isDesktop ? 11 : 10, fontWeight: '800', color: '#9CA3AF', marginBottom: isDesktop ? 6 : 4, textTransform: 'uppercase', letterSpacing: isDesktop ? 1 : 0 }}>{prod.category}</Text>
+      <Text 
+        style={{ fontSize: isDesktop ? 17 : 13, fontWeight: '800', color: '#111827', lineHeight: isDesktop ? 22 : 18, height: isDesktop ? 44 : 36, textTransform: 'uppercase' }} 
+        numberOfLines={2}
+      >
+        {prod.name}
+      </Text>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 10 }}>
+        {prod.variants && prod.variants.length > 0 ? (
+          prod.variants.map((v: any, i: number) => (
+            <TouchableOpacity 
+              key={i}
+              onPress={(e) => { e.stopPropagation(); setSelectedVarIndex(i); }}
+              style={{
+                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+                backgroundColor: '#FFFFFF',
+                borderWidth: selectedVarIndex === i ? 2 : 1,
+                borderColor: selectedVarIndex === i ? '#63348C' : '#D1D5DB'
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '800', color: selectedVarIndex === i ? '#63348C' : '#9CA3AF', textTransform: 'uppercase' }}>{v.label}</Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#63348C' }}>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: '#63348C', textTransform: 'uppercase' }}>UNIDAD</Text>
+          </View>
+        )}
+      </View>
+
+      <Text style={{ fontSize: isDesktop ? 24 : 18, fontWeight: '900', color: '#111827', marginTop: isDesktop ? 5 : 8 }}>{displayPrice}</Text>
+
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: isDesktop ? 20 : 12 }}>
+        {!auth.currentUser ? (
+          <TouchableOpacity 
+            onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); router.push('/login'); }}
+            style={{ 
+              flex: 1, backgroundColor: '#10B981', borderRadius: 12, paddingVertical: isDesktop ? 14 : 12, alignItems: 'center', justifyContent: 'center',
+              shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 8
+            }}
+          >
+            <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>Iniciar Sesión</Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            {isDesktop && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 10 }}>
+                <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantity(q => Math.max(1, q - 1)) }} style={{ padding: 8 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>-</Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 16, fontWeight: '800', marginHorizontal: 4 }}>{quantity}</Text>
+                <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantity(q => q + 1) }} style={{ padding: 8 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>+</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <TouchableOpacity 
+              onPress={(e) => {
+                if (e?.stopPropagation) e.stopPropagation();
+                if (!auth.currentUser) {
+                  setShowAuthModal(true);
+                  return;
+                }
+                const finalPrice = currentVariant ? currentVariant.price : (prod.numericPrice || 0);
+                addToCart({
+                  id: prod.id,
+                  name: prod.name + (currentVariant ? ` (${currentVariant.label})` : ''),
+                  price: finalPrice,
+                  image: prod.image,
+                  quantity: quantity
+                });
+                setQuantity(1);
+              }}
+              style={{ 
+                flex: 1,
+                backgroundColor: isDesktop ? '#F47321' : '#63348C',
+                borderRadius: 12,
+                paddingVertical: isDesktop ? 14 : 14,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 8,
+                shadowColor: isDesktop ? '#F47321' : '#63348C',
+                shadowOpacity: 0.25,
+                shadowRadius: 8
+              }}
+            >
+              {!isDesktop && (
+                <ShoppingCart size={16} color="#FFFFFF" strokeWidth={2.5} />
+              )}
+              <Text style={{ color: 'white', fontWeight: '900', fontSize: isDesktop ? 14 : 13 }}>
+                {isDesktop ? '+ Agregar' : (cartQty > 0 ? `Agregar (${cartQty})` : 'Agregar')}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </>
+  );
+});
+
 export default function SearchScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const { filter, animal, category, tipo, marca } = useLocalSearchParams();
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { addToCart } = useCart();
+  const { cart, addToCart } = useCart();
   const isDesktop = width >= 1024;
   
   // Cálculos dinámicos para una grilla perfecta sin espacios
@@ -82,6 +219,7 @@ export default function SearchScreen() {
   const desktopCols = Math.max(2, Math.floor((desktopGridWidth + 20) / (idealCardWidth + 20)));
   const desktopCardWidth = ((desktopGridWidth - (desktopCols - 1) * 20) / desktopCols) - 0.1; // -0.1 para evitar saltos por decimales
 
+  const { products, loadingProducts: loading } = useProducts();
   const [selectedAnimals, setSelectedAnimals] = useState<string[]>([]);
   const [selectedMarcas, setSelectedMarcas] = useState<string[]>([]);
   const [selectedCategorias, setSelectedCategorias] = useState<string[]>([]);
@@ -99,42 +237,50 @@ export default function SearchScreen() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [products, setProducts] = useState<any[]>(MOCK_PRODUCTS);
-  const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const availableAnimals = Array.from(new Set((products || []).map(p => p.animal).filter(Boolean)));
   const availableMarcas = Array.from(new Set((products || []).map(p => p.marca).filter(Boolean)));
   const availableCategorias = Array.from(new Set((products || []).map(p => p.categoriaReal).filter(Boolean)));
-  const availableTipos = Array.from(new Set((products || []).map(p => p.tipo).filter(Boolean)));
+  const baseTipos = Array.from(new Set((products || []).map(p => p.tipo).filter(Boolean)));
+  const availableTipos = selectedTipos.includes('Exoticos') && !baseTipos.includes('Exoticos') 
+    ? ['Exoticos', ...baseTipos] 
+    : baseTipos;
 
-  const filteredProducts = (products || []).filter(p => {
-    if (!p) return false;
-    const name = String(p.name || '');
-    const categoryName = String(p.category || '');
-    const pAnimal = String(p.animal || '');
-    const pMarca = String(p.marca || '');
-    const pCategoriaReal = String(p.categoriaReal || '');
-    const pTipo = String(p.tipo || '');
+  const filteredProducts = React.useMemo(() => {
+    return (products || []).filter(p => {
+      if (!p) return false;
+      const name = String(p.name || '');
+      const categoryName = String(p.category || '');
+      const pAnimal = String(p.animal || '');
+      const pMarca = String(p.marca || '');
+      const pCategoriaReal = String(p.categoriaReal || '');
+      const pTipo = String(p.tipo || '');
 
-    const matchesSearch = name.toLowerCase().includes(String(searchQuery || '').toLowerCase()) || 
-                         categoryName.toLowerCase().includes(String(searchQuery || '').toLowerCase());
-    
-    const matchesAnimal = selectedAnimals.length === 0 || selectedAnimals.includes(pAnimal);
-    const matchesMarca = selectedMarcas.length === 0 || selectedMarcas.includes(pMarca);
-    const matchesCategoria = selectedCategorias.length === 0 || selectedCategorias.includes(pCategoriaReal);
-    const matchesTipo = selectedTipos.length === 0 || selectedTipos.includes(pTipo);
-    const matchesPromo = selectedPromo === 'Todos' ? true : (selectedPromo === 'Sí' ? !!p.promo : !p.promo);
+      const matchesSearch = name.toLowerCase().includes(String(searchQuery || '').toLowerCase()) || 
+                           categoryName.toLowerCase().includes(String(searchQuery || '').toLowerCase());
+      
+      const matchesAnimal = selectedAnimals.length === 0 || 
+                           (selectedAnimals.includes('Exoticos') 
+                            ? (pAnimal !== 'Perro' && pAnimal !== 'Gato') 
+                            : selectedAnimals.includes(pAnimal));
+      const matchesMarca = selectedMarcas.length === 0 || selectedMarcas.includes(pMarca);
+      const matchesCategoria = selectedCategorias.length === 0 || selectedCategorias.includes(pCategoriaReal);
+      const realSelectedTipos = selectedTipos.filter(t => t !== 'Exoticos');
+      const matchesTipo = realSelectedTipos.length === 0 || realSelectedTipos.includes(pTipo);
+      const matchesPromo = selectedPromo === 'Todos' ? true : (selectedPromo === 'Sí' ? !!p.promo : !p.promo);
 
-    return matchesSearch && matchesAnimal && matchesMarca && matchesCategoria && matchesTipo && matchesPromo;
-  }).sort((a, b) => {
-    const priceA = a.numericPrice || 0;
-    const priceB = b.numericPrice || 0;
-    if (sortOrder === 'asc') return priceA - priceB;
-    if (sortOrder === 'desc') return priceB - priceA;
-    return 0;
-  });
+      return matchesSearch && matchesAnimal && matchesMarca && matchesCategoria && matchesTipo && matchesPromo;
+    }).sort((a, b) => {
+      const priceA = a.numericPrice || 0;
+      const priceB = b.numericPrice || 0;
+      if (sortOrder === 'asc') return priceA - priceB;
+      if (sortOrder === 'desc') return priceB - priceA;
+      return 0;
+    });
+  }, [products, searchQuery, selectedAnimals, selectedMarcas, selectedCategorias, selectedTipos, selectedPromo, sortOrder]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const PRODUCTS_PER_PAGE = 8;
@@ -164,37 +310,7 @@ export default function SearchScreen() {
     }
   }, [filter, animal, category, tipo, marca]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'Products'));
-        const productsList = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: data.ID_productos || doc.id,
-            category: data.categoria || data.Tipo || data.animal || 'GENERAL',
-            name: data.nombre || 'Producto sin nombre',
-            unit: data.medida || '1 unidad',
-            price: 'CLP $' + (data.precio || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."),
-            numericPrice: data.precio || 0,
-            promo: data.estadoPromocion || false,
-            image: data.foto1 || 'https://via.placeholder.com/500',
-            animal: data.animal || '',
-            marca: data.marca || '',
-            categoriaReal: data.categoria || '',
-            tipo: data.Tipo || '',
-          };
-        });
-        setProducts(productsList.length > 0 ? productsList : MOCK_PRODUCTS);
-      } catch (error) {
-        console.error("Error fetching products from Firebase: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchProducts();
-  }, []);
 
   const toggleSort = () => {
     if (sortOrder === 'none') setSortOrder('asc');
@@ -207,15 +323,23 @@ export default function SearchScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         {/* Header */}
-        <View style={{ height: 60, justifyContent: 'center', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
-          <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>Buscar</Text>
+        <View style={{ height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
+          <TouchableOpacity 
+            onPress={() => router.push('/')}
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
+          >
+            <ChevronLeft size={24} color="#111827" strokeWidth={3} />
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: 'center', marginRight: 40 }}>
+            <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>Buscar</Text>
+          </View>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           {/* Search Bar & Brand Filter */}
           <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 15, gap: 15 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 16, paddingHorizontal: 15, height: 54, borderWidth: 1, borderColor: isSearchFocused ? '#3B1E54' : 'transparent' }}>
-              <Search size={20} color={isSearchFocused ? '#3B1E54' : '#9CA3AF'} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 16, paddingHorizontal: 15, height: 54, borderWidth: 1, borderColor: isSearchFocused ? '#10B981' : 'transparent' }}>
+              <Search size={20} color={isSearchFocused ? '#10B981' : '#9CA3AF'} />
               <TextInput 
                 placeholder="Buscar productos, marcas..." 
                 style={{ flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '600', outlineStyle: 'none' } as any}
@@ -237,8 +361,8 @@ export default function SearchScreen() {
                 onPress={() => setIsFilterModalOpen(true)}
                 style={{ 
                   flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? '#F47321' : '#F9FAFB', 
-                  borderRadius: 14, height: 48, gap: 8, borderWidth: 1, borderColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? '#F47321' : '#F3F4F6'
+                  backgroundColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? '#10B981' : '#F9FAFB', 
+                  borderRadius: 14, height: 48, gap: 8, borderWidth: 1, borderColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? '#10B981' : '#F3F4F6'
                 }}
               >
                 <Filter size={18} color={(selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? 'white' : '#111827'} strokeWidth={2.5} />
@@ -251,8 +375,8 @@ export default function SearchScreen() {
                 onPress={toggleSort}
                 style={{ 
                   flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: sortOrder !== 'none' ? '#3B1E54' : '#F9FAFB', 
-                  borderRadius: 14, height: 48, gap: 8, borderWidth: 1, borderColor: sortOrder !== 'none' ? '#3B1E54' : '#F3F4F6'
+                  backgroundColor: sortOrder !== 'none' ? '#10B981' : '#F9FAFB', 
+                  borderRadius: 14, height: 48, gap: 8, borderWidth: 1, borderColor: sortOrder !== 'none' ? '#10B981' : '#F3F4F6'
                 }}
               >
                 <ArrowUpDown size={18} color={sortOrder !== 'none' ? 'white' : '#111827'} strokeWidth={2.5} />
@@ -269,30 +393,98 @@ export default function SearchScreen() {
             showsHorizontalScrollIndicator={false} 
             contentContainerStyle={{ paddingHorizontal: 20, gap: 10, paddingBottom: 15 }}
           >
-            {['Perro', 'Gato', 'Erizo', 'Hámster', 'Aves', 'Tortugas'].map((animal) => {
-              const isSelected = selectedAnimals.includes(animal);
-              return (
-                <TouchableOpacity 
-                  key={animal}
-                  onPress={() => toggleFilter(setSelectedAnimals, animal)}
-                  style={{ 
-                    paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, 
-                    backgroundColor: isSelected ? '#3B1E54' : '#FFFFFF',
-                    borderWidth: 1.5, borderColor: isSelected ? '#3B1E54' : '#F3F4F6',
-                    shadowColor: '#000', shadowOpacity: isSelected ? 0.1 : 0.02, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? 'white' : '#6B7280' }}>{animal}</Text>
-                </TouchableOpacity>
-              );
-            })}
+            {(() => {
+              const isExotic = selectedAnimals.includes('Exoticos') || selectedTipos.includes('Exoticos');
+              const isCat = selectedAnimals.includes('Gato') && selectedAnimals.length === 1;
+              const isDog = selectedAnimals.includes('Perro') && selectedAnimals.length === 1;
+
+              if (isExotic) {
+                return ['Alimento', 'Snacks', 'Juguetes', 'Accesorios', 'Medicamentos'].map((cat) => {
+                  const isSelected = selectedCategorias.includes(cat);
+                  return (
+                    <TouchableOpacity 
+                      key={cat}
+                      onPress={() => toggleFilter(setSelectedCategorias, cat)}
+                      style={{ 
+                        paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, 
+                        backgroundColor: isSelected ? '#10B981' : '#FFFFFF',
+                        borderWidth: 1.5, borderColor: isSelected ? '#10B981' : '#F3F4F6',
+                        shadowColor: '#000', shadowOpacity: isSelected ? 0.1 : 0.02, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? 'white' : '#6B7280' }}>
+                        {cat === 'Alimento' ? 'Alimentos' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                });
+              } else if (isCat) {
+                return ['Alimento', 'Snacks', 'Juguetes', 'Medicamentos', 'Arenas y areneros', 'Cuidado e higiene'].map((cat) => {
+                  const isSelected = selectedCategorias.includes(cat);
+                  return (
+                    <TouchableOpacity 
+                      key={cat}
+                      onPress={() => toggleFilter(setSelectedCategorias, cat)}
+                      style={{ 
+                        paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, 
+                        backgroundColor: isSelected ? '#10B981' : '#FFFFFF',
+                        borderWidth: 1.5, borderColor: isSelected ? '#10B981' : '#F3F4F6',
+                        shadowColor: '#000', shadowOpacity: isSelected ? 0.1 : 0.02, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? 'white' : '#6B7280' }}>
+                        {cat === 'Alimento' ? 'Alimentos' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                });
+              } else if (isDog) {
+                return ['Alimento', 'Snacks', 'Juguetes', 'Accesorios', 'Medicamentos', 'Cuidado e higiene'].map((cat) => {
+                  const isSelected = selectedCategorias.includes(cat);
+                  return (
+                    <TouchableOpacity 
+                      key={cat}
+                      onPress={() => toggleFilter(setSelectedCategorias, cat)}
+                      style={{ 
+                        paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, 
+                        backgroundColor: isSelected ? '#10B981' : '#FFFFFF',
+                        borderWidth: 1.5, borderColor: isSelected ? '#10B981' : '#F3F4F6',
+                        shadowColor: '#000', shadowOpacity: isSelected ? 0.1 : 0.02, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? 'white' : '#6B7280' }}>
+                        {cat === 'Alimento' ? 'Alimentos' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                });
+              } else {
+                return ['Perro', 'Gato', 'Erizo', 'Hámster', 'Aves', 'Tortugas'].map((animal) => {
+                  const isSelected = selectedAnimals.includes(animal);
+                  return (
+                    <TouchableOpacity 
+                      key={animal}
+                      onPress={() => toggleFilter(setSelectedAnimals, animal)}
+                      style={{ 
+                        paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, 
+                        backgroundColor: isSelected ? '#10B981' : '#FFFFFF',
+                        borderWidth: 1.5, borderColor: isSelected ? '#10B981' : '#F3F4F6',
+                        shadowColor: '#000', shadowOpacity: isSelected ? 0.1 : 0.02, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? 'white' : '#6B7280' }}>{animal}</Text>
+                    </TouchableOpacity>
+                  );
+                });
+              }
+            })()}
           </ScrollView>
 
 
           {/* Product Grid */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 15, gap: 15, paddingBottom: 100 }}>
             {loading ? (
-              <ActivityIndicator size="large" color="#3B1E54" style={{ marginTop: 50 }} />
+              <ActivityIndicator size="large" color="#63348C" style={{ marginTop: 50 }} />
             ) : filteredProducts.length === 0 ? (
               <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 16, color: '#9CA3AF', width: '100%' }}>No se encontraron productos.</Text>
             ) : (
@@ -306,64 +498,7 @@ export default function SearchScreen() {
                   shadowRadius: 10, overflow: 'hidden' 
                 }}
               >
-                {prod.promo && (
-                  <View style={{ 
-                    position: 'absolute', top: 12, left: -22, backgroundColor: '#22C55E', 
-                    width: 90, height: 24, transform: [{ rotate: '-45deg' }], 
-                    justifyContent: 'center', alignItems: 'center', zIndex: 20,
-                    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
-                  }}>
-                    <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, letterSpacing: 0.5 }}>PROMO</Text>
-                  </View>
-                )}
-                <View style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}>
-                  <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); toggleFavorite(prod); }}>
-                    <Heart size={20} color={isFavorite(prod.id) ? '#EF4444' : '#9CA3AF'} fill={isFavorite(prod.id) ? '#EF4444' : 'transparent'} />
-                  </TouchableOpacity>
-                </View>
-
-
-
-                <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
-                  <Image source={{ uri: prod.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-                </View>
-
-                <Text style={{ fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 4, textTransform: 'uppercase' }}>{prod.category}</Text>
-                <Text 
-                  style={{ fontSize: 13, fontWeight: '800', color: '#111827', lineHeight: 18, height: 36, textTransform: 'uppercase', overflow: 'hidden' }} 
-                  numberOfLines={2} 
-                  ellipsizeMode="tail"
-                >
-                  {prod.name}
-                </Text>
-                <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', marginTop: 8 }}>{prod.price}</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 8 }}>
-                    <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities(prev => ({...prev, [prod.id]: Math.max(1, (prev[prod.id] || 1) - 1)})) }} style={{ padding: 8 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: '#4B5563' }}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={{ fontSize: 14, fontWeight: '800', marginHorizontal: 4 }}>{quantities[prod.id] || 1}</Text>
-                    <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities(prev => ({...prev, [prod.id]: (prev[prod.id] || 1) + 1})) }} style={{ padding: 8 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: '#4B5563' }}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <TouchableOpacity 
-                    onPress={(e) => {
-                      if (e?.stopPropagation) e.stopPropagation();
-                      addToCart({
-                        id: prod.id,
-                        name: prod.name,
-                        price: prod.numericPrice || 0,
-                        image: prod.image,
-                        quantity: quantities[prod.id] || 1
-                      });
-                      setQuantities(prev => ({...prev, [prod.id]: 1}));
-                    }}
-                    style={{ flex: 1, backgroundColor: '#F47321', borderRadius: 12, paddingVertical: 10, alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Text style={{ color: 'white', fontWeight: '600', fontSize: 13 }}>+ Agregar</Text>
-                  </TouchableOpacity>
-                </View>
+                <SearchProductCardBody prod={prod} isDesktop={false} isFavorite={isFavorite(prod.id)} toggleFavorite={toggleFavorite} addToCart={addToCart} setShowAuthModal={setShowAuthModal} cart={cart} />
               </TouchableOpacity>
             )))}
 
@@ -375,7 +510,7 @@ export default function SearchScreen() {
                   onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   style={{ padding: 10, opacity: currentPage === 1 ? 0.3 : 1 }}
                 >
-                  <Text style={{ fontWeight: '800', color: '#3B1E54', fontSize: 14 }}>Anterior</Text>
+                  <Text style={{ fontWeight: '800', color: '#10B981', fontSize: 14 }}>Anterior</Text>
                 </TouchableOpacity>
                 <View style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 }}>
                   <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }}>{currentPage} de {totalPages}</Text>
@@ -385,7 +520,7 @@ export default function SearchScreen() {
                   onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   style={{ padding: 10, opacity: currentPage === totalPages ? 0.3 : 1 }}
                 >
-                  <Text style={{ fontWeight: '800', color: '#3B1E54', fontSize: 14 }}>Siguiente</Text>
+                  <Text style={{ fontWeight: '800', color: '#10B981', fontSize: 14 }}>Siguiente</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -416,10 +551,10 @@ export default function SearchScreen() {
               </View>
 
               <ScrollView style={{ padding: 25 }} showsVerticalScrollIndicator={false}>
-                <FilterAccordion title="Animal" options={['Perro', 'Gato', 'Erizo', 'Guinea', 'Aves', 'Conejo', 'Hámster', 'Tortugas', 'Hurón']} selected={selectedAnimals} onToggle={(v: string) => toggleFilter(setSelectedAnimals, v)} isExpanded={expandedSections.animal} onToggleExpand={() => toggleSection('animal')} />
-                <FilterAccordion title="Marca" options={['Royal Canin', 'Pro Plan', 'Brit', 'Fit Formula', 'Bravery', 'Acana', 'Orijen']} selected={selectedMarcas} onToggle={(v: string) => toggleFilter(setSelectedMarcas, v)} isExpanded={expandedSections.marca} onToggleExpand={() => toggleSection('marca')} />
-                <FilterAccordion title="Categoría" options={CATEGORIES} selected={selectedCategorias} onToggle={(v: string) => toggleFilter(setSelectedCategorias, v)} isExpanded={expandedSections.categoria} onToggleExpand={() => toggleSection('categoria')} />
-                <FilterAccordion title="Especialidad / Tipo" options={['Cachorro', 'Adulto', 'Senior', 'Light', 'Esterilizado']} selected={selectedTipos} onToggle={(v: string) => toggleFilter(setSelectedTipos, v)} isExpanded={expandedSections.tipo} onToggleExpand={() => toggleSection('tipo')} />
+                <FilterAccordion title="Animal" options={availableAnimals} selected={selectedAnimals} onToggle={(v: string) => toggleFilter(setSelectedAnimals, v)} isExpanded={expandedSections.animal} onToggleExpand={() => toggleSection('animal')} />
+                <FilterAccordion title="Marca" options={availableMarcas} selected={selectedMarcas} onToggle={(v: string) => toggleFilter(setSelectedMarcas, v)} isExpanded={expandedSections.marca} onToggleExpand={() => toggleSection('marca')} />
+                <FilterAccordion title="Categoría" options={availableCategorias} selected={selectedCategorias} onToggle={(v: string) => toggleFilter(setSelectedCategorias, v)} isExpanded={expandedSections.categoria} onToggleExpand={() => toggleSection('categoria')} />
+                <FilterAccordion title="Especialidad / Tipo" options={availableTipos} selected={selectedTipos} onToggle={(v: string) => toggleFilter(setSelectedTipos, v)} isExpanded={expandedSections.tipo} onToggleExpand={() => toggleSection('tipo')} />
                 <FilterAccordion title="Promoción" options={['Todos', 'Sí', 'No']} selected={selectedPromo} onToggle={setSelectedPromo} isExpanded={expandedSections.promo} onToggleExpand={() => toggleSection('promo')} />
                 
                 <View style={{ height: 40 }} />
@@ -442,9 +577,9 @@ export default function SearchScreen() {
                 <TouchableOpacity 
                   onPress={() => setIsFilterModalOpen(false)}
                   style={{ 
-                    flex: 2, height: 60, borderRadius: 18, backgroundColor: '#F47321', 
+                    flex: 2, height: 60, borderRadius: 18, backgroundColor: '#10B981', 
                     justifyContent: 'center', alignItems: 'center', gap: 10, flexDirection: 'row',
-                    shadowColor: '#F47321', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 } 
+                    shadowColor: '#10B981', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 } 
                   }}
                 >
                   <Text style={{ fontSize: 16, fontWeight: '900', color: 'white' }}>Ver resultados</Text>
@@ -533,8 +668,8 @@ export default function SearchScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 30, gap: 20 }}>
             
             {/* Input Buscar productos... controlado anti-desbordamiento */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 30, paddingHorizontal: 16, paddingVertical: 12, flex: 1, maxWidth: 400, overflow: 'hidden', borderWidth: 1, borderColor: isSearchFocused ? '#3B1E54' : 'transparent' }}>
-              <Search size={18} color={isSearchFocused ? '#3B1E54' : '#9CA3AF'} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 30, paddingHorizontal: 16, paddingVertical: 12, flex: 1, maxWidth: 400, overflow: 'hidden', borderWidth: 1, borderColor: isSearchFocused ? '#10B981' : 'transparent' }}>
+              <Search size={18} color={isSearchFocused ? '#10B981' : '#9CA3AF'} />
               <TextInput 
                 placeholder="Buscar productos..." 
                 style={{ flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '500', minWidth: 0, outlineStyle: 'none' } as any}
@@ -562,7 +697,7 @@ export default function SearchScreen() {
                   onPress={toggleSort}
                   style={{ 
                     flexDirection: 'row', alignItems: 'center', gap: 8, 
-                    backgroundColor: sortOrder !== 'none' ? '#F47321' : '#F3F4F6', 
+                    backgroundColor: sortOrder !== 'none' ? '#10B981' : '#F3F4F6', 
                     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 
                   }}
                 >
@@ -578,7 +713,7 @@ export default function SearchScreen() {
           <ScrollView showsVerticalScrollIndicator={false}>
              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 20, paddingBottom: 50 }}>
                 {loading ? (
-                  <ActivityIndicator size="large" color="#3B1E54" style={{ marginTop: 50, marginLeft: 'auto', marginRight: 'auto' }} />
+                  <ActivityIndicator size="large" color="#10B981" style={{ marginTop: 50, marginLeft: 'auto', marginRight: 'auto' }} />
                 ) : filteredProducts.length === 0 ? (
                   <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18, color: '#9CA3AF', width: '100%' }}>No se encontraron productos para tu búsqueda.</Text>
                 ) : (
@@ -587,83 +722,12 @@ export default function SearchScreen() {
                     key={prod.id} 
                     onPress={() => router.push(`/product/${prod.id}`)}
                     style={{ 
-                      width: desktopCardWidth, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
-                      borderWidth: 1, borderColor: '#F0F0F0', overflow: 'hidden'
+                      width: desktopCardWidth, backgroundColor: 'white', borderRadius: 28, padding: 20, 
+                      borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOpacity: 0.02, 
+                      shadowRadius: 15, position: 'relative'
                     }}
                   >
-                     {prod.promo && (
-                        <View style={{ 
-                          position: 'absolute', top: 14, left: -28, backgroundColor: '#22C55E', 
-                          width: 110, height: 28, transform: [{ rotate: '-45deg' }], 
-                          justifyContent: 'center', alignItems: 'center', zIndex: 20,
-                          shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4
-                        }}>
-                          <Text style={{ color: 'white', fontWeight: '900', fontSize: 12, letterSpacing: 1 }}>PROMO</Text>
-                        </View>
-                     )}
-                     {/* Top Row: Heart Icon (Tag removed) */}
-                     <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-start', marginBottom: 15, zIndex: 10 }}>
-
-                        
-                        <TouchableOpacity 
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite({
-                              id: prod.id,
-                              name: prod.name,
-                              price: prod.price,
-                              image: prod.image,
-                              category: prod.category
-                            });
-                          }}
-                          style={{ padding: 4 }}
-                        >
-                           <Heart size={22} color={isFavorite(prod.id) ? '#EF4444' : '#C4C4C4'} fill={isFavorite(prod.id) ? '#EF4444' : 'transparent'} />
-                        </TouchableOpacity>
-                     </View>
-
-                     {/* Image */}
-                     <View style={{ width: '100%', height: 160, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-                        <Image source={{ uri: prod.image }} style={{ width: '90%', height: '90%' }} resizeMode="contain" />
-                     </View>
-
-                     {/* Details */}
-                     <Text style={{ fontSize: 16, fontWeight: '700', color: '#13132B', lineHeight: 22, height: 44, marginTop: 10 }} numberOfLines={2}>
-                        {prod.name}
-                     </Text>
-                        <Text style={{ fontSize: 20, fontWeight: '900', color: '#CD1A3B', marginTop: 15 }}>
-                        {prod.price} {prod.promo ? '- $ 74.243' : ''}
-                      </Text>
-                      <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 12 }}>
-                          <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities(prev => ({...prev, [prod.id]: Math.max(1, (prev[prod.id] || 1) - 1)})) }} style={{ padding: 8 }}>
-                            <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>-</Text>
-                          </TouchableOpacity>
-                          <Text style={{ fontSize: 16, fontWeight: '800', marginHorizontal: 8 }}>{quantities[prod.id] || 1}</Text>
-                          <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities(prev => ({...prev, [prod.id]: (prev[prod.id] || 1) + 1})) }} style={{ padding: 8 }}>
-                            <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>+</Text>
-                          </TouchableOpacity>
-                        </View>
-                        <TouchableOpacity 
-                          onPress={(e) => {
-                            if (e?.stopPropagation) e.stopPropagation();
-                            addToCart({
-                              id: prod.id,
-                              name: prod.name,
-                              price: prod.numericPrice || 0,
-                              image: prod.image,
-                              quantity: quantities[prod.id] || 1
-                            });
-                            setQuantities(prev => ({...prev, [prod.id]: 1}));
-                          }}
-                          style={{ 
-                            flex: 1, backgroundColor: '#F47321', borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center',
-                            shadowColor: '#F47321', shadowOpacity: 0.2, shadowRadius: 8
-                          }}
-                        >
-                           <Text style={{ color: 'white', fontWeight: '600', fontSize: 14, letterSpacing: -0.3 }}>+ Agregar</Text>
-                        </TouchableOpacity>
-                      </View>
+                    <SearchProductCardBody prod={prod} isDesktop={true} isFavorite={isFavorite(prod.id)} toggleFavorite={toggleFavorite} addToCart={addToCart} setShowAuthModal={setShowAuthModal} cart={cart} />
                   </TouchableOpacity>
                 )))}
 
@@ -675,7 +739,7 @@ export default function SearchScreen() {
                       onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       style={{ backgroundColor: currentPage === 1 ? '#F3F4F6' : '#E5E7EB', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }}
                     >
-                      <Text style={{ fontWeight: '800', color: currentPage === 1 ? '#9CA3AF' : '#3B1E54', fontSize: 15 }}>Anterior</Text>
+                      <Text style={{ fontWeight: '800', color: currentPage === 1 ? '#9CA3AF' : '#10B981', fontSize: 15 }}>Anterior</Text>
                     </TouchableOpacity>
                     <View style={{ paddingHorizontal: 20 }}>
                       <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Página {currentPage} de {totalPages}</Text>
@@ -685,7 +749,7 @@ export default function SearchScreen() {
                       onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       style={{ backgroundColor: currentPage === totalPages ? '#F3F4F6' : '#E5E7EB', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }}
                     >
-                      <Text style={{ fontWeight: '800', color: currentPage === totalPages ? '#9CA3AF' : '#3B1E54', fontSize: 15 }}>Siguiente</Text>
+                      <Text style={{ fontWeight: '800', color: currentPage === totalPages ? '#9CA3AF' : '#10B981', fontSize: 15 }}>Siguiente</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -693,6 +757,10 @@ export default function SearchScreen() {
           </ScrollView>
         </View>
       </View>
+      <AuthModal 
+        isVisible={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </View>
   );
 }

@@ -31,7 +31,7 @@ export default function SupportScreen() {
   const SectionHeader = ({ title, icon: Icon }: any) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20, marginTop: 30 }}>
       <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
-        <Icon size={20} color="#3B1E54" />
+        <Icon size={20} color="#63348C" />
       </View>
       <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>{title}</Text>
     </View>
@@ -95,8 +95,8 @@ export default function SupportScreen() {
           <View style={{ gap: 12 }}>
             {[
               { label: 'WhatsApp Soporte', value: '+56 9 1234 5678', icon: MessageCircle, color: '#25D366', bg: '#DCFCE7' },
-              { label: 'Correo Electrónico', value: 'contacto@saku.cl', icon: Mail, color: '#6366F1', bg: '#EEF2FF' },
-              { label: 'Llámanos', value: '2 2345 6789', icon: Phone, color: '#F47321', bg: '#FFF7ED' }
+              { label: 'Correo Electrónico', value: 'contacto@saku.cl', icon: Mail, color: '#63348C', bg: '#EEF2FF' },
+              { label: 'Llámanos', value: '2 2345 6789', icon: Phone, color: '#63348C', bg: '#FFF7ED' }
             ].map((contact, idx) => (
               <TouchableOpacity 
                 key={idx}

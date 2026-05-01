@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { 
   ShoppingBag, 
   MapPin, 
@@ -9,6 +12,7 @@ import {
   ShieldCheck, 
   LogOut, 
   ChevronRight,
+  ChevronLeft,
   ArrowLeft,
   Settings,
   Calendar
@@ -18,6 +22,34 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const isDesktop = width >= 1024;
+  const [userName, setUserName] = useState('Usuario');
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    let unsubUser: (() => void) | undefined;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserEmail(user.email || '');
+        unsubUser = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const fullName = [data.display_name, data.apellido].filter(Boolean).join(' ');
+            setUserName(fullName || user.displayName || 'Usuario');
+          } else {
+            setUserName(user.displayName || 'Usuario');
+          }
+        });
+      } else {
+        setUserName('Usuario');
+        setUserEmail('');
+        if (unsubUser) unsubUser();
+      }
+    });
+    return () => {
+      unsubscribe();
+      if (unsubUser) unsubUser();
+    };
+  }, []);
 
   if (!isDesktop) {
     return (
@@ -27,19 +59,25 @@ export default function ProfileScreen() {
           height: 80, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
           flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20
         }}>
+          <TouchableOpacity 
+            onPress={() => router.push('/')}
+            style={{ position: 'absolute', left: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
+          >
+            <ChevronLeft size={24} color="#111827" strokeWidth={3} />
+          </TouchableOpacity>
           <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Mi cuenta</Text>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
           {/* Profile Card */}
-          <View style={{ margin: 20, padding: 24, backgroundColor: '#FFFFFF', borderRadius: 32, borderBottomWidth: 4, borderBottomColor: '#1E1B4B', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
+          <View style={{ margin: 20, padding: 24, backgroundColor: '#FFFFFF', borderRadius: 32, borderBottomWidth: 4, borderBottomColor: '#63348C', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
-              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>U</Text>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#63348C', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>{userName ? userName.charAt(0).toUpperCase() : 'U'}</Text>
               </View>
               <View>
-                <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>Mi cuenta</Text>
-                <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '600' }}>demo1@gmail.com</Text>
+                <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>{userName}</Text>
+                <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '600' }}>{userEmail}</Text>
               </View>
             </View>
           </View>
@@ -59,28 +97,21 @@ export default function ProfileScreen() {
               onPress={() => router.push('/orders')}
             />
             <ProfileItem 
-              icon={<MapPin size={20} color="#F47321" />} 
+              icon={<MapPin size={20} color="#63348C" />} 
               iconBg="#FFF7ED" 
               title="Mis direcciones" 
               subtitle="Direcciones guardadas"
               onPress={() => router.push('/addresses')}
             />
             <ProfileItem 
-              icon={<User size={20} color="#10B981" />} 
+              icon={<User size={20} color="#63348C" />} 
               iconBg="#E6FFFA" 
               title="Mi cuenta" 
               subtitle="Datos personales y perfil"
               onPress={() => router.push('/account')}
             />
             <ProfileItem 
-              icon={<CreditCard size={20} color="#6366F1" />} 
-              iconBg="#EEF2FF" 
-              title="Mis tarjetas" 
-              subtitle="Medios de pago guardados"
-              onPress={() => router.push('/cards')}
-            />
-            <ProfileItem 
-              icon={<Calendar size={20} color="#6366F1" />} 
+              icon={<Calendar size={20} color="#63348C" />} 
               iconBg="#EEF2FF" 
               title="Mis Servicios" 
               subtitle="Agenda y citas veterinarias"
@@ -131,13 +162,13 @@ export default function ProfileScreen() {
           {/* Left Column: Profile Info */}
           <View style={{ flex: 1, gap: 32 }}>
             <View style={{ backgroundColor: '#FFFFFF', borderRadius: 32, padding: 40, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 20 }}>
-              <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
-                <Text style={{ color: 'white', fontSize: 48, fontWeight: '900' }}>U</Text>
+              <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: '#63348C', justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
+                <Text style={{ color: 'white', fontSize: 48, fontWeight: '900' }}>{userName ? userName.charAt(0).toUpperCase() : 'U'}</Text>
               </View>
-              <Text style={{ fontSize: 28, fontWeight: '900', color: '#1E293B' }}>Usuario Demo</Text>
-              <Text style={{ fontSize: 16, color: '#64748B', fontWeight: '600', marginTop: 4 }}>demo1@gmail.com</Text>
+              <Text style={{ fontSize: 28, fontWeight: '900', color: '#1E293B' }}>{userName}</Text>
+              <Text style={{ fontSize: 16, color: '#64748B', fontWeight: '600', marginTop: 4 }}>{userEmail}</Text>
               
-              <TouchableOpacity style={{ backgroundColor: '#F47321', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 32, marginTop: 32 }}>
+              <TouchableOpacity style={{ backgroundColor: '#63348C', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 32, marginTop: 32 }}>
                 <Text style={{ color: 'white', fontSize: 15, fontWeight: '900' }}>Editar Perfil</Text>
               </TouchableOpacity>
             </View>
@@ -146,15 +177,15 @@ export default function ProfileScreen() {
               <Text style={{ fontSize: 18, fontWeight: '900', color: '#1E293B', marginBottom: 24 }}>Estadísticas</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#10B981' }}>12</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#63348C' }}>12</Text>
                   <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '700' }}>Órdenes</Text>
                 </View>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#F47321' }}>4</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#63348C' }}>4</Text>
                   <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '700' }}>Favoritos</Text>
                 </View>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#6366F1' }}>2</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#63348C' }}>2</Text>
                   <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '700' }}>Tarjetas</Text>
                 </View>
               </View>
@@ -173,7 +204,7 @@ export default function ProfileScreen() {
                 isDesktop
               />
               <ProfileItem 
-                icon={<MapPin size={20} color="#F47321" />} 
+                icon={<MapPin size={20} color="#63348C" />} 
                 iconBg="#FFF7ED" 
                 title="Mis direcciones" 
                 subtitle="Gestiona tus lugares de entrega frecuentes"
@@ -181,15 +212,7 @@ export default function ProfileScreen() {
                 isDesktop
               />
               <ProfileItem 
-                icon={<CreditCard size={20} color="#6366F1" />} 
-                iconBg="#EEF2FF" 
-                title="Mis tarjetas" 
-                subtitle="Medios de pago y facturación"
-                onPress={() => router.push('/cards')}
-                isDesktop
-              />
-              <ProfileItem 
-                icon={<Calendar size={20} color="#6366F1" />} 
+                icon={<Calendar size={20} color="#63348C" />} 
                 iconBg="#EEF2FF" 
                 title="Mis Servicios" 
                 subtitle="Agenda y citas veterinarias"
@@ -221,7 +244,7 @@ export default function ProfileScreen() {
   );
 }
 
-function ProfileItem({ icon, iconBg, title, subtitle, onPress, isLast = false, isDesktop = false }) {
+const ProfileItem = React.memo(({ icon, iconBg, title, subtitle, onPress, isLast = false, isDesktop = false }: any) => {
   return (
     <TouchableOpacity 
       onPress={onPress}
@@ -240,4 +263,4 @@ function ProfileItem({ icon, iconBg, title, subtitle, onPress, isLast = false, i
       <ChevronRight size={20} color="#D1D5DB" />
     </TouchableOpacity>
   );
-}
+});

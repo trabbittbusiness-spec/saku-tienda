@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, useWindowDimensions, ScrollView, Linking, ActivityIndicator, Alert, Modal, StyleSheet } from 'react-native';
 import { ArrowLeft, EyeOff, Eye, MapPin, AlertCircle } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,7 +20,8 @@ export default function Login() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
+  const params = useLocalSearchParams();
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(params.tab === 'register' ? 'register' : 'login');
   const [registerStep, setRegisterStep] = useState(1);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState({
@@ -191,24 +192,29 @@ export default function Login() {
         entering={FadeIn.duration(600)}
         style={{ 
           width: '100%', 
-          maxWidth: isDesktop ? 450 : '100%', 
+          maxWidth: isDesktop ? 500 : '100%', 
           alignItems: 'center',
+          paddingVertical: isDesktop ? 40 : 0
         }}
       >
         {/* Tabs & Logo - Always on background for mobile login/register step 1 */}
         {!(activeTab === 'register' && registerStep === 2) && (
           <View style={{ width: '100%', alignItems: 'center' }}>
              {/* Logo */}
-             <View style={{ 
-                width: 100, 
-                height: 100, 
-                backgroundColor: isDesktop ? '#1E1B4B' : 'transparent', 
-                borderRadius: 24, 
+              <View style={{ 
+                width: 120, 
+                height: 120, 
+                backgroundColor: isDesktop ? '#63348C' : 'transparent', 
+                borderRadius: 28, 
                 justifyContent: 'center', 
                 alignItems: 'center', 
-                marginBottom: 12 
+                marginBottom: 24,
+                shadowColor: '#63348C',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: isDesktop ? 0.2 : 0,
+                shadowRadius: 20,
               }}>
-                 <Image source={require('../assets/images/logo_saku_cl.png')} style={{ width: 80, height: 80 }} resizeMode="contain" />
+                 <Image source={require('../assets/images/logo_saku_cl.png')} style={{ width: 90, height: 90 }} resizeMode="contain" />
               </View>
 
               {!isDesktop && (
@@ -220,15 +226,15 @@ export default function Login() {
               <View style={{ flexDirection: 'row', width: '100%', borderBottomWidth: 1, borderBottomColor: isDesktop ? '#F3F4F6' : 'rgba(255,255,255,0.2)', marginBottom: 40 }}>
                 <TouchableOpacity 
                   onPress={() => setActiveTab('login')}
-                  style={{ flex: 1, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 3, borderBottomColor: activeTab === 'login' ? (isDesktop ? '#4C1D95' : 'white') : 'transparent' }}
+                  style={{ flex: 1, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 3, borderBottomColor: activeTab === 'login' ? (isDesktop ? '#63348C' : 'white') : 'transparent' }}
                 >
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: activeTab === 'login' ? (isDesktop ? '#1E1B4B' : 'white') : (isDesktop ? '#9CA3AF' : 'rgba(255,255,255,0.5)') }}>Inicia sesión</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: activeTab === 'login' ? (isDesktop ? '#63348C' : 'white') : (isDesktop ? '#9CA3AF' : 'rgba(255,255,255,0.5)') }}>Inicia sesión</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   onPress={() => { setActiveTab('register'); setRegisterStep(1); }}
-                  style={{ flex: 1, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 3, borderBottomColor: activeTab === 'register' ? (isDesktop ? '#4C1D95' : 'white') : 'transparent' }}
+                  style={{ flex: 1, paddingVertical: 15, alignItems: 'center', borderBottomWidth: 3, borderBottomColor: activeTab === 'register' ? (isDesktop ? '#63348C' : 'white') : 'transparent' }}
                 >
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: activeTab === 'register' ? (isDesktop ? '#1E1B4B' : 'white') : (isDesktop ? '#9CA3AF' : 'rgba(255,255,255,0.5)') }}>Registrarse</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: activeTab === 'register' ? (isDesktop ? '#63348C' : 'white') : (isDesktop ? '#9CA3AF' : 'rgba(255,255,255,0.5)') }}>Registrarse</Text>
                 </TouchableOpacity>
               </View>
           </View>
@@ -240,8 +246,8 @@ export default function Login() {
             onPress={() => setRegisterStep(1)}
             style={{ position: 'absolute', top: 20, left: 20, zIndex: 20, flexDirection: 'row', alignItems: 'center', gap: 4 }}
           >
-            <ArrowLeft size={18} color="#1E1B4B" />
-            <Text style={{ color: '#1E1B4B', fontWeight: '700', fontSize: 14 }}>Atrás</Text>
+            <ArrowLeft size={18} color="#63348C" />
+            <Text style={{ color: '#63348C', fontWeight: '700', fontSize: 14 }}>Atrás</Text>
           </TouchableOpacity>
         )}
 
@@ -259,7 +265,7 @@ export default function Login() {
         }}>
             {isDesktop && (
               <>
-                <Text style={{ fontSize: 36, fontWeight: '900', color: '#1E1B4B', marginBottom: 8, textAlign: 'center' }}>
+                <Text style={{ fontSize: 36, fontWeight: '900', color: '#63348C', marginBottom: 8, textAlign: 'center' }}>
                   {getTitle()}
                 </Text>
                 <Text style={{ fontSize: 16, color: '#6B7280', fontWeight: '500', textAlign: 'center', lineHeight: 24, marginBottom: 40 }}>
@@ -278,7 +284,7 @@ export default function Login() {
                     height: 64, 
                     justifyContent: 'center',
                     borderWidth: 2,
-                    borderColor: focusedField === 'login-email' ? '#4C1D95' : 'transparent'
+                    borderColor: focusedField === 'login-email' ? '#63348C' : 'transparent'
                   }}>
                     <TextInput 
                       placeholder="Correo electrónico" 
@@ -288,7 +294,7 @@ export default function Login() {
                       onBlur={() => setFocusedField(null)}
                       autoCapitalize="none"
                       keyboardType="email-address"
-                      style={{ fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      style={{ fontSize: 16, fontWeight: '600', color: '#63348C', outlineStyle: 'none' }} 
                       placeholderTextColor="#9CA3AF" 
                     />
                   </View>
@@ -300,7 +306,7 @@ export default function Login() {
                     flexDirection: 'row', 
                     alignItems: 'center',
                     borderWidth: 2,
-                    borderColor: focusedField === 'login-password' ? '#4C1D95' : 'transparent'
+                    borderColor: focusedField === 'login-password' ? '#63348C' : 'transparent'
                   }}>
                     <TextInput 
                       placeholder="Contraseña" 
@@ -309,7 +315,7 @@ export default function Login() {
                       onFocus={() => setFocusedField('login-password')}
                       onBlur={() => setFocusedField(null)}
                       secureTextEntry={!showPassword} 
-                      style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#63348C', outlineStyle: 'none' }} 
                       placeholderTextColor="#9CA3AF" 
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -329,7 +335,7 @@ export default function Login() {
                     height: 64, 
                     justifyContent: 'center',
                     borderWidth: 2,
-                    borderColor: focusedField === 'reg-email' ? '#4C1D95' : 'transparent'
+                    borderColor: focusedField === 'reg-email' ? '#63348C' : 'transparent'
                   }}>
                     <TextInput 
                       placeholder="trabbitt.business5@gmail.com" 
@@ -337,7 +343,7 @@ export default function Login() {
                       onChangeText={setRegEmail}
                       onFocus={() => setFocusedField('reg-email')}
                       onBlur={() => setFocusedField(null)}
-                      style={{ fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      style={{ fontSize: 16, fontWeight: '600', color: '#63348C', outlineStyle: 'none' }} 
                       placeholderTextColor="#9CA3AF" 
                     />
                   </View>
@@ -349,7 +355,7 @@ export default function Login() {
                     flexDirection: 'row', 
                     alignItems: 'center',
                     borderWidth: 2,
-                    borderColor: focusedField === 'reg-pass' ? '#4C1D95' : 'transparent'
+                    borderColor: focusedField === 'reg-pass' ? '#63348C' : 'transparent'
                   }}>
                     <TextInput 
                       placeholder="Contraseña" 
@@ -358,7 +364,7 @@ export default function Login() {
                       onFocus={() => setFocusedField('reg-pass')}
                       onBlur={() => setFocusedField(null)}
                       secureTextEntry={!showPassword} 
-                      style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#63348C', outlineStyle: 'none' }} 
                       placeholderTextColor="#9CA3AF" 
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -373,7 +379,7 @@ export default function Login() {
                     flexDirection: 'row', 
                     alignItems: 'center',
                     borderWidth: 2,
-                    borderColor: focusedField === 'reg-confirm' ? '#4C1D95' : 'transparent'
+                    borderColor: focusedField === 'reg-confirm' ? '#63348C' : 'transparent'
                   }}>
                     <TextInput 
                       placeholder="Confirmar contraseña" 
@@ -382,19 +388,19 @@ export default function Login() {
                       onFocus={() => setFocusedField('reg-confirm')}
                       onBlur={() => setFocusedField(null)}
                       secureTextEntry={!showPassword} 
-                      style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      style={{ flex: 1, fontSize: 16, fontWeight: '600', color: '#63348C', outlineStyle: 'none' }} 
                       placeholderTextColor="#9CA3AF" 
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff size={20} color="#9CA3AF" /> : <Eye size={20} color="#9CA3AF" />}
                     </TouchableOpacity>
                   </View>
-                  <View style={{ marginTop: 20, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, color: 'white', textAlign: 'center', fontWeight: '500' }}>
+                  <View style={{ marginTop: 24, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 12, color: isDesktop ? '#6B7280' : 'white', textAlign: 'center', fontWeight: '500', lineHeight: 18 }}>
                       Al continuar, aceptas nuestras{' '}
-                      <Text onPress={() => Linking.openURL('https://sites.google.com/view/sakucl/t%C3%A9rminos-y-condiciones')} style={{ fontWeight: '800', color: '#F47321' }}>Políticas de privacidad</Text>
+                      <Text onPress={() => Linking.openURL('https://sites.google.com/view/sakucl/t%C3%A9rminos-y-condiciones')} style={{ fontWeight: '800', color: isDesktop ? '#63348C' : 'white', textDecorationLine: 'underline' }}>Políticas de privacidad</Text>
                       {' '}y{' '}
-                      <Text onPress={() => Linking.openURL('https://sites.google.com/view/sakucl/t%C3%A9rminos-y-condiciones')} style={{ fontWeight: '800', color: '#F47321' }}>Términos de servicio</Text>
+                      <Text onPress={() => Linking.openURL('https://sites.google.com/view/sakucl/t%C3%A9rminos-y-condiciones')} style={{ fontWeight: '800', color: isDesktop ? '#63348C' : 'white', textDecorationLine: 'underline' }}>Términos de servicio</Text>
                     </Text>
                   </View>
                 </View>
@@ -433,7 +439,7 @@ export default function Login() {
                     backgroundColor: '#F9FAFB', 
                     borderRadius: 16, 
                     borderWidth: 2, 
-                    borderColor: focusedField === 'full-name' ? '#4C1D95' : '#F3F4F6', 
+                    borderColor: focusedField === 'full-name' ? '#63348C' : '#F3F4F6', 
                     paddingHorizontal: 20, 
                     height: 64, 
                     justifyContent: 'center' 
@@ -444,7 +450,7 @@ export default function Login() {
                       onChangeText={setFullName}
                       onFocus={() => setFocusedField('full-name')}
                       onBlur={() => setFocusedField(null)}
-                      style={{ fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      style={{ fontSize: 16, fontWeight: '600', color: '#63348C', outlineStyle: 'none' }} 
                       placeholderTextColor="#9CA3AF" 
                     />
                   </View>
@@ -453,7 +459,7 @@ export default function Login() {
                     backgroundColor: '#F9FAFB', 
                     borderRadius: 16, 
                     borderWidth: 2, 
-                    borderColor: focusedField === 'phone' ? '#4C1D95' : '#F3F4F6', 
+                    borderColor: focusedField === 'phone' ? '#63348C' : '#F3F4F6', 
                     paddingHorizontal: 20, 
                     height: 64, 
                     justifyContent: 'center' 
@@ -465,7 +471,7 @@ export default function Login() {
                       onFocus={() => setFocusedField('phone')}
                       onBlur={() => setFocusedField(null)}
                       keyboardType="phone-pad" 
-                      style={{ fontSize: 16, fontWeight: '600', color: '#1E1B4B', outlineStyle: 'none' }} 
+                      style={{ fontSize: 16, fontWeight: '600', color: '#63348C', outlineStyle: 'none' }} 
                       placeholderTextColor="#9CA3AF" 
                     />
                   </View>
@@ -484,8 +490,8 @@ export default function Login() {
                       gap: 12 
                     }}
                   >
-                    <MapPin size={20} color="#F47321" />
-                    <Text style={{ flex: 1, fontSize: 16, fontWeight: '600', color: selectedLocation.main ? '#1E1B4B' : '#9CA3AF' }}>
+                    <MapPin size={20} color="#63348C" />
+                    <Text style={{ flex: 1, fontSize: 16, fontWeight: '600', color: selectedLocation.main ? '#63348C' : '#9CA3AF' }}>
                       {selectedLocation.main || "Ubicación o dirección de entrega"}
                     </Text>
                   </TouchableOpacity>
@@ -540,11 +546,11 @@ export default function Login() {
 
               style={{ 
                 width: '100%', 
-                backgroundColor: (activeTab === 'register' && registerStep === 2) ? '#10B981' : '#1E1B4B', 
+                backgroundColor: (activeTab === 'register' && registerStep === 2) ? '#63348C' : '#63348C', 
                 height: 64, borderRadius: 16, 
                 justifyContent: 'center', alignItems: 'center', 
                 marginTop: 20,
-                shadowColor: '#1E1B4B', shadowOpacity: 0.2, shadowRadius: 15, elevation: 5,
+                shadowColor: '#63348C', shadowOpacity: 0.2, shadowRadius: 15, elevation: 5,
                 opacity: loading ? 0.7 : 1
               }}
             >
@@ -569,12 +575,12 @@ export default function Login() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: isDesktop ? '#FFFFFF' : '#4C1D95' }}>
+    <View style={{ flex: 1, backgroundColor: isDesktop ? '#FFFFFF' : '#63348C' }}>
       
       {isDesktop ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
           {/* LEFT SIDE: MASCOT & PATTERN */}
-          <View style={{ width: '42%', backgroundColor: '#4C1D95', position: 'relative', overflow: 'hidden' }}>
+          <View style={{ width: '40%', backgroundColor: '#63348C', position: 'relative', overflow: 'hidden' }}>
             <TouchableOpacity 
               onPress={() => {
                 if (activeTab === 'register' && registerStep === 2) {
@@ -606,8 +612,13 @@ export default function Login() {
           </View>
 
           {/* RIGHT SIDE: FORM */}
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 60 }}>
-            {renderForm()}
+          <View style={{ flex: 1, backgroundColor: 'white' }}>
+            <ScrollView 
+              contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: isDesktop ? 60 : 25 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {renderForm()}
+            </ScrollView>
           </View>
         </View>
       ) : (
@@ -717,7 +728,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#1E1B4B',
+    color: '#63348C',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 1,

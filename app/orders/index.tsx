@@ -195,7 +195,7 @@ export default function OrdersScreen() {
                 </View>
 
                 <View style={{ alignItems: isDesktop ? 'flex-end' : 'flex-start' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString()} CLP</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString("de-DE")} CLP</Text>
                   <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>{order.date}</Text>
                 </View>
               </View>
@@ -233,8 +233,8 @@ export default function OrdersScreen() {
                     onPress={() => router.push(`/orders/${order.id}` as any)}
                     style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}
                   >
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#3B1E54' }}>Ver detalles</Text>
-                    <ChevronRight size={16} color="#3B1E54" />
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#63348C' }}>Ver detalles</Text>
+                    <ChevronRight size={16} color="#63348C" />
                   </TouchableOpacity>
                 </View>
               </View>

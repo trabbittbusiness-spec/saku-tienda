@@ -1,0 +1,376 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  useWindowDimensions,
+  FlatList,
+  TextInput,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  Modal,
+  Pressable,
+  ActivityIndicator,
+  Platform,
+  Linking,
+} from 'react-native';
+
+import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome } from '@expo/vector-icons';
+import Animated, { ZoomIn, useSharedValue, withRepeat, withTiming, withDelay, useAnimatedStyle, Easing } from 'react-native-reanimated';
+import { 
+  Heart, 
+  Star, 
+  Plus, 
+  Package, 
+  Dog as DogIcon, 
+  Cat as CatIcon, 
+  Bird, 
+  Stethoscope, 
+  ChevronRight, 
+  Truck, 
+  MapPin, 
+  ChevronDown,
+  ChevronLeft,
+  ArrowRight,
+  Zap,
+  Megaphone,
+  MessageSquare,
+  ShieldCheck,
+  FileText,
+  CheckCircle2,
+  HeartPulse,
+  Award,
+  Quote,
+  HelpCircle,
+  Gift,
+  Shield,
+  RotateCcw,
+  Clock,
+  MessageCircle,
+  X,
+  Bone,
+  ShoppingBag,
+  Sparkles,
+  Activity,
+  Pizza,
+  Scissors,
+  User
+} from 'lucide-react-native';
+
+import Header from '../components/Header';
+import AuthModal from '../components/AuthModal';
+import LoadingScreen from '../components/LoadingScreen';
+import CategoryBar from '../components/CategoryBar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams, useRouter } from 'expo-router';
+
+import { useFavorites } from '../context/FavoritesContext';
+import { useCart } from '../context/CartContext';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, onSnapshot, query, orderBy, where, doc } from 'firebase/firestore';
+
+export interface Variant {
+  label: string;
+  price: number;
+}
+
+export interface ProductItem {
+  id: string | number;
+  category: string;
+  name: string;
+  price: string;
+  numericPrice?: number;
+  rating: number;
+  image: string;
+  promo?: boolean;
+  medida?: string;
+  variants?: Variant[];
+}
+
+const BREAKPOINT = 1024;
+
+const DesktopProductCard = React.memo(({ item, liked, quantities, setQuantities, toggleFavorite, addToCart, setShowAuthModal }: any) => {
+  const [selectedVarIndex, setSelectedVarIndex] = useState(0);
+  const currentVariant = item.variants && item.variants.length > 0 ? item.variants[selectedVarIndex] : null;
+  const displayPrice = currentVariant 
+    ? 'CLP $' + Math.round(currentVariant.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    : item.price;
+
+  return (
+    <TouchableOpacity 
+      onPress={() => router.push(`/product/${item.id}`)}
+      key={item.id} style={{ 
+        width: 290, backgroundColor: 'white', borderRadius: 16, padding: 20,
+        shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 2,
+        borderWidth: 1, borderColor: '#F0F0F0', overflow: 'hidden'
+      }}
+    >
+      {item.promo && (
+        <View style={{ 
+          position: 'absolute', top: 0, left: 0, backgroundColor: '#22C55E', 
+          paddingHorizontal: 14, paddingVertical: 6, borderBottomRightRadius: 14, zIndex: 20,
+        }}>
+          <Text style={{ color: 'white', fontWeight: '900', fontSize: 12, letterSpacing: 1 }}>OFERTA</Text>
+        </View>
+      )}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
+        <TouchableOpacity 
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleFavorite({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              image: item.image
+            });
+          }}
+          style={{ padding: 5 }}
+        >
+          <Heart size={24} color={liked ? '#EF4444' : '#D1D1D1'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ height: 220, justifyContent: 'center', alignItems: 'center', marginVertical: 15 }}>
+        <Image source={{ uri: item.image }} style={{ width: '90%', height: '100%' }} resizeMode="contain" />
+      </View>
+
+      <View style={{ alignItems: 'flex-start', width: '100%' }}>
+        <Text style={{ fontSize: 10, fontWeight: '800', color: '#9CA3AF', marginBottom: 4, textTransform: 'uppercase' }}>{item.category}</Text>
+        <Text 
+          style={{ fontSize: 16, fontWeight: '700', color: '#13132B', lineHeight: 22, height: 44, textTransform: 'uppercase' }} 
+          numberOfLines={2}
+        >
+          {item.name}
+        </Text>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 12 }}>
+          {item.variants && item.variants.length > 0 ? (
+            item.variants.map((v: any, i: number) => (
+              <TouchableOpacity 
+                key={i}
+                onPress={(e) => { e.stopPropagation(); setSelectedVarIndex(i); }}
+                style={{
+                  paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+                  backgroundColor: selectedVarIndex === i ? '#63348C' : '#F3F4F6',
+                  borderWidth: 1, borderColor: selectedVarIndex === i ? '#63348C' : '#E5E7EB'
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '800', color: selectedVarIndex === i ? 'white' : '#64748B' }}>{v.label}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' }}>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: '#64748B' }}>UNIDAD</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginTop: 5 }}>
+          {displayPrice}
+        </Text>
+        
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 20, width: '100%' }}>
+          {!auth.currentUser ? (
+            <TouchableOpacity 
+              onPress={(e) => {
+                if (e?.stopPropagation) e.stopPropagation();
+                router.push('/login');
+              }}
+              style={{ 
+                flex: 1, backgroundColor: '#10B981', borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center',
+                shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 8
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>Iniciar Sesión</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 12 }}>
+                <TouchableOpacity 
+                  onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities((prev: any) => ({...prev, [item.id]: Math.max(1, (prev[item.id] || 1) - 1)})) }} 
+                  style={{ padding: 8 }}
+                >
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>-</Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 16, fontWeight: '800', marginHorizontal: 8 }}>{quantities[item.id] || 1}</Text>
+                <TouchableOpacity 
+                  onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantities((prev: any) => ({...prev, [item.id]: (prev[item.id] || 1) + 1})) }} 
+                  style={{ padding: 8 }}
+                >
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#4B5563' }}>+</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity 
+                onPress={(e) => {
+                  if (e?.stopPropagation) e.stopPropagation();
+                  if (!auth.currentUser) {
+                    setShowAuthModal(true);
+                    return;
+                  }
+                  const finalPrice = currentVariant ? currentVariant.price : (item.numericPrice || 0);
+                  addToCart({
+                    id: item.id,
+                    name: item.name + (currentVariant ? ` (${currentVariant.label})` : ''),
+                    price: finalPrice,
+                    image: item.image,
+                    quantity: quantities[item.id] || 1
+                  });
+                  setQuantities((prev: any) => ({...prev, [item.id]: 1}));
+                }}
+                style={{ 
+                  flex: 1, backgroundColor: '#F47321', borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center',
+                  shadowColor: '#F47321', shadowOpacity: 0.2, shadowRadius: 8
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: '600', fontSize: 14, letterSpacing: -0.3 }}>+ Agregar</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+const MobileProductCard = React.memo(({ item, onAuthRequired }: { item: ProductItem, onAuthRequired: () => void }) => {
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { cart, addToCart } = useCart();
+  const [quantity, setQuantity] = useState(1);
+  const [selectedVarIndex, setSelectedVarIndex] = useState(0);
+  const liked = isFavorite(item.id);
+
+  const currentVariant = item.variants && item.variants.length > 0 ? item.variants[selectedVarIndex] : null;
+  const displayPrice = currentVariant 
+    ? 'CLP $' + Math.round(currentVariant.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    : item.price;
+
+  return (
+    <TouchableOpacity 
+      onPress={() => router.push(`/product/${item.id}`)}
+      style={{ 
+        width: 170, 
+        backgroundColor: '#FFFFFF', 
+        borderRadius: 20, 
+        marginRight: 16, 
+        overflow: 'visible',
+        shadowColor: '#000', 
+        shadowOffset: { width: 0, height: 8 }, 
+        shadowOpacity: 0.08, 
+        shadowRadius: 16, 
+        elevation: 5, 
+        borderWidth: 1, 
+        borderColor: '#F0F0F0', 
+        padding: 12,
+      }}
+    >
+      {item.promo && (
+        <View style={{ 
+          position: 'absolute', top: 0, left: 0, backgroundColor: '#22C55E', 
+          paddingHorizontal: 12, paddingVertical: 6, borderBottomRightRadius: 12, zIndex: 20,
+        }}>
+          <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, letterSpacing: 0.5 }}>OFERTA</Text>
+        </View>
+      )}
+      <TouchableOpacity 
+        onPress={(e) => {
+          e.stopPropagation();
+          toggleFavorite({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            category: item.category,
+            rating: item.rating
+          });
+        }} 
+        style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
+      >
+        <Heart size={20} color={liked ? '#EF4444' : '#E5E7EB'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
+      </TouchableOpacity>
+
+      <View style={{ width: '100%', height: 130, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        <Image source={{ uri: item.image }} style={{ width: '90%', height: '90%' }} resizeMode="contain" />
+      </View>
+
+      <Text style={{ fontSize: 9, color: '#9CA3AF', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>{item.category}</Text>
+      
+      <Text 
+        style={{ fontSize: 13, fontWeight: '700', color: '#1A1A2E', lineHeight: 16, marginBottom: 10, minHeight: 32, textTransform: 'uppercase' }} 
+        numberOfLines={2}
+      >
+        {item.name}
+      </Text>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+        {item.variants && item.variants.length > 0 ? (
+          item.variants.map((v, i) => (
+            <TouchableOpacity 
+              key={i}
+              onPress={(e) => { e.stopPropagation(); setSelectedVarIndex(i); }}
+              style={{
+                paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+                backgroundColor: selectedVarIndex === i ? '#63348C' : '#F3F4F6',
+                borderWidth: 1, borderColor: selectedVarIndex === i ? '#63348C' : '#E5E7EB'
+              }}
+            >
+              <Text style={{ fontSize: 9, fontWeight: '800', color: selectedVarIndex === i ? 'white' : '#64748B' }}>{v.label}</Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' }}>
+            <Text style={{ fontSize: 9, fontWeight: '800', color: '#64748B' }}>UNIDAD</Text>
+          </View>
+        )}
+      </View>
+
+      <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827', marginBottom: 14 }}>{displayPrice}</Text>
+
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 10, flex: 1, justifyContent: 'space-between' }}>
+          <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantity(q => Math.max(1, q - 1)) }} style={{ padding: 8 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#4B5563' }}>-</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 13, fontWeight: '800' }}>{quantity}</Text>
+          <TouchableOpacity onPress={(e) => { if (e?.stopPropagation) e.stopPropagation(); setQuantity(q => q + 1) }} style={{ padding: 8 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#4B5563' }}>+</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <TouchableOpacity 
+          onPress={(e) => {
+            if (e?.stopPropagation) e.stopPropagation();
+            if (!auth.currentUser) {
+              onAuthRequired();
+              return;
+            }
+            const finalPrice = currentVariant ? currentVariant.price : (item.numericPrice || 0);
+            addToCart({
+              id: item.id,
+              name: item.name + (currentVariant ? ` (${currentVariant.label})` : ''),
+              price: finalPrice,
+              image: item.image,
+              quantity: quantity
+            });
+            setQuantity(1);
+          }}
+          style={{ 
+            backgroundColor: '#F47321', padding: 10, borderRadius: 10, 
+            shadowColor: '#F47321', shadowOpacity: 0.2, shadowRadius: 8
+          }}
+        >
+          <Plus size={20} color="white" />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+// Re-writing the whole file to ensure consistency and fix errors
+// I will keep the rest of the file logic as it was but with the updated components
+// Since I can't easily read the whole file to append, I'll use multi_replace to fix specific parts if possible
+// But write_to_file is safer for complex repairs. However, the file is 2000+ lines.
+// I'll stick to careful multi_replace.

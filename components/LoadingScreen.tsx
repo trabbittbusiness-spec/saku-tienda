@@ -90,7 +90,7 @@ export default function LoadingScreen({ message = 'Conectando con Saku Vet...' }
           ]}
         >
           <View style={styles.iconRing}>
-            <HeartPulse size={56} color="#F47321" strokeWidth={1.5} />
+            <HeartPulse size={56} color="#63348C" strokeWidth={1.5} />
             
             {/* Scanning Effect Overlay */}
             <Animated.View 
@@ -104,7 +104,7 @@ export default function LoadingScreen({ message = 'Conectando con Saku Vet...' }
 
         {/* Brand Text */}
         <View style={styles.textWrapper}>
-          <Text style={styles.brand}>SAKU<Text style={{color: '#F47321'}}>VET</Text></Text>
+          <Text style={styles.brand}>SAKU<Text style={{color: '#63348C'}}>VET</Text></Text>
           <Animated.Text style={[styles.status, { opacity: opacityValue }]}>
             {message}
           </Animated.Text>
@@ -163,8 +163,8 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     borderWidth: 1,
-    borderColor: 'rgba(244, 115, 33, 0.3)',
-    backgroundColor: 'rgba(244, 115, 33, 0.05)',
+    borderColor: 'rgba(59, 30, 84, 0.3)',
+    backgroundColor: 'rgba(59, 30, 84, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '150%',
     height: 2,
-    backgroundColor: '#F47321',
-    shadowColor: '#F47321',
+    backgroundColor: '#63348C',
+    shadowColor: '#63348C',
     shadowOpacity: 1,
     shadowRadius: 10,
     elevation: 10,

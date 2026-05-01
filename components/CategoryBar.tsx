@@ -17,7 +17,7 @@ export default function CategoryBar() {
   const router = useRouter();
 
   return (
-    <View style={{ backgroundColor: '#1A1A2E', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
+    <View style={{ backgroundColor: '#63348C', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false} 
@@ -36,9 +36,9 @@ export default function CategoryBar() {
             style={{ alignItems: 'center', position: 'relative' }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <cat.icon size={18} color={cat.isActive ? '#F47321' : '#A0A0B0'} strokeWidth={cat.isActive ? 3 : 2} />
+              <cat.icon size={18} color={cat.isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)'} strokeWidth={cat.isActive ? 3 : 2} />
               <Text style={{ 
-                color: cat.isActive ? '#FFFFFF' : '#A0A0B0', 
+                color: cat.isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)', 
                 fontSize: 14, 
                 fontWeight: cat.isActive ? '800' : '600',
                 letterSpacing: 0.2
@@ -54,7 +54,7 @@ export default function CategoryBar() {
                 left: 0, 
                 right: 0, 
                 height: 4, 
-                backgroundColor: '#F47321', 
+                backgroundColor: '#FFFFFF', 
                 borderTopLeftRadius: 4, 
                 borderTopRightRadius: 4 
               }} />
