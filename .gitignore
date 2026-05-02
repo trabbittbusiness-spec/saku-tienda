@@ -52,3 +52,9 @@ logs_new.txt
 # data
 users.json
 /scratch
+
+# Builds and sensitive files
+*.apk
+*.aab
+/saku-cg45pm-keystore/
+/android/app/saku-prod.keystore

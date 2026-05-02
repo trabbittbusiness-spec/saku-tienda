@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, useWindowDimensions, ActivityIndicator } from 'react-native';
-import { ArrowLeft, Lock, EyeOff, Eye, CheckCircle, Fingerprint, AlertCircle, X } from 'lucide-react-native';
+import { ArrowLeft, Lock, EyeOff, Eye, CheckCircle, AlertCircle, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { auth } from '../lib/firebase';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
@@ -53,7 +53,7 @@ export default function SecurityScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
+
   
   // UI State
   const [showCurrent, setShowCurrent] = useState(false);
@@ -218,37 +218,7 @@ export default function SecurityScreen() {
             </View>
           </View>
 
-          {/* Biometric Section - ONLY ON MOBILE */}
-          {!isDesktop && (
-            <>
-              <View style={{ marginBottom: 25 }}>
-                <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>Acceso Biométrico</Text>
-                <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600', marginTop: 4, lineHeight: 20 }}>Usa tu huella digital o reconocimiento facial para iniciar sesión más rápido.</Text>
-              </View>
 
-              <View style={{ 
-                backgroundColor: '#FFFFFF', borderRadius: 32, padding: 20, borderWidth: 1, borderColor: '#F3F4F6',
-                shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 15,
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 60
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, flex: 1 }}>
-                  <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center' }}>
-                    <Fingerprint size={24} color="#10B981" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Desbloqueo con Huella/FaceID</Text>
-                    <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '600', marginTop: 4, lineHeight: 18 }}>Inicia sesión de forma segura sin tener que escribir tu contraseña.</Text>
-                  </View>
-                </View>
-                <Switch 
-                  value={biometricEnabled} 
-                  onValueChange={setBiometricEnabled}
-                  trackColor={{ false: '#E5E7EB', true: '#10B981' }}
-                  thumbColor={biometricEnabled ? '#FFFFFF' : '#FFFFFF'}
-                />
-              </View>
-            </>
-          )}
         </View>
       </ScrollView>
 

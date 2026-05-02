@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.SAKUtienda.cl",
+      "sha256_cert_fingerprints": [
+        "8E:2A:A1:14:E3:A0:E9:51:46:E2:96:66:1F:AB:B7:27:E2:CC:E7:1C:08:08:97:DD:C6:BE:29:E7:A3:68:B3:4D"
+      ]
+    }
+  }
+]

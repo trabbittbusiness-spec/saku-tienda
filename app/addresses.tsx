@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MapPin, Plus, Check, Trash2, ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import LocationMapModal from '../components/LocationMapModal';
@@ -7,8 +8,9 @@ import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 
 export default function AddressesScreen() {
-  const { width } = useWindowDimensions();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [addresses, setAddresses] = React.useState<any[]>([]);
@@ -88,34 +90,46 @@ export default function AddressesScreen() {
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       {/* Sleek Minimalist Header */}
       <View style={{ 
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: isDesktop ? 60 : 20, paddingVertical: 25,
+        paddingHorizontal: isDesktop ? 60 : 20, 
+        paddingTop: Platform.OS === 'web' ? 25 : insets.top + 10,
+        paddingBottom: 20,
         backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6'
       }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 25 }}>
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
-          >
-            <ArrowLeft size={20} color="#111827" />
-          </TouchableOpacity>
-          <View>
-            <Text style={{ fontSize: isDesktop ? 26 : 20, fontWeight: '900', color: '#111827' }}>Mis Direcciones</Text>
-            <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '700', marginTop: 2 }}>{addresses.length} ubicaciones guardadas</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: isDesktop ? 25 : 15, flex: 1 }}>
+            <TouchableOpacity 
+              onPress={() => router.back()}
+              style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}
+            >
+              <ArrowLeft size={20} color="#111827" />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: isDesktop ? 26 : 18, fontWeight: '900', color: '#111827' }} numberOfLines={1}>Mis Direcciones</Text>
+              {!isDesktop ? null : <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '700', marginTop: 2 }}>{addresses.length} ubicaciones guardadas</Text>}
+            </View>
           </View>
-        </View>
 
-        {/* THE ONLY ADD BUTTON (HEADER) */}
-        <TouchableOpacity 
-          onPress={() => setIsModalOpen(true)}
-          style={{ 
-            backgroundColor: '#10B981', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16,
-            flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#10B981', shadowOpacity: 0.15, shadowRadius: 15
-          }}
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-          <Text style={{ color: 'white', fontWeight: '900', fontSize: 15 }}>Nueva Dirección</Text>
-        </TouchableOpacity>
+          {/* THE ONLY ADD BUTTON (HEADER) */}
+          <TouchableOpacity 
+            onPress={() => setIsModalOpen(true)}
+            style={{ 
+              backgroundColor: '#10B981', 
+              paddingHorizontal: isDesktop ? 24 : 12, 
+              paddingVertical: isDesktop ? 14 : 10, 
+              borderRadius: 16,
+              flexDirection: 'row', alignItems: 'center', gap: 8, 
+              shadowColor: '#10B981', shadowOpacity: 0.15, shadowRadius: 15
+            }}
+          >
+            <Plus size={isDesktop ? 20 : 18} color="white" strokeWidth={3} />
+            {isDesktop ? <Text style={{ color: 'white', fontWeight: '900', fontSize: 15 }}>Nueva Dirección</Text> : null}
+          </TouchableOpacity>
+        </View>
+        {!isDesktop && (
+          <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '700', marginTop: 10, marginLeft: 59 }}>
+            {addresses.length} ubicaciones guardadas
+          </Text>
+        )}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>

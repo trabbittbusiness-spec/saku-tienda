@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Platform,
   Linking,
+  InteractionManager
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -70,17 +71,17 @@ import {
   Tag
 } from 'lucide-react-native';
 
-import Header from '../components/Header';
-import AuthModal from '../components/AuthModal';
-import LoadingScreen from '../components/LoadingScreen';
-import CategoryBar from '../components/CategoryBar';
+import Header from '../../components/Header';
+import AuthModal from '../../components/AuthModal';
+import LoadingScreen from '../../components/LoadingScreen';
+import CategoryBar from '../../components/CategoryBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams, useRouter } from 'expo-router';
 
-import { useFavorites } from '../context/FavoritesContext';
-import { useCart } from '../context/CartContext';
-import { useProducts } from '../context/ProductsContext';
-import { auth, db } from '../lib/firebase';
+import { useFavorites } from '../../context/FavoritesContext';
+import { useCart } from '../../context/CartContext';
+import { useProducts } from '../../context/ProductsContext';
+import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, orderBy, where, doc } from 'firebase/firestore';
 
@@ -180,7 +181,7 @@ const MOCK_PRODUCTS: ProductItem[] = [
 //  MOBILE COMPONENTS
 // ══════════════════════════════════════════════════════════════════════════════
 
-function MobileHeroCarousel({ screenWidth, slides = [] }: { screenWidth: number, slides?: any[] }) {
+function MobileHeroCarousel({ screenWidth, slides = [], onPress }: { screenWidth: number, slides?: any[], onPress?: (item: any) => void }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const CARD_W = screenWidth - 32;
@@ -206,7 +207,7 @@ function MobileHeroCarousel({ screenWidth, slides = [] }: { screenWidth: number,
   };
 
   return (
-    <View style={{ marginHorizontal: 15, borderRadius: 20, overflow: 'hidden', height: 260, marginTop: -140, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 25, elevation: 20, backgroundColor: '#FFFFFF' }}>
+    <View style={{ marginHorizontal: 15, borderRadius: 24, overflow: 'hidden', height: 260, marginTop: -130, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 25, elevation: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#FFFFFF' }}>
       <FlatList
         ref={flatListRef}
         data={slides}
@@ -222,24 +223,28 @@ function MobileHeroCarousel({ screenWidth, slides = [] }: { screenWidth: number,
           index,
         })}
         renderItem={({ item }) => (
-          <View style={{ width: CARD_W, height: 260 }}>
+          <TouchableOpacity 
+            activeOpacity={0.9}
+            onPress={() => { if (onPress) onPress(item); }}
+            style={{ width: CARD_W, height: 260 }}
+          >
             <Image 
               source={typeof item.image === 'string' ? { uri: item.image, cache: 'force-cache' } : (item.imageUrl ? { uri: item.imageUrl, cache: 'force-cache' } : item.image)} 
               style={{ width: '100%', height: '100%' }} 
               resizeMode="cover" 
             />
-            {item.badge && (
+            {!!item.badge && (
               <View style={{ position: 'absolute', top: 14, left: 14, backgroundColor: item.badgeColor, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5 }}>
                 <Text style={{ color: 'white', fontSize: 11, fontWeight: '900', letterSpacing: 0.8 }}>{item.badge}</Text>
               </View>
             )}
-            {(item.title || item.subtitle) && (
+            {!!(item.title || item.subtitle) && (
               <View style={{ position: 'absolute', bottom: 20, left: 16, right: 60 }}>
-                {item.title && <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', lineHeight: 28, letterSpacing: -0.5 }}>{item.title}</Text>}
-                {item.subtitle && <Text style={{ color: 'rgba(255,255,255,1)', fontSize: 13, fontWeight: '700', marginTop: 2 }}>{item.subtitle}</Text>}
+                {!!item.title && <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', lineHeight: 28, letterSpacing: -0.5 }}>{item.title}</Text>}
+                {!!item.subtitle && <Text style={{ color: 'rgba(255,255,255,1)', fontSize: 13, fontWeight: '700', marginTop: 2 }}>{item.subtitle}</Text>}
               </View>
             )}
-          </View>
+          </TouchableOpacity>
         )}
       />
       <View style={{ position: 'absolute', bottom: 24, right: 16, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -847,7 +852,7 @@ function DesktopSubHeader() {
 const desktopHeroSlides = [
   { 
     id: 1, 
-    image: require('../assets/images/royal_canin_promo_banner.png'), 
+    image: require('../../assets/images/royal_canin_promo_banner.png'), 
     title: "Ofertas", 
     highlight: "guau!", 
     brand: "Dr.Pet",
@@ -865,7 +870,7 @@ const desktopHeroSlides = [
   }
 ];
 
-function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
+function DesktopHeroSlider({ slides = [], onPress }: { slides?: any[], onPress?: (item: any) => void }) {
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
@@ -887,7 +892,11 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
 
   return (
     <View style={{ width: '100%', height: 450, backgroundColor: 'white', position: 'relative' }}>
-      <View style={{ flex: 1, flexDirection: 'row' }}>
+      <TouchableOpacity 
+        activeOpacity={0.9}
+        onPress={() => onPress?.(currentSlide)}
+        style={{ flex: 1, flexDirection: 'row' }}
+      >
         {isFullImage ? (
           <View style={{ flex: 1 }}>
             <Image source={imageSource} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
@@ -901,9 +910,9 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
               <Text style={{ fontSize: 90, fontWeight: '300', color: '#1A1A2E', lineHeight: 95 }}>{currentSlide.title}</Text>
               <Text style={{ fontSize: 105, fontWeight: '900', color: '#1A1A2E', marginTop: -25, fontStyle: 'italic', letterSpacing: -2 }}>{currentSlide.highlight}</Text>
               <Text style={{ fontSize: 18, color: '#666', marginTop: 20, fontWeight: '500', maxWidth: 350 }}>{currentSlide.subtitle}</Text>
-              <TouchableOpacity style={{ backgroundColor: '#63348C', alignSelf: 'flex-start', paddingHorizontal: 50, paddingVertical: 18, borderRadius: 35, marginTop: 40 }}>
+              <View style={{ backgroundColor: '#63348C', alignSelf: 'flex-start', paddingHorizontal: 50, paddingVertical: 18, borderRadius: 35, marginTop: 40 }}>
                 <Text style={{ color: 'white', fontWeight: '900', fontSize: 20 }}>COMPRAR</Text>
-              </TouchableOpacity>
+              </View>
             </View>
             <View style={{ width: '55%', position: 'relative', overflow: 'hidden' }}>
               <Image source={imageSource} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
@@ -915,7 +924,7 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
             </View>
           </>
         )}
-      </View>
+      </TouchableOpacity>
       {slides.length > 1 && (
         <View style={{ position: 'absolute', top: 0, bottom: 0, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'box-none' }}>
           <TouchableOpacity onPress={() => setActiveSlide((activeSlide - 1 + slides.length) % slides.length)} style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.8)', justifyContent: 'center', alignItems: 'center' }}>
@@ -930,7 +939,11 @@ function DesktopHeroSlider({ slides = [] }: { slides?: any[] }) {
   );
 }
 
-export default function Home() {
+const HomeScreen = React.memo(function HomeScreen() {
+  const router = useRouter();
+  const { width: screenWidth } = useWindowDimensions();
+  const isDesktop = screenWidth >= BREAKPOINT;
+  const insets = useSafeAreaInsets();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { addToCart } = useCart();
   const { 
@@ -941,8 +954,6 @@ export default function Home() {
     portadasData 
   } = useProducts();
   const params = useLocalSearchParams();
-  const { width: screenWidth } = useWindowDimensions();
-  const isDesktop = screenWidth >= BREAKPOINT;
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessageDetails, setSuccessMessageDetails] = useState('');
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -973,7 +984,49 @@ export default function Home() {
     }
   }, [params.logout]);
   const handleBannerNavigation = (item: any) => {
+    console.log('Banner clicked:', {
+      id: item.id,
+      tipoDestino: item.tipoDestino,
+      filters: {
+        servicio: item.filtroServicioCat,
+        animales: item.filtroAnimales,
+        categorias: item.filtroCategorias,
+        marcas: item.filtroMarcas
+      }
+    });
     if (!item) return;
+
+    if (item.tipoDestino === 'servicios') {
+      const params = new URLSearchParams();
+      if (item.filtroServicioCat) {
+        params.append('category', item.filtroServicioCat);
+      }
+      const qs = params.toString();
+      router.push(qs ? `/servicios?${qs}` : '/servicios');
+      return;
+    }
+
+    if (item.tipoDestino === 'productos') {
+      const searchParams = new URLSearchParams();
+      
+      if (item.filtroAnimales && Array.isArray(item.filtroAnimales) && item.filtroAnimales.length > 0) {
+        searchParams.append('animal', item.filtroAnimales[0]); // Pick first for now as search supports one via param
+      }
+      
+      if (item.filtroCategorias && Array.isArray(item.filtroCategorias) && item.filtroCategorias.length > 0) {
+        searchParams.append('category', item.filtroCategorias[0]);
+      }
+      
+      if (item.filtroMarcas && Array.isArray(item.filtroMarcas) && item.filtroMarcas.length > 0) {
+        searchParams.append('marca', item.filtroMarcas[0]);
+      }
+
+      const queryString = searchParams.toString();
+      router.push(queryString ? `/search?${queryString}` : '/search');
+      return;
+    }
+
+    // Fallback original logic if tipoDestino is not set or is 'ninguno'
     const searchParams = new URLSearchParams();
     
     if (item.categorias) {
@@ -1121,8 +1174,8 @@ export default function Home() {
 
   useEffect(() => {
     if (globalProducts.length > 0) setProducts(globalProducts);
-    setMobileBanners(globalMobileBanners.length > 0 ? globalMobileBanners : mobileHeroSlides);
-    setDesktopBannersList(globalDesktopBanners.length > 0 ? globalDesktopBanners : desktopHeroSlides);
+    setMobileBanners(globalMobileBanners.length > 0 ? globalMobileBanners : []);
+    setDesktopBannersList(globalDesktopBanners.length > 0 ? globalDesktopBanners : []);
   }, [globalProducts, globalMobileBanners, globalDesktopBanners]);
 
 
@@ -1179,6 +1232,8 @@ export default function Home() {
     testimonialsScrollRef.current?.scrollTo({ x: currentTestimonialsX.current, animated: true });
   };
 
+
+
   // ── DESKTOP LAYOUT ─────────────────────────────────────────────────────────
   if (isDesktop) {
     return (
@@ -1194,11 +1249,11 @@ export default function Home() {
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
           
-          <DesktopHeroSlider slides={desktopBannersList} />
+          <DesktopHeroSlider slides={desktopBannersList} onPress={handleBannerNavigation} />
 
           <View style={{ paddingHorizontal: 40 }}>
             {/* HERO CAROUSEL FOR MOBILE (In Desktop ScrollView) */}
-            {!isDesktop && <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} />}
+            {!isDesktop && <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} onPress={handleBannerNavigation} />}
             {isDesktop && <View style={{ height: 10 }} />}
             {/* TRUST BAR (Refined Spacing & Layout) */}
             <View style={{ 
@@ -1234,7 +1289,7 @@ export default function Home() {
                   sub: 'Soporte Directo', 
                   color: '#63348C', 
                   bg: '#ECFDF5',
-                  onPress: () => Linking.openURL('https://wa.me/56983781062')
+                  onPress: () => Linking.openURL('https://chat.whatsapp.com/DCMfqmSSpv6LwHuiUDhWri')
                 }
               ].map((item, idx) => (
                 <TouchableOpacity 
@@ -1479,7 +1534,7 @@ export default function Home() {
                 </View>
 
                 <TouchableOpacity 
-                  onPress={() => Linking.openURL('https://wa.me/56983781062')}
+                  onPress={() => Linking.openURL('https://chat.whatsapp.com/DCMfqmSSpv6LwHuiUDhWri')}
                   style={{ 
                   backgroundColor: '#075E54', paddingHorizontal: 30, paddingVertical: 15, 
                   borderRadius: 6, zIndex: 10,
@@ -1783,7 +1838,7 @@ export default function Home() {
                       <View style={{ width: 40, height: 40, backgroundColor: '#111827', borderRadius: 8, justifyContent: 'center', alignItems: 'center' }}>
                         <DogIcon size={22} color="white" />
                       </View>
-                      <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', letterSpacing: -1 }}>SAKU<Text style={{ color: '#63348C' }}>.</Text></Text>
+                      <Text style={{ fontSize: 28, fontWeight: '900', color: '#111827', letterSpacing: -1 }}>Tienda Saku<Text style={{ color: '#63348C' }}>.</Text></Text>
                     </View>
                     <Text style={{ color: '#6B7280', fontSize: 16, lineHeight: 26, fontWeight: '500', marginBottom: 30 }}>
                       Amor incondicional, calidad excepcional. El ecosistema premium para el bienestar de tu mascota.
@@ -1843,7 +1898,7 @@ export default function Home() {
                     
                     <View style={{ gap: 18, marginBottom: 25 }}>
                       <TouchableOpacity 
-                        onPress={() => Linking.openURL('https://wa.me/56983781062')}
+                        onPress={() => Linking.openURL('https://chat.whatsapp.com/DCMfqmSSpv6LwHuiUDhWri')}
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
                       >
                         <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#25D366', justifyContent: 'center', alignItems: 'center' }}>
@@ -1877,7 +1932,7 @@ export default function Home() {
 
                 {/* MINIMALIST BOTTOM BAR */}
                 <View style={{ marginTop: 60, paddingTop: 30, borderTopWidth: 1, borderTopColor: '#F9FAFB', flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ color: '#9CA3AF', fontSize: 12, fontWeight: '700' }}>© {new Date().getFullYear()} SAKU ECOMMERCE. TODO POR ELLOS.</Text>
+                  <Text style={{ color: '#9CA3AF', fontSize: 12, fontWeight: '700' }}>© {new Date().getFullYear()} TIENDA SAKU. TODO POR ELLOS.</Text>
                   <TouchableOpacity><Text style={{ color: '#63348C', fontSize: 12, fontWeight: '900' }}>CONFIGURACIÓN DE COOKIES</Text></TouchableOpacity>
                 </View>
 
@@ -1931,10 +1986,10 @@ export default function Home() {
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
         <Header />
-        <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} />
+        <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} onPress={handleBannerNavigation} />
         
         {/* Section: Categories */}
-        <View style={{ marginTop: 24 }}>
+        <View style={{ marginTop: 32 }}>
           <View style={{ paddingHorizontal: 15, marginBottom: 18 }}>
             <Text style={{ fontSize: 20, fontWeight: '900', color: '#1A1A2E', letterSpacing: -0.5 }}>Explora categorías</Text>
           </View>
@@ -1993,10 +2048,12 @@ export default function Home() {
           </View>
         </View>
 
-        {hasActiveOrders && <ActiveOrderBanner count={activeOrdersCount} />}
+        {/* Contenido pesado diferido para no congelar la navegación */}
+        <>
+            {hasActiveOrders && <ActiveOrderBanner count={activeOrdersCount} />}
 
-        {/* Section: Promotions */}
-        <View style={{ marginTop: 32 }}>
+            {/* Section: Promotions */}
+            <View style={{ marginTop: 32 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, marginBottom: 20 }}>
             <Text style={{ fontSize: 22, fontWeight: '900', color: '#1A1A2E', letterSpacing: -0.5 }}>Últimas promociones</Text>
             <TouchableOpacity style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
@@ -2004,7 +2061,7 @@ export default function Home() {
             </TouchableOpacity>
           </View>
           <FlatList
-            data={products}
+            data={products.slice(0, 6)}
             horizontal
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.id.toString()}
@@ -2025,7 +2082,7 @@ export default function Home() {
 
         {/* WhatsApp Community Banner - MOBILE ONLY ASSET */}
         <TouchableOpacity 
-          onPress={() => Linking.openURL('https://wa.me/56983781062')}
+          onPress={() => Linking.openURL('https://chat.whatsapp.com/DCMfqmSSpv6LwHuiUDhWri')}
           activeOpacity={0.9} 
           style={{ 
             marginHorizontal: 15, 
@@ -2042,7 +2099,7 @@ export default function Home() {
           }}
         >
           <Image 
-            source={require('../assets/images/whatsapp_banner_v2.png')} 
+            source={require('../../assets/images/whatsapp_banner_v2.png')} 
             style={{ width: '100%', height: 120 }} 
             resizeMode="cover"
           />
@@ -2275,7 +2332,7 @@ export default function Home() {
             © 2026 Saku · Todos los derechos reservados
           </Text>
         </View>
-
+        </>
       </ScrollView>
 
       {/* SUCCESS ORDER MODAL */}
@@ -2386,5 +2443,6 @@ export default function Home() {
       />
     </View>
   );
-}
+});
 
+export default HomeScreen;

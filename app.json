@@ -2,37 +2,67 @@
   "expo": {
     "name": "Tienda Saku",
     "slug": "tienda-saku",
-    "version": "1.0.0",
+    "version": "10.90.7",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/logo_saku_cl.png",
     "scheme": "tiendasaku",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/logo_saku_cl.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.SAKUtienda.cl",
+      "buildNumber": "36",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "associatedDomains": ["applinks:saku-tienda.web.app"],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.sakuchile.tienda",
+      "package": "com.SAKUtienda.cl",
+      "versionCode": 37,
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "saku-tienda.web.app",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
-        "foregroundImage": "./assets/adaptive-icon.png"
+        "foregroundImage": "./assets/images/logo_saku_cl.png"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/logo_saku_cl.png"
     },
     "plugins": [
       "expo-router",
       "expo-notifications",
-      "expo-av"
+      "expo-video"
     ],
+    "notification": {
+      "icon": "./assets/images/logo_saku_cl.png",
+      "color": "#63348C"
+    },
     "experiments": {
       "typedRoutes": true
     },

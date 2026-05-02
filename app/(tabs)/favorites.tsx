@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Image } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Image, ActivityIndicator, InteractionManager } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { HeartOff, ArrowLeft, Heart, ShoppingCart, Clock, CreditCard, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useFavorites } from '../context/FavoritesContext';
-import { useCart } from '../context/CartContext';
-import { auth } from '../lib/firebase';
-import AuthModal from '../components/AuthModal';
+import { useFavorites } from '../../context/FavoritesContext';
+import { useCart } from '../../context/CartContext';
+import { auth } from '../../lib/firebase';
+import AuthModal from '../../components/AuthModal';
 
 const FavoriteCard = React.memo(({ item, isDesktop, toggleFavorite, addToCart, setShowAuthModal, cart }: any) => {
   const [selectedVarIndex, setSelectedVarIndex] = useState(0);
@@ -142,9 +143,9 @@ const FavoriteServiceCard = ({ item, isDesktop, toggleFavorite, router }: any) =
       <TouchableOpacity
         onPress={() => router.push(`/servicio/${item.id}`)}
         style={{
-          backgroundColor: '#63348C', borderRadius: 14, paddingVertical: 12,
+          backgroundColor: '#10B981', borderRadius: 14, paddingVertical: 12,
           alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8,
-          shadowColor: '#63348C', shadowOpacity: 0.25, shadowRadius: 8
+          shadowColor: '#10B981', shadowOpacity: 0.25, shadowRadius: 8
         }}
       >
         <CreditCard size={15} color="#FFFFFF" strokeWidth={2.5} />
@@ -154,8 +155,11 @@ const FavoriteServiceCard = ({ item, isDesktop, toggleFavorite, router }: any) =
   );
 };
 
-export default function FavoritesScreen() {
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const FavoritesScreen = React.memo(function FavoritesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { favorites, toggleFavorite } = useFavorites();
   const { addToCart, cart } = useCart();
@@ -164,57 +168,97 @@ export default function FavoritesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      {/* HEADER */}
+      {/* HEADER Optimizado para Notch */}
       <View style={{
-        height: 80, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20
+        paddingTop: insets.top,
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+        zIndex: 100
       }}>
-        <TouchableOpacity
-          onPress={() => router.push('/')}
-          style={{ position: 'absolute', left: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
-        >
-          <ChevronLeft size={24} color="#111827" strokeWidth={3} />
-        </TouchableOpacity>
-
-        {isDesktop && (
+        <View style={{ 
+          height: 64,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 20
+        }}>
           <TouchableOpacity
-            onPress={() => router.back()}
-            style={{ position: 'absolute', left: 40, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            onPress={() => router.push('/')}
+            style={{ 
+              position: 'absolute', 
+              left: 15, 
+              width: 44, 
+              height: 44, 
+              borderRadius: 22, 
+              backgroundColor: '#F9FAFB', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: '#F3F4F6'
+            }}
           >
-            <ArrowLeft size={18} color="#111827" />
-            <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Volver</Text>
+            <ChevronLeft size={24} color="#111827" strokeWidth={3} />
           </TouchableOpacity>
-        )}
-        <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>
-          {favorites.length === 0 && !isDesktop ? 'Favoritos' : `Mis Favoritos (${favorites.length})`}
-        </Text>
+
+          {isDesktop && (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ position: 'absolute', left: 40, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            >
+              <ArrowLeft size={18} color="#111827" />
+              <Text style={{ fontSize: 15, fontWeight: '800', color: '#111827' }}>Volver</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={{ fontSize: 19, fontWeight: '900', color: '#111827', letterSpacing: -0.5 }}>
+            {favorites.length === 0 && !isDesktop ? 'Favoritos' : `Mis Favoritos (${favorites.length})`}
+          </Text>
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: '#FFFFFF', padding: 15, paddingBottom: 100 }}>
-        {favorites.length === 0 ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 80 }}>
-            <View style={{
-              width: 140, height: 140, borderRadius: 70, backgroundColor: '#FFF5F5',
-              justifyContent: 'center', alignItems: 'center', marginBottom: 32
-            }}>
-              <HeartOff size={60} color="#F87171" strokeWidth={1.5} />
+      {favorites.length === 0 ? (
+        <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: '#FFFFFF', padding: 15, paddingBottom: 100 }}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30, paddingBottom: 100 }}>
+            <View style={{ alignItems: 'center' }}>
+              <View style={{ 
+                width: 100, height: 100, backgroundColor: '#FFF5F5', borderRadius: 50,
+                justifyContent: 'center', alignItems: 'center', marginBottom: 25
+              }}>
+                <Heart size={40} color="#F87171" fill="#F87171" strokeWidth={2} />
+              </View>
+              
+              <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', textAlign: 'center', marginBottom: 8 }}>
+                Sin favoritos
+              </Text>
+              
+              <Text style={{ 
+                fontSize: 14, color: '#9CA3AF', fontWeight: '600', textAlign: 'center', 
+                marginBottom: 30, maxWidth: 220
+              }}>
+                Toca el corazón en cualquier producto para guardarlo aquí.
+              </Text>
+
+              <TouchableOpacity 
+                onPress={() => router.push('/')}
+                style={{ 
+                  backgroundColor: '#63348C', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 40,
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 15, fontWeight: '800' }}>Explorar productos</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827', marginBottom: 12 }}>
-              Sin favoritos
-            </Text>
-            <Text style={{ fontSize: 15, color: '#9CA3AF', fontWeight: '600', textAlign: 'center', lineHeight: 22, marginBottom: 40, maxWidth: 280 }}>
-              Toca el corazón en cualquier producto para guardarlo aquí
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push('/')}
-              style={{ backgroundColor: '#63348C', borderRadius: 32, paddingVertical: 16, paddingHorizontal: 48 }}
-            >
-              <Text style={{ color: 'white', fontSize: 16, fontWeight: '900' }}>Explorar productos</Text>
-            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 15 }}>
-            {favorites.map((item) => {
+        </ScrollView>
+      ) : (
+        <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: '#FFFFFF', paddingHorizontal: 15, paddingTop: 15, paddingBottom: 100 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+            {/* Limit rendered components on mount to avoid freezing */}
+            {favorites.slice(0, 12).map((item) => {
               if (item.type === 'service') {
                 return (
                   <FavoriteServiceCard
@@ -239,10 +283,11 @@ export default function FavoritesScreen() {
               );
             })}
           </View>
-        )}
-      </ScrollView>
+        </ScrollView>
+      )}
 
       <AuthModal isVisible={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </View>
   );
-}
+});
+export default FavoritesScreen;

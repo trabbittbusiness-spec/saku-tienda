@@ -637,30 +637,6 @@ export default function CheckoutScreen() {
         timestamp: serverTimestamp()
       });
 
-      // Notify Admins via Push Notification
-      try {
-        const adminsSnap = await getDocs(query(collection(db, 'users'), where('IsAdmin', '==', true)));
-        if (!adminsSnap.empty) {
-          const adminRefsArr = adminsSnap.docs.map(d => `users/${d.id}`);
-          const adminRefsString = adminRefsArr.join(',');
-
-          await addDoc(collection(db, 'ff_user_push_notifications'), {
-            initial_page_name: 'orders',
-            notification_text: `${userName} ha realizado un pedido de $${total.toLocaleString("de-DE")}.`,
-            notification_title: '🛍️ ¡Nuevo Pedido Recibido!',
-            num_sent: adminsSnap.size,
-            parameter_data: JSON.stringify({ orderId: docRef.id }),
-            sender: doc(db, 'users', auth.currentUser?.uid || 'system'),
-            status: 'pending',
-            app_target: 'admin',
-            timestamp: serverTimestamp(),
-            user_refs: adminRefsString
-          });
-        }
-      } catch (pushErr) {
-        console.error('Error sending admin push:', pushErr);
-      }
-
       // 5. Clear Cart
       if (!isBookingMode) {
         const batch = writeBatch(db);

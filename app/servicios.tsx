@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, useWindowDimensions, ActivityIndicator, Platform, StyleSheet, StatusBar, Alert } from 'react-native';
-import { Search, Heart, ChevronRight, Star, Clock, MapPin, Phone, MessageSquare, ArrowLeft, Stethoscope, Scissors, Syringe, ClipboardList, AlertCircle, Calendar, Zap, ShieldCheck, Waves, Info, ChevronLeft } from 'lucide-react-native';
+import { Search, X, Heart, ChevronRight, Star, Clock, MapPin, Phone, MessageSquare, ArrowLeft, Stethoscope, Scissors, Syringe, ClipboardList, AlertCircle, Calendar, Zap, ShieldCheck, Waves, Info, ChevronLeft } from 'lucide-react-native';
 import Header from '../components/Header';
 import { useFavorites } from '../context/FavoritesContext';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,6 +31,7 @@ export default function VeterinaryServicesScreen() {
   const insets = useSafeAreaInsets();
   const isDesktop = width >= 1024;
 
+  const { category: urlCategory } = useLocalSearchParams();
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,12 @@ export default function VeterinaryServicesScreen() {
   const [selectedCat, setSelectedCat] = useState('Todas');
   const [isBooking, setIsBooking] = useState<string | null>(null);
   const { toggleFavorite, isFavorite } = useFavorites();
+
+  useEffect(() => {
+    if (urlCategory) {
+      setSelectedCat(urlCategory as string);
+    }
+  }, [urlCategory]);
 
   useEffect(() => {
     // Listen for services
@@ -156,100 +163,149 @@ export default function VeterinaryServicesScreen() {
         {/* 2. SEARCH & QUICK ACTIONS BAR (STICKY) */}
         <View style={{
           backgroundColor: '#FFFFFF',
-          paddingTop: 24,
-          paddingBottom: 15,
-          paddingHorizontal: isDesktop ? '4%' : 20,
+          paddingTop: 20,
+          paddingBottom: 12,
+          paddingHorizontal: isDesktop ? '4%' : 16,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           zIndex: 100,
         }}>
           <View style={{
-            flexDirection: isDesktop ? 'row' : 'column',
+            flexDirection: 'row',
+            alignItems: 'center',
             gap: 12,
-            alignItems: 'stretch'
           }}>
             {/* Search Input */}
             <View style={{
-              backgroundColor: '#fff',
-              borderRadius: 24,
-              height: 58,
+              backgroundColor: '#F8FAFC',
+              borderRadius: 16,
+              height: 52,
               flexDirection: 'row',
               alignItems: 'center',
-              paddingHorizontal: 20,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.08,
-              shadowRadius: 15,
-              elevation: 5,
+              paddingHorizontal: 16,
               borderWidth: 1,
-              borderColor: '#F1F5F9',
-              flex: isDesktop ? 1 : undefined
+              borderColor: '#E2E8F0',
+              flex: 1,
             }}>
-              <Search size={20} color="#94A3B8" />
+              <Search size={18} color="#94A3B8" />
               <TextInput
                 placeholder="¿Qué servicio buscas hoy?"
-                style={{ flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600', outlineStyle: 'none' } as any}
+                placeholderTextColor="#94A3B8"
+                style={{ flex: 1, marginLeft: 10, fontSize: 14, fontWeight: '500', color: '#1E293B', outlineStyle: 'none' } as any}
                 value={search}
                 onChangeText={setSearch}
               />
+              {!!search && (
+                <TouchableOpacity
+                  onPress={() => setSearch('')}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: '#CBD5E1',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginLeft: 8,
+                  }}
+                >
+                  <X size={14} color="#475569" strokeWidth={2.5} />
+                </TouchableOpacity>
+              )}
             </View>
-
-            {/* Emergency Action (Only Desktop) */}
-            {isDesktop && (
-              <TouchableOpacity style={{
-                backgroundColor: '#EF4444',
-                borderRadius: 24,
-                height: 58,
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 30,
-                gap: 10,
-                shadowColor: '#EF4444',
-                shadowOpacity: 0.2,
-                shadowRadius: 15,
-                elevation: 5,
-                minWidth: 220
-              }}>
-                <AlertCircle size={22} color="#fff" strokeWidth={2.5} />
-                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 }}>URGENCIAS 24/7</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 
         {/* 3. CATEGORIES SECTION */}
         <View style={{ marginTop: 10, paddingHorizontal: isDesktop ? '4%' : 15 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={isDesktop} contentContainerStyle={{ gap: 20, paddingBottom: 15, paddingLeft: 5 }}>
-            <TouchableOpacity
-              onPress={() => setSelectedCat('Todas')}
-              style={styles.categoryItem}
-            >
-              <View style={[styles.categoryCircle, selectedCat === 'Todas' ? styles.circleActive : { backgroundColor: '#F1F5F9' }]}>
-                <Zap size={26} color={selectedCat === 'Todas' ? '#fff' : '#64748B'} strokeWidth={2.5} />
-              </View>
-              <Text style={[styles.categoryLabel, selectedCat === 'Todas' && styles.labelActive]}>Todas</Text>
-            </TouchableOpacity>
+          {isDesktop ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingVertical: 10 }}>
+              <TouchableOpacity
+                onPress={() => setSelectedCat('Todas')}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 24,
+                  paddingVertical: 14,
+                  borderRadius: 16,
+                  backgroundColor: selectedCat === 'Todas' ? '#63348C' : '#F8FAFC',
+                  borderWidth: 1,
+                  borderColor: selectedCat === 'Todas' ? '#63348C' : '#E2E8F0',
+                  gap: 12,
+                  shadowColor: selectedCat === 'Todas' ? '#63348C' : 'transparent',
+                  shadowOpacity: 0.2,
+                  shadowRadius: 10,
+                  elevation: selectedCat === 'Todas' ? 4 : 0
+                }}
+              >
+                <Zap size={20} color={selectedCat === 'Todas' ? '#fff' : '#64748B'} strokeWidth={2.5} />
+                <Text style={{ fontSize: 15, fontWeight: '800', color: selectedCat === 'Todas' ? '#fff' : '#475569' }}>Todas</Text>
+              </TouchableOpacity>
 
-            {categories.map((cat, index) => {
-              const theme = getCategoryTheme(cat.nombre, index);
-              const Icon = theme.icon;
-              const isActive = selectedCat === cat.id;
-              if (cat.nombre.length < 3 && cat.nombre !== 'Todas') return null;
+              {categories.map((cat, index) => {
+                const theme = getCategoryTheme(cat.nombre, index);
+                const Icon = theme.icon;
+                const isActive = selectedCat === cat.id;
+                if (cat.nombre.length < 3 && cat.nombre !== 'Todas') return null;
 
-              return (
-                <TouchableOpacity
-                  key={cat.id}
-                  onPress={() => setSelectedCat(cat.id)}
-                  style={styles.categoryItem}
-                >
-                  <View style={[styles.categoryCircle, isActive ? styles.circleActive : { backgroundColor: theme.bg }]}>
-                    <Icon size={26} color={isActive ? '#fff' : theme.color} strokeWidth={2.5} />
-                  </View>
-                  <Text style={[styles.categoryLabel, isActive && styles.labelActive]} numberOfLines={1}>{cat.nombre}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                return (
+                  <TouchableOpacity
+                    key={cat.id}
+                    onPress={() => setSelectedCat(cat.id)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: 24,
+                      paddingVertical: 14,
+                      borderRadius: 16,
+                      backgroundColor: isActive ? '#63348C' : '#fff',
+                      borderWidth: 1,
+                      borderColor: isActive ? '#63348C' : '#E2E8F0',
+                      gap: 12,
+                      shadowColor: isActive ? '#63348C' : 'transparent',
+                      shadowOpacity: 0.15,
+                      shadowRadius: 8,
+                      elevation: isActive ? 3 : 0
+                    }}
+                  >
+                    <Icon size={20} color={isActive ? '#fff' : theme.color} strokeWidth={2.5} />
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: isActive ? '#fff' : '#475569' }}>{cat.nombre}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 20, paddingBottom: 15, paddingLeft: 5 }}>
+              <TouchableOpacity
+                onPress={() => setSelectedCat('Todas')}
+                style={styles.categoryItem}
+              >
+                <View style={[styles.categoryCircle, selectedCat === 'Todas' ? styles.circleActive : { backgroundColor: '#F1F5F9' }]}>
+                  <Zap size={26} color={selectedCat === 'Todas' ? '#fff' : '#64748B'} strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.categoryLabel, selectedCat === 'Todas' && styles.labelActive]}>Todas</Text>
+              </TouchableOpacity>
+
+              {categories.map((cat, index) => {
+                const theme = getCategoryTheme(cat.nombre, index);
+                const Icon = theme.icon;
+                const isActive = selectedCat === cat.id;
+                if (cat.nombre.length < 3 && cat.nombre !== 'Todas') return null;
+
+                return (
+                  <TouchableOpacity
+                    key={cat.id}
+                    onPress={() => setSelectedCat(cat.id)}
+                    style={styles.categoryItem}
+                  >
+                    <View style={[styles.categoryCircle, isActive ? styles.circleActive : { backgroundColor: theme.bg }]}>
+                      <Icon size={26} color={isActive ? '#fff' : theme.color} strokeWidth={2.5} />
+                    </View>
+                    <Text style={[styles.categoryLabel, isActive && styles.labelActive]} numberOfLines={1}>{cat.nombre}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
 
         {/* 4. MAIN CATALOG AREA */}

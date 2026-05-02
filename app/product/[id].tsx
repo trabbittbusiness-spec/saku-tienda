@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, useWindowDimensions, TextInput, Animated, Alert } from 'react-native';
-import { ArrowLeft, Star, Heart, ShoppingCart, Truck, Store, Plus, Minus, ChevronRight, ShoppingBag } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, useWindowDimensions, TextInput, Animated, Alert, Share, Platform } from 'react-native';
+import { ArrowLeft, Star, Heart, ShoppingCart, Truck, Store, Plus, Minus, ChevronRight, ShoppingBag, Share2 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Header from '../../components/Header';
 import AuthModal from '../../components/AuthModal';
@@ -190,6 +190,36 @@ export default function ProductDetailsScreen() {
       });
     });
   };
+  
+  const handleShare = async () => {
+    if (!product) return;
+    // Solo el URL limpio, sin texto extra
+    const shareUrl = `https://saku-tienda.web.app/product/${id}`;
+
+    try {
+      if (Platform.OS === 'web') {
+        // En web siempre copiar SOLO el URL al portapapeles para evitar
+        // que el texto descriptivo se mezcle con el link al pegar
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+        } catch {
+          // Fallback si clipboard no está disponible
+          const { setStringAsync } = await import('expo-clipboard');
+          await setStringAsync(shareUrl);
+        }
+        Alert.alert('✓ Enlace copiado', `El link ha sido copiado:\n${shareUrl}`);
+      } else {
+        // En móvil nativo usar el share sheet del sistema
+        await Share.share({
+          message: `¡Mira este producto en Tienda Saku: ${product.name}!\n${shareUrl}`,
+          url: shareUrl, // iOS usa este campo para el link
+          title: 'Tienda Saku'
+        });
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
 
   // Si no está cargando y no hay producto, mostrar error
   if (!loading && !product) {
@@ -241,12 +271,20 @@ export default function ProductDetailsScreen() {
             </TouchableOpacity>
 
             {!loading && (
-              <TouchableOpacity 
-                onPress={() => toggleFavorite(product)}
-                style={{ position: 'absolute', top: 20, right: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 }}
-              >
-                <Heart size={20} color={isFavorite(product.id) ? '#EF4444' : '#111827'} fill={isFavorite(product.id) ? '#EF4444' : 'transparent'} />
-              </TouchableOpacity>
+              <View style={{ position: 'absolute', top: 20, right: 20, flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity 
+                  onPress={handleShare}
+                  style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 }}
+                >
+                  <Share2 size={20} color="#111827" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => toggleFavorite(product)}
+                  style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 }}
+                >
+                  <Heart size={20} color={isFavorite(product.id) ? '#EF4444' : '#111827'} fill={isFavorite(product.id) ? '#EF4444' : 'transparent'} />
+                </TouchableOpacity>
+              </View>
             )}
 
             {/* Badge */}
@@ -584,23 +622,35 @@ export default function ProductDetailsScreen() {
                 <Image source={{ uri: product.images[selectedImage] }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
               )}
               {!loading && (
-                <TouchableOpacity 
-                  onPress={() => toggleFavorite({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    image: product.images[0],
-                    category: product.category,
-                    type: 'product'
-                  })}
-                  style={{ 
-                    position: 'absolute', top: 24, right: 24, width: 44, height: 44, borderRadius: 22, 
-                    backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center',
-                    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
-                  }}
-                >
-                  <Heart size={20} color={isFavorite(product.id) ? '#EF4444' : '#D1D5DB'} fill={isFavorite(product.id) ? '#EF4444' : 'transparent'} />
-                </TouchableOpacity>
+                <View style={{ position: 'absolute', top: 24, right: 24, flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity 
+                    onPress={handleShare}
+                    style={{ 
+                      width: 44, height: 44, borderRadius: 22, 
+                      backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center',
+                      shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
+                    }}
+                  >
+                    <Share2 size={20} color="#111827" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => toggleFavorite({
+                      id: product.id,
+                      name: product.name,
+                      price: product.price,
+                      image: product.images[0],
+                      category: product.category,
+                      type: 'product'
+                    })}
+                    style={{ 
+                      width: 44, height: 44, borderRadius: 22, 
+                      backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center',
+                      shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }
+                    }}
+                  >
+                    <Heart size={20} color={isFavorite(product.id) ? '#EF4444' : '#D1D5DB'} fill={isFavorite(product.id) ? '#EF4444' : 'transparent'} />
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
 

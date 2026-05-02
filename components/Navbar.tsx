@@ -4,9 +4,11 @@ import { ShoppingBag, Search, User, Heart, Home, LogIn } from 'lucide-react-nati
 import { useCart } from '../context/CartContext';
 import { usePathname, router } from 'expo-router';
 import { auth } from '../lib/firebase';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const PremiumNavbar = React.memo(function PremiumNavbar() {
-  const pathname = usePathname();
+const PremiumNavbar = ({ currentPath }: { currentPath: string }) => {
+  const pathname = currentPath;
+  const insets = useSafeAreaInsets();
 
   const { cartCount } = useCart();
 
@@ -34,27 +36,33 @@ const PremiumNavbar = React.memo(function PremiumNavbar() {
         right: 0,
         zIndex: 50,
         backgroundColor: '#FFFFFF',
-        borderTopWidth: 1,
-        borderTopColor: '#EFEFEF',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        overflow: 'hidden',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-around',
-        paddingTop: 8,
-        paddingBottom: 26,
+        paddingTop: 12,
+        paddingBottom: insets.bottom > 0 ? insets.bottom + 10 : 36,
         paddingHorizontal: 6,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.07,
-        shadowRadius: 12,
-        elevation: 12,
+        shadowOffset: { width: 0, height: -10 },
+        shadowOpacity: 0.12,
+        shadowRadius: 20,
+        elevation: 30,
+        zIndex: 999,
       }}
     >
       {NAV_ITEMS.map((item, index) => {
-        const isActive = pathname === item.path;
+        const isActive = pathname === item.path || (item.path === '/' && pathname === '/index');
         return (
           <TouchableOpacity
             key={index}
-            onPress={() => router.push(item.path as any)}
+            onPress={() => {
+              if (isActive) return;
+              // Navigate usa el historial existente si la pantalla ya está en el Stack, previniendo desmontaje.
+              router.navigate(item.path as any);
+            }}
             style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}
             activeOpacity={0.7}
           >
@@ -62,9 +70,9 @@ const PremiumNavbar = React.memo(function PremiumNavbar() {
             <View style={{ position: 'relative' }}>
               <View
                 style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 23,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 10, // Modern rounded square
                   backgroundColor: isActive ? '#F47321' : 'transparent',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -117,7 +125,6 @@ const PremiumNavbar = React.memo(function PremiumNavbar() {
       })}
     </View>
   );
-});
+};
 
 export default PremiumNavbar;
-

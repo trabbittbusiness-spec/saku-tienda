@@ -38,8 +38,14 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     return favorites.some((p) => p.id === productId);
   };
 
+  const value = React.useMemo(() => ({
+    favorites,
+    toggleFavorite,
+    isFavorite
+  }), [favorites]);
+
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite }}>
+    <FavoritesContext.Provider value={value}>
       {children}
     </FavoritesContext.Provider>
   );

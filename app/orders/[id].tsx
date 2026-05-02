@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ChevronRight, Store, CreditCard, Banknote, HelpCircle, CheckCircle2, MapPin, Copy, Check, Wifi, RefreshCcw, Truck, Home } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -9,6 +10,7 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 export default function OrderDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
   const [copied, setCopied] = React.useState(false);
@@ -33,7 +35,20 @@ export default function OrderDetailsScreen() {
           status: rawStatus,
           statusStep: rawStatus === 'entregado' ? 2 : rawStatus === 'enviado' ? 1 : 0,
           type: data.tipoEntrega === 'home' ? 'Entrega a Domicilio' : 'Retiro en Sucursal',
-          date: data.fechaCreacion || 'Fecha no disponible',
+          date: (() => {
+            const fc = data.fechaCreacion;
+            if (fc && fc.toDate) {
+              return fc.toDate().toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+            } else if (typeof fc === 'string') {
+              try {
+                const d = new Date(fc);
+                return d.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+              } catch (e) {
+                return fc;
+              }
+            }
+            return 'Fecha no disponible';
+          })(),
           items: (data.items || []).map((item: any) => ({
             name: item.nombre || item.name || 'Producto',
             image: item.foto || item.image || 'https://via.placeholder.com/150',
@@ -97,7 +112,9 @@ export default function OrderDetailsScreen() {
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       {/* Top Nav */}
       <View style={{ 
-        paddingHorizontal: isDesktop ? 40 : 20, paddingVertical: 10,
+        paddingHorizontal: isDesktop ? 40 : 20, 
+        paddingTop: Platform.OS === 'web' ? 10 : insets.top + 10,
+        paddingBottom: 10,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
       }}>
         <TouchableOpacity 
@@ -127,30 +144,37 @@ export default function OrderDetailsScreen() {
       >
         
         {/* Main Status Header Card */}
-        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 24, padding: isDesktop ? 20 : 15, shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 20 }}>
-          <View style={{ flexDirection: isDesktop ? 'row' : 'column', justifyContent: 'space-between', gap: isDesktop ? 30 : 20 }}>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: isDesktop ? 'row' : 'column', alignItems: isDesktop ? 'center' : 'flex-start', gap: isDesktop ? 15 : 10 }}>
+        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 20, shadowOffset: { width: 0, height: 8 }, borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 20 }}>
+          <View style={{ gap: 20 }}>
+            <View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 10 }}>
                 <TouchableOpacity 
                   onPress={() => copyToClipboard(order.id)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}
                 >
-                  <Text style={{ fontSize: isDesktop ? 28 : 20, fontWeight: '900', color: '#111827' }} numberOfLines={1}>{order.id}</Text>
-                  {copied ? <Check size={16} color="#63348C" /> : <Copy size={16} color="#9CA3AF" />}
+                  <Text style={{ fontSize: isDesktop ? 24 : 16, fontWeight: '900', color: '#111827' }} numberOfLines={1} ellipsizeMode="middle">#{order.id}</Text>
+                  <Copy size={14} color="#9CA3AF" />
                 </TouchableOpacity>
-                <View style={{ backgroundColor: order.status === 'entregado' ? '#F0FDF4' : order.status === 'enviado' ? '#EFF6FF' : '#FFFBEB', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+
+                <View style={{ 
+                  backgroundColor: order.status === 'entregado' ? '#F0FDF4' : order.status === 'enviado' ? '#EFF6FF' : '#FFFBEB', 
+                  paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, 
+                  flexDirection: 'row', alignItems: 'center', gap: 4,
+                  borderWidth: 1, borderColor: order.status === 'entregado' ? '#DCFCE7' : order.status === 'enviado' ? '#DBEAFE' : '#FEF3C7',
+                  flexShrink: 0
+                }}>
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: order.status === 'entregado' ? '#10B981' : order.status === 'enviado' ? '#3B82F6' : '#D97706' }} />
-                  <Text style={{ fontSize: 11, fontWeight: '900', color: order.status === 'entregado' ? '#10B981' : order.status === 'enviado' ? '#3B82F6' : '#D97706' }}>{order.status.toUpperCase()}</Text>
+                  <Text style={{ fontSize: 9, fontWeight: '900', color: order.status === 'entregado' ? '#10B981' : order.status === 'enviado' ? '#3B82F6' : '#D97706' }}>{order.status.toUpperCase()}</Text>
                 </View>
               </View>
-              <Text style={{ fontSize: isDesktop ? 14 : 12, color: '#9CA3AF', fontWeight: '600', marginTop: 8 }}>{order.type} • {order.date}</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 8 }}>{order.type} • {order.date}</Text>
             </View>
 
             {/* Status Steps Tracker */}
-            <View style={{ flex: 1.5, justifyContent: 'center' }}>
+            <View style={{ paddingHorizontal: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
                 <View style={{ position: 'absolute', left: '5%', right: '5%', top: 16, height: 2, backgroundColor: '#F3F4F6', zIndex: -1 }} />
-                <View style={{ position: 'absolute', left: '5%', width: `${(order.statusStep / 2) * 90}%`, top: 16, height: 2, backgroundColor: '#111827', zIndex: -1 }} />
+                <View style={{ position: 'absolute', left: '5%', width: `${(order.statusStep / 2) * 90}%`, top: 16, height: 2, backgroundColor: '#63348C', zIndex: -1 }} />
 
                 {steps.map((step, idx) => {
                   const isActive = idx <= order.statusStep;
@@ -158,16 +182,13 @@ export default function OrderDetailsScreen() {
                   return (
                     <View key={idx} style={{ alignItems: 'center', gap: 8 }}>
                       <View style={{ 
-                        width: 32, height: 32, borderRadius: 16, backgroundColor: isActive ? '#111827' : '#FFFFFF', 
-                        justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: isActive ? '#111827' : '#F3F4F6'
+                        width: 34, height: 34, borderRadius: 17, backgroundColor: isActive ? '#63348C' : '#FFFFFF', 
+                        justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: isActive ? '#63348C' : '#F3F4F6',
+                        shadowColor: isActive ? '#63348C' : '#000', shadowOpacity: isActive ? 0.2 : 0, shadowRadius: 5
                       }}>
-                        {isCurrent ? (
-                           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6' }} />
-                        ) : (
-                           <step.icon size={16} color={isActive ? '#FFFFFF' : '#9CA3AF'} strokeWidth={3} />
-                        )}
+                        <step.icon size={16} color={isActive ? '#FFFFFF' : '#9CA3AF'} strokeWidth={2.5} />
                       </View>
-                      <Text style={{ fontSize: 10, fontWeight: isActive ? '800' : '600', color: isActive ? '#111827' : '#9CA3AF' }}>{step.label}</Text>
+                      <Text style={{ fontSize: 10, fontWeight: isActive ? '900' : '600', color: isActive ? '#111827' : '#9CA3AF' }}>{step.label}</Text>
                     </View>
                   );
                 })}
@@ -176,76 +197,75 @@ export default function OrderDetailsScreen() {
           </View>
         </View>
 
-        <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 24 }}>
+        <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 20 }}>
           {/* Left Column: QR Card / Delivery Status */}
           <View style={{ flex: isDesktop ? 1.1 : undefined }}>
             <View style={{ 
-              backgroundColor: '#111827', borderRadius: 32, overflow: 'hidden',
-              shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 30, shadowOffset: { width: 0, height: 20 }
+              backgroundColor: '#111827', borderRadius: 28, overflow: 'hidden',
+              shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 25, shadowOffset: { width: 0, height: 15 }
             }}>
               {/* Card Header with Gradient */}
-              <View style={{ padding: isDesktop ? 20 : 15, alignItems: 'center', backgroundColor: '#1F2937' }}>
-                <Text style={{ color: '#FFFFFF', fontSize: isDesktop ? 20 : 16, fontWeight: '900' }}>Código de Retiro</Text>
+              <View style={{ padding: 18, alignItems: 'center', backgroundColor: '#1F2937' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900' }}>Código de Retiro</Text>
               </View>
 
-              <View style={{ padding: isDesktop ? 25 : 20, alignItems: 'center', marginTop: isDesktop ? -10 : 0 }}>
+              <View style={{ padding: 20, alignItems: 'center' }}>
                 <View style={{ 
-                  backgroundColor: '#FFFFFF', padding: isDesktop ? 20 : 15, borderRadius: 24, 
-                  shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20,
-                  width: '100%', maxWidth: isDesktop ? 240 : 200
+                  backgroundColor: '#FFFFFF', padding: 12, borderRadius: 20, 
+                  width: '100%', maxWidth: 180,
+                  shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10
                 }}>
                   <Image 
-                    source={{ uri: 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + order.id }} 
-                    style={{ width: isDesktop ? 180 : 150, height: isDesktop ? 180 : 150, alignSelf: 'center' }} 
+                    source={{ uri: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + order.id }} 
+                    style={{ width: 150, height: 150, alignSelf: 'center' }} 
                     resizeMode="contain"
                   />
                   
-                  <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: isDesktop ? 15 : 10, borderStyle: 'dashed', borderWidth: 1, borderColor: '#E5E7EB' }} />
+                  <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 12, borderStyle: 'dashed', borderWidth: 1, borderColor: '#E5E7EB' }} />
                   
                   <TouchableOpacity 
                     onPress={() => copyToClipboard(order.codigoRetiro || order.id)}
-                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   >
-                    <Text style={{ fontSize: isDesktop ? 18 : 14, fontWeight: '900', color: '#111827', textAlign: 'center', letterSpacing: isDesktop ? 2 : 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827', textAlign: 'center', letterSpacing: 1 }}>
                       {order.codigoRetiro || order.id}
                     </Text>
-                    <Copy size={16} color="#9CA3AF" />
+                    <Copy size={14} color="#9CA3AF" />
                   </TouchableOpacity>
                 </View>
 
-                <View style={{ marginTop: isDesktop ? 20 : 15, gap: 6, alignItems: 'center' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <CheckCircle2 size={14} color="#10B981" />
-                    <Text style={{ color: '#FFFFFF', fontSize: isDesktop ? 13 : 11, fontWeight: '700' }}>Listo para entrega</Text>
+                <View style={{ marginTop: 15, gap: 4, alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <CheckCircle2 size={12} color="#10B981" />
+                    <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Listo para entrega</Text>
                   </View>
-                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: isDesktop ? 11 : 10, fontWeight: '500', textAlign: 'center', lineHeight: isDesktop ? 16 : 14 }}>
-                    Muestra este código al personal en sucursal.
+                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '500', textAlign: 'center' }}>
+                    Presenta este código en sucursal.
                   </Text>
                 </View>
               </View>
-
-              {/* Card Footer Decoration */}
-              <View style={{ height: 8, backgroundColor: '#111827' }} />
             </View>
           </View>
 
           {/* Middle Column: Products */}
           <View style={{ flex: isDesktop ? 1.2 : undefined }}>
-            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 24, padding: isDesktop ? 20 : 15, shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 20, borderWidth: 1, borderColor: '#F3F4F6' }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-                <Text style={{ fontSize: isDesktop ? 16 : 14, fontWeight: '900', color: '#111827' }}>Tus Productos</Text>
-                <View style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                   <Text style={{ fontSize: 10, fontWeight: '800', color: '#6B7280' }}>{order.items.length} ítems</Text>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 20, borderWidth: 1, borderColor: '#F3F4F6' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }}>Tus Productos</Text>
+                <View style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                   <Text style={{ fontSize: 11, fontWeight: '800', color: '#6B7280' }}>{order.items.length} ítems</Text>
                 </View>
               </View>
 
-              <View style={{ gap: 10 }}>
+              <View style={{ gap: 12 }}>
                 {order.items.map((item, idx) => (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F9FAFB', padding: 10, borderRadius: 12 }}>
-                    <Image source={{ uri: item.image }} style={{ width: 40, height: 40, borderRadius: 8 }} />
+                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#F9FAFB', padding: 12, borderRadius: 16 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#FFFFFF', padding: 4, borderWidth: 1, borderColor: '#F3F4F6' }}>
+                      <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%', borderRadius: 6 }} resizeMode="contain" />
+                    </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: isDesktop ? 13 : 12, fontWeight: '800', color: '#111827' }} numberOfLines={1}>{item.name}</Text>
-                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 1 }}>x{item.qty} • ${item.price.toLocaleString("de-DE")} CLP</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }} numberOfLines={1}>{item.name}</Text>
+                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 2 }}>x{item.qty} • ${item.price.toLocaleString("de-DE")} CLP</Text>
                     </View>
                   </View>
                 ))}

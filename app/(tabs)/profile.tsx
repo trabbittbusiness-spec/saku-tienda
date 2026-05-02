@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image, ActivityIndicator, InteractionManager } from 'react-native';
 import { useRouter } from 'expo-router';
-import { auth, db } from '../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { 
@@ -18,8 +18,11 @@ import {
   Calendar
 } from 'lucide-react-native';
 
-export default function ProfileScreen() {
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const ProfileScreen = React.memo(function ProfileScreen() {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const isDesktop = width >= 1024;
   const [userName, setUserName] = useState('Usuario');
@@ -54,18 +57,45 @@ export default function ProfileScreen() {
   if (!isDesktop) {
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-        {/* Header */}
+        {/* Header Optimizado para Notch */}
         <View style={{ 
-          height: 80, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
-          flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20
+          paddingTop: insets.top,
+          backgroundColor: '#FFFFFF',
+          borderBottomWidth: 1,
+          borderBottomColor: '#F3F4F6',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 3,
+          zIndex: 100
         }}>
-          <TouchableOpacity 
-            onPress={() => router.push('/')}
-            style={{ position: 'absolute', left: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
-          >
-            <ChevronLeft size={24} color="#111827" strokeWidth={3} />
-          </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Mi cuenta</Text>
+          <View style={{ 
+            height: 64,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 20
+          }}>
+            <TouchableOpacity 
+              onPress={() => router.push('/')}
+              style={{ 
+                position: 'absolute', 
+                left: 15, 
+                width: 44, 
+                height: 44, 
+                borderRadius: 22, 
+                backgroundColor: '#F9FAFB', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: '#F3F4F6'
+              }}
+            >
+              <ChevronLeft size={24} color="#111827" strokeWidth={3} />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 19, fontWeight: '900', color: '#111827', letterSpacing: -0.5 }}>Mi cuenta</Text>
+          </View>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
@@ -242,7 +272,7 @@ export default function ProfileScreen() {
       </ScrollView>
     </View>
   );
-}
+});
 
 const ProfileItem = React.memo(({ icon, iconBg, title, subtitle, onPress, isLast = false, isDesktop = false }: any) => {
   return (
@@ -264,3 +294,4 @@ const ProfileItem = React.memo(({ icon, iconBg, title, subtitle, onPress, isLast
     </TouchableOpacity>
   );
 });
+export default ProfileScreen;

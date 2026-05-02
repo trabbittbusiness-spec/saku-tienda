@@ -121,12 +121,12 @@ export default function AgendaScreen() {
           maxWidth: '100%', 
           alignSelf: 'center', 
           width: '100%',
-          paddingHorizontal: 40,
+          paddingHorizontal: isDesktop ? 40 : 16,
           marginTop: isDesktop ? 40 : 20
         }}>
           
           {/* Page Header (Desktop only or for button) */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
              {isDesktop && (
                <View>
                   <Text style={{ fontSize: 32, fontWeight: '900', color: '#1A1A2E' }}>Mis Servicios</Text>
@@ -145,7 +145,7 @@ export default function AgendaScreen() {
           </View>
 
           {/* Tabs Filter */}
-          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
             {renderTab('Todas')}
             {renderTab('Pendientes')}
             {renderTab('Completadas')}
@@ -167,21 +167,20 @@ export default function AgendaScreen() {
             <View style={{ 
               flexDirection: 'row', 
               flexWrap: 'wrap', 
-              gap: 20,
+              gap: 16,
               justifyContent: 'flex-start'
             }}>
               {filteredBookings.map((item) => (
-                <TouchableOpacity 
+                <View 
                   key={item.id}
-                  activeOpacity={0.9}
                   style={{ 
                     backgroundColor: '#FFFFFF', 
                     borderRadius: 24, 
-                    padding: isDesktop ? 24 : 16,
+                    padding: 16,
                     borderWidth: 1,
                     borderColor: '#F1F5F9',
                     flexDirection: 'column',
-                    gap: 16,
+                    gap: 12,
                     shadowColor: '#000',
                     shadowOpacity: 0.02,
                     shadowRadius: 15,
@@ -193,40 +192,41 @@ export default function AgendaScreen() {
                   <View style={{ flex: 1, justifyContent: 'center' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                        <View style={{ flex: 1 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A1A2E' }}>{item.serviceName}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Text style={{ fontSize: 17, fontWeight: '900', color: '#1A1A2E' }}>{item.serviceName}</Text>
                             <View style={{ backgroundColor: item.status === 'Pendientes' ? '#FFFBEB' : '#F0FDF4', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
                               <Text style={{ color: item.status === 'Pendientes' ? '#D97706' : '#10B981', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>{item.status}</Text>
                             </View>
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                             <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                               <Text style={{ fontSize: 12, fontWeight: '800', color: '#3B82F6' }}>{item.petName}</Text>
+                               <Text style={{ fontSize: 11, fontWeight: '800', color: '#3B82F6' }}>{item.petName}</Text>
                              </View>
-                            <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600' }}>• {item.vetName || 'Saku Vet'}</Text>
+                            <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '600' }}>• {item.vetName || 'Saku Vet'}</Text>
                           </View>
                        </View>
                     </View>
 
-                    <View style={{ height: 1, backgroundColor: '#F1F5F9', marginVertical: 16 }} />
+                    <View style={{ height: 1, backgroundColor: '#F1F5F9', marginVertical: 12 }} />
 
-                    <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 15, alignItems: isDesktop ? 'center' : 'flex-start' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                         <CalendarIcon size={16} color="#6B7280" />
-                         <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>{item.date}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <CalendarIcon size={14} color="#6B7280" />
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#374151' }}>{item.date}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Clock size={14} color="#6B7280" />
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#374151' }}>{item.time}</Text>
+                        </View>
                       </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                         <Clock size={16} color="#6B7280" />
-                         <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>{item.time}</Text>
+                      
+                      <View style={{ backgroundColor: '#F8FAFC', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                         <Text style={{ fontSize: 12, fontWeight: '800', color: '#1A1A2E' }}>${item.price?.toLocaleString('es-ES')}</Text>
                       </View>
-                      <View style={{ flex: 1 }} />
-                      <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F9FAFB', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#1A1A2E' }}>Ver detalles</Text>
-                        <ChevronRight size={14} color="#1A1A2E" strokeWidth={3} />
-                      </TouchableOpacity>
                     </View>
                   </View>
-                </TouchableOpacity>
+                </View>
               ))}
             </View>
           )}

@@ -1,16 +1,18 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image, Platform, ActivityIndicator, InteractionManager } from 'react-native';
 import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useCart } from '../context/CartContext';
-import { auth } from '../lib/firebase';
-import AuthModal from '../components/AuthModal';
+import { useCart } from '../../context/CartContext';
+import { auth } from '../../lib/firebase';
+import AuthModal from '../../components/AuthModal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function CartScreen() {
+const CartScreen = React.memo(function CartScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart();
   const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const insets = useSafeAreaInsets();
   const isDesktop = width >= 1024;
 
   React.useEffect(() => {
@@ -23,49 +25,74 @@ export default function CartScreen() {
     if (cart.length === 0) {
       return (
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-          {/* Header */}
+          {/* Header Optimizado para Notch */}
           <View style={{ 
-            height: 80, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20
+            paddingTop: insets.top,
+            backgroundColor: '#FFFFFF',
+            borderBottomWidth: 1,
+            borderBottomColor: '#F3F4F6',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            elevation: 3,
+            zIndex: 100
           }}>
-            <TouchableOpacity 
-              onPress={() => router.push('/')}
-              style={{ position: 'absolute', left: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
-            >
-              <ChevronLeft size={24} color="#111827" strokeWidth={3} />
-            </TouchableOpacity>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Mi Carrito</Text>
+            <View style={{ 
+              height: 64,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 20
+            }}>
+              <TouchableOpacity 
+                onPress={() => router.push('/')}
+                style={{ 
+                  position: 'absolute', 
+                  left: 15, 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: 22, 
+                  backgroundColor: '#F9FAFB', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: '#F3F4F6'
+                }}
+              >
+                <ChevronLeft size={24} color="#111827" strokeWidth={3} />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 19, fontWeight: '900', color: '#111827', letterSpacing: -0.5 }}>Mi Carrito</Text>
+            </View>
           </View>
 
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, paddingBottom: 100 }}>
-            <View style={{ alignItems: 'center', paddingHorizontal: 40 }}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30, paddingBottom: 100 }}>
+            <View style={{ alignItems: 'center' }}>
               <View style={{ 
-                width: 160, height: 160, backgroundColor: '#FFFFFF', borderRadius: 45,
-                justifyContent: 'center', alignItems: 'center', marginBottom: 35,
-                shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 25, shadowOffset: { width: 0, height: 12 }
+                width: 100, height: 100, backgroundColor: '#FFF7ED', borderRadius: 50,
+                justifyContent: 'center', alignItems: 'center', marginBottom: 25
               }}>
-                <ShoppingBag size={72} color="#FF7F32" strokeWidth={2} />
+                <ShoppingBag size={40} color="#FF7F32" strokeWidth={2} />
               </View>
               
-              <Text style={{ fontSize: 32, fontWeight: '900', color: '#111827', textAlign: 'center', marginBottom: 15 }}>
-                Tu carrito está vacío
+              <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', textAlign: 'center', marginBottom: 8 }}>
+                Carrito vacío
               </Text>
               
               <Text style={{ 
-                fontSize: 15, color: '#9CA3AF', fontWeight: '600', textAlign: 'center', 
-                lineHeight: 22, marginBottom: 45, maxWidth: 280
+                fontSize: 14, color: '#9CA3AF', fontWeight: '600', textAlign: 'center', 
+                marginBottom: 30, maxWidth: 220
               }}>
-                Descubre productos increíbles para tu mascota
+                Añade productos a tu carrito para verlos aquí.
               </Text>
 
               <TouchableOpacity 
                 onPress={() => router.push('/')}
                 style={{ 
-                  backgroundColor: '#FF7F32', borderRadius: 32, paddingVertical: 18, paddingHorizontal: 65,
-                  shadowColor: '#FF7F32', shadowOpacity: 0.2, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
+                  backgroundColor: '#63348C', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 40,
                 }}
               >
-                <Text style={{ color: 'white', fontSize: 18, fontWeight: '800' }}>Explorar productos</Text>
+                <Text style={{ color: 'white', fontSize: 15, fontWeight: '800' }}>Ir a la tienda</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -75,28 +102,67 @@ export default function CartScreen() {
 
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-        {/* Header */}
+        {/* Header Optimizado para Notch */}
         <View style={{ 
-          backgroundColor: '#FFFFFF', paddingVertical: 20,
-          flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-          borderBottomWidth: 1, borderBottomColor: '#F3F4F6'
+          paddingTop: insets.top,
+          backgroundColor: '#FFFFFF',
+          borderBottomWidth: 1,
+          borderBottomColor: '#F3F4F6',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 3,
+          zIndex: 100
         }}>
-          <TouchableOpacity 
-            onPress={() => router.push('/')}
-            style={{ position: 'absolute', left: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}
-          >
-            <ChevronLeft size={24} color="#111827" strokeWidth={3} />
-          </TouchableOpacity>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>Mi Carrito</Text>
-            <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '600' }}>{cart.length} productos</Text>
+          <View style={{ 
+            height: 64,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 20
+          }}>
+            <TouchableOpacity 
+              onPress={() => router.push('/')}
+              style={{ 
+                position: 'absolute', 
+                left: 15, 
+                width: 44, 
+                height: 44, 
+                borderRadius: 22, 
+                backgroundColor: '#F9FAFB', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: '#F3F4F6'
+              }}
+            >
+              <ChevronLeft size={24} color="#111827" strokeWidth={3} />
+            </TouchableOpacity>
+            
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 19, fontWeight: '900', color: '#111827', letterSpacing: -0.5 }}>Mi Carrito</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '700' }}>{cart.length} productos</Text>
+            </View>
+
+            <TouchableOpacity 
+              onPress={() => router.push('/orders')}
+              style={{ 
+                position: 'absolute', 
+                right: 20, 
+                width: 44, 
+                height: 44, 
+                backgroundColor: '#F9FAFB', 
+                borderRadius: 12, 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: '#F3F4F6'
+              }}
+            >
+              <ShoppingBag size={20} color="#111827" strokeWidth={2.5} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity 
-            onPress={() => router.push('/orders')}
-            style={{ position: 'absolute', right: 20, width: 40, height: 40, backgroundColor: '#F3F4F6', borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}
-          >
-            <ShoppingBag size={20} color="#4B5563" />
-          </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 15, paddingBottom: 180 }}>
@@ -167,7 +233,9 @@ export default function CartScreen() {
 
         {/* Floating Checkout Button */}
         <View style={{ 
-          position: 'absolute', bottom: isDesktop ? 40 : 110, left: 0, right: 0, 
+          position: 'absolute', 
+          bottom: isDesktop ? 40 : (Platform.OS === 'web' ? 125 : 100 + insets.bottom), 
+          left: 0, right: 0, 
           paddingHorizontal: 20, zIndex: 100 
         }}>
           <TouchableOpacity 
@@ -233,4 +301,5 @@ export default function CartScreen() {
       />
     </>
   );
-}
+});
+export default CartScreen;

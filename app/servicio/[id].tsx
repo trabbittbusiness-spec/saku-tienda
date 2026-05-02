@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { ChevronLeft, Clock, Star, Heart, Share2, ShieldCheck, CheckCircle2, Volume2, VolumeX, Play, X, Award, FileText, Package, CreditCard, Navigation, Search, Shield, Lock } from 'lucide-react-native';
-import { Video, ResizeMode } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../../components/Header';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -19,6 +19,28 @@ export default function ServicioDetailScreen() {
   const [videoModalVisible, setVideoModalVisible] = useState(false);
   const [categoriaPrincipal, setCategoriaPrincipal] = useState<string>('');
   const { toggleFavorite, isFavorite } = useFavorites();
+
+  const player = useVideoPlayer(service?.video1 || null, player => {
+    player.loop = true;
+    player.muted = isMuted;
+    if (videoModalVisible) player.play();
+  });
+
+  useEffect(() => {
+    if (player) {
+      player.muted = isMuted;
+    }
+  }, [isMuted, player]);
+
+  useEffect(() => {
+    if (player) {
+      if (videoModalVisible) {
+        player.play();
+      } else {
+        player.pause();
+      }
+    }
+  }, [videoModalVisible, player]);
   useEffect(() => {
     const fetchService = async () => {
       if (!id) return;
@@ -302,8 +324,8 @@ export default function ServicioDetailScreen() {
               ) : null}
             </View>
             <View style={styles.contentBody}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <View style={{ flex: 1, paddingRight: 20 }}>
+              <View style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                <View style={{ width: '100%' }}>
                   <Text style={styles.title}>{service.nombre}</Text>
                   <View style={styles.metaRow}>
                     {categoriaPrincipal ? (
@@ -320,7 +342,7 @@ export default function ServicioDetailScreen() {
                     </View>
                   </View>
                 </View>
-                <View style={styles.priceContainer}>
+                <View style={{ alignItems: 'flex-start', width: '100%', backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' }}>
                   <Text style={styles.priceValue}>{getPriceDisplay(service)}</Text>
                 </View>
               </View>
@@ -367,7 +389,7 @@ export default function ServicioDetailScreen() {
               <TouchableOpacity style={styles.closeWidgetBtn} onPress={() => setVideoModalVisible(false)}><X size={20} color="#1E293B" /></TouchableOpacity>
             </View>
             <View style={styles.videoContainerInner}>
-              <Video source={{ uri: service?.video1 }} style={styles.widgetVideo} useNativeControls resizeMode={ResizeMode.COVER} shouldPlay isLooping isMuted={isMuted} />
+              <VideoView player={player} style={styles.widgetVideo} nativeControls contentFit="cover" />
               <TouchableOpacity style={styles.widgetMuteBtn} onPress={() => setIsMuted(!isMuted)}>
                 {isMuted ? <VolumeX size={18} color="#fff" /> : <Volume2 size={18} color="#fff" />}
               </TouchableOpacity>
@@ -430,7 +452,7 @@ const styles = StyleSheet.create({
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   benefitText: { fontSize: 15, color: '#334155', fontWeight: '500' },
   floatingBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', padding: 20, paddingBottom: 35, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 15 },
-  reserveBtn: { backgroundColor: '#63348C', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 16, shadowColor: '#63348C', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+  reserveBtn: { backgroundColor: '#10B981', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 16, shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
   reserveBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
   desktopScrollContent: { paddingBottom: 60, backgroundColor: '#FFFFFF' },
   webRoot: { flex: 1, position: 'relative', overflow: 'hidden' },

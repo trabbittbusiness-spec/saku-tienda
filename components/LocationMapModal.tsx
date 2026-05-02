@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Pressable, Modal, ScrollView, Platform, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
+import * as Location from 'expo-location';
 import { MapPin, Search, X, Minus, Plus, Home, Briefcase, Navigation, Dog as DogIcon } from 'lucide-react-native';
 
 interface LocationMapModalProps {
@@ -10,6 +13,7 @@ interface LocationMapModalProps {
 
 export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMapModalProps) {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isDesktop = width >= 768;
   const mapRef = React.useRef<any>(null);
   const [selectedCategory, setSelectedCategory] = useState('CASA');
@@ -24,44 +28,43 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
   });
   const [mapCenter, setMapCenter] = useState({ lat: -33.4425, lng: -70.6400 });
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.addEventListener) return;
-    
-    const handleMessage = async (e: any) => {
-      try {
-        if (!e.data) return;
-        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (data.type === 'map_moved') {
-          const { lat, lng } = data;
+  const handleMessage = async (e: any) => {
+    try {
+      if (!e.data) return;
+      const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+      if (data.type === 'map_moved') {
+        const { lat, lng } = data;
+        
+        const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg&language=es`;
+        const fetchUrl = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(geoUrl)}` : geoUrl;
+        const res = await fetch(fetchUrl);
+        const geoData = await res.json();
+        
+        if (geoData.results && geoData.results.length > 0) {
+          const result = geoData.results[0];
+          const addressParts = result.formatted_address.split(',');
           
-          const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg&language=es`;
-          const geoProxyUrl = `https://corsproxy.io/?${encodeURIComponent(geoUrl)}`;
-          const res = await fetch(geoProxyUrl);
-          const geoData = await res.json();
+          const streetNumber = result.address_components.find((c: any) => c.types.includes('street_number'))?.long_name;
+          const route = result.address_components.find((c: any) => c.types.includes('route'))?.long_name;
           
-          if (geoData.results && geoData.results.length > 0) {
-            const result = geoData.results[0];
-            const addressParts = result.formatted_address.split(',');
-            
-            const streetNumber = result.address_components.find((c: any) => c.types.includes('street_number'))?.long_name;
-            const route = result.address_components.find((c: any) => c.types.includes('route'))?.long_name;
-            
-            setSelectedLocation({
-              main: (route && streetNumber) ? `${route} ${streetNumber}` : (addressParts[0] || 'Ubicación seleccionada'),
-              sub: addressParts.slice(1).map(s => s.trim()).join(', ') || '',
-              fullAddress: result.formatted_address,
-              lat: lat,
-              lng: lng
-            });
-
-
-          }
+          setSelectedLocation({
+            main: (route && streetNumber) ? `${route} ${streetNumber}` : (addressParts[0] || 'Ubicación seleccionada'),
+            sub: addressParts.slice(1).map(s => s.trim()).join(', ') || '',
+            fullAddress: result.formatted_address,
+            lat: lat,
+            lng: lng
+          });
         }
-      } catch (err) {}
-    };
+      }
+    } catch (err) {}
+  };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    
+    const onWebMessage = (e: any) => handleMessage(e);
+    window.addEventListener('message', onWebMessage);
+    return () => window.removeEventListener('message', onWebMessage);
   }, []);
 
   const googleMapsHtml = `
@@ -109,23 +112,33 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
                     }
                 });
 
+                marker.addListener('dragend', function() {
+                    var pos = marker.getPosition();
+                    var msg = JSON.stringify({ 
+                        type: 'map_moved', 
+                        lat: pos.lat(), 
+                        lng: pos.lng() 
+                    });
+                    if (window.ReactNativeWebView) {
+                        window.ReactNativeWebView.postMessage(msg);
+                    } else {
+                        window.parent.postMessage(msg, '*');
+                    }
+                });
+
                 map.addListener('click', function(e) {
                     var pos = e.latLng;
                     marker.setPosition(pos);
-                    window.parent.postMessage(JSON.stringify({ 
+                    var msg = JSON.stringify({ 
                         type: 'map_moved', 
                         lat: pos.lat(), 
                         lng: pos.lng() 
-                    }), '*');
-                });
-
-                marker.addListener('dragend', function() {
-                    var pos = marker.getPosition();
-                    window.parent.postMessage(JSON.stringify({ 
-                        type: 'map_moved', 
-                        lat: pos.lat(), 
-                        lng: pos.lng() 
-                    }), '*');
+                    });
+                    if (window.ReactNativeWebView) {
+                        window.ReactNativeWebView.postMessage(msg);
+                    } else {
+                        window.parent.postMessage(msg, '*');
+                    }
                 });
 
                 window.addEventListener('message', function(e) {
@@ -137,11 +150,16 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
                       map.setZoom(17);
                       marker.setPosition(pos);
                       
-                      window.parent.postMessage(JSON.stringify({ 
+                      var msg = JSON.stringify({ 
                         type: 'map_moved', 
                         lat: pos.lat, 
                         lng: pos.lng 
-                      }), '*');
+                      });
+                      if (window.ReactNativeWebView) {
+                        window.ReactNativeWebView.postMessage(msg);
+                      } else {
+                        window.parent.postMessage(msg, '*');
+                      }
                     }
                     if (data.type === 'zoom_in') {
                       map.setZoom(map.getZoom() + 1);
@@ -161,113 +179,278 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
   if (!isOpen) return null;
 
   return (
-    <View style={{ position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(10px)' }}>
+    <Modal
+      visible={isOpen}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        backgroundColor: 'rgba(0, 0, 0, 0.6)'
+      }}>
       <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={onClose} />
-      
-      <View style={{
-        width: isDesktop ? 1000 : '95%', 
-        height: isDesktop ? 520 : '90%', 
-        backgroundColor: '#FFFFFF', borderRadius: isDesktop ? 48 : 32,
+            <View style={{
+        width: isDesktop ? 1000 : '100%', 
+        height: isDesktop ? 520 : '100%', 
+        backgroundColor: '#FFFFFF', 
+        borderRadius: isDesktop ? 48 : 0,
         flexDirection: isDesktop ? 'row' : 'column', 
-        alignItems: 'center', padding: 12,
+        padding: isDesktop ? 12 : 0,
         shadowColor: '#000', shadowOffset: { width: 0, height: 25 }, shadowOpacity: 0.2, shadowRadius: 60,
-        borderWidth: 1, borderColor: '#F3F4F6'
+        borderWidth: isDesktop ? 1 : 0, borderColor: '#F3F4F6',
+        position: 'relative'
       }}>
         
-        {/* MAP SECTION */}
+        {/* MAP SECTION - FULL SCREEN BACKGROUND ON MOBILE */}
         <View style={{ 
           width: isDesktop ? 496 : '100%', 
-          height: isDesktop ? 496 : 320, 
-          borderRadius: isDesktop ? 40 : 24, 
+          height: isDesktop ? 496 : '100%', 
+          borderRadius: isDesktop ? 40 : 0, 
           overflow: 'hidden', 
-          position: 'relative', backgroundColor: '#E5E7EB',
-          justifyContent: 'center', alignItems: 'center'
+          position: isDesktop ? 'relative' : 'absolute', 
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: '#F3F4F6'
         }}>
-          <iframe
-            ref={mapRef}
-            srcDoc={googleMapsHtml}
-            style={{ width: '100%', height: '100%', border: 'none', position: 'absolute', top: 0, left: 0 } as any}
-            allowFullScreen={false}
-            loading="lazy"
-            title="Interactive Map"
-          />
+          {Platform.OS === 'web' ? (
+            <iframe
+              ref={mapRef}
+              srcDoc={googleMapsHtml}
+              style={{ width: '100%', height: '100%', border: 'none', position: 'absolute', top: 0, left: 0 } as any}
+              allowFullScreen={false}
+              loading="lazy"
+              title="Interactive Map"
+            />
+          ) : (
+            <WebView
+              ref={mapRef}
+              originWhitelist={['*']}
+              source={{ html: googleMapsHtml }}
+              onMessage={(event) => handleMessage(event.nativeEvent)}
+              style={{ width: '100%', height: '100%', backgroundColor: 'transparent' }}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView error: ', nativeEvent);
+              }}
+            />
+          )}
 
-          {/* Custom Zoom Controls */}
+          {/* Zoom Controls (Floating over Map) */}
           <View style={{ 
-            position: 'absolute' as any, bottom: isDesktop ? 92 : 80, right: 16, 
-            gap: 8, alignItems: 'center'
+            position: 'absolute' as any, 
+            top: isDesktop ? undefined : insets.top + 80,
+            bottom: isDesktop ? 92 : undefined, 
+            right: 16, 
+            gap: 12, alignItems: 'center',
+            zIndex: 9999 
           }}>
             <TouchableOpacity 
-              onPress={() => mapRef.current?.contentWindow.postMessage(JSON.stringify({ type: 'zoom_in' }), '*')}
+              onPress={() => {
+                const msg = JSON.stringify({ type: 'zoom_in' });
+                if (Platform.OS === 'web') mapRef.current?.contentWindow.postMessage(msg, '*');
+                else mapRef.current?.injectJavaScript(`window.postMessage(${JSON.stringify(msg)}, '*')`);
+              }}
               style={{
-                width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF',
+                width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF',
                 justifyContent: 'center', alignItems: 'center',
-                shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8,
+                shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 8
               }}
             >
-              <Plus size={20} color="#1F2937" strokeWidth={3} />
+              <Plus size={24} color="#1F2937" strokeWidth={3} />
             </TouchableOpacity>
             <TouchableOpacity 
-              onPress={() => mapRef.current?.contentWindow.postMessage(JSON.stringify({ type: 'zoom_out' }), '*')}
+              onPress={() => {
+                const msg = JSON.stringify({ type: 'zoom_out' });
+                if (Platform.OS === 'web') mapRef.current?.contentWindow.postMessage(msg, '*');
+                else mapRef.current?.injectJavaScript(`window.postMessage(${JSON.stringify(msg)}, '*')`);
+              }}
               style={{
-                width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF',
+                width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF',
                 justifyContent: 'center', alignItems: 'center',
-                shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8,
+                shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 8
               }}
             >
-              <Minus size={20} color="#1F2937" strokeWidth={3} />
+              <Minus size={24} color="#1F2937" strokeWidth={3} />
             </TouchableOpacity>
           </View>
 
-          {/* Minimal Light GPS Button */}
+          {/* GPS Button (Floating over Map) */}
           <TouchableOpacity 
-            onPress={() => {
-              if (typeof navigator !== 'undefined' && navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                    const { latitude, longitude } = position.coords;
-                    if (mapRef.current) {
-                      // @ts-ignore
-                      const win = mapRef.current.contentWindow || mapRef.current;
-                      if (win && win.postMessage) {
-                        win.postMessage(JSON.stringify({ type: 'set_center', lat: latitude, lng: longitude }), '*');
+            onPress={async () => {
+              if (Platform.OS === 'web') {
+                if (typeof navigator !== 'undefined' && navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      const { latitude, longitude } = position.coords;
+                      const msg = JSON.stringify({ type: 'set_center', lat: latitude, lng: longitude });
+                      if (mapRef.current) {
+                        const win = mapRef.current.contentWindow || mapRef.current;
+                        win.postMessage(msg, '*');
                       }
-                    }
-                  },
-                  (error) => console.log('Geolocation error:', error),
-                  { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
+                    },
+                    (error) => console.log('Geolocation error:', error),
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                  );
+                }
               } else {
-                console.log('Geolocation not supported on this platform');
+                try {
+                  const { status } = await Location.requestForegroundPermissionsAsync();
+                  if (status !== 'granted') {
+                    Alert.alert('Permiso denegado', 'Necesitamos acceso a tu ubicación para centrar el mapa.');
+                    return;
+                  }
+
+                  const location = await Location.getCurrentPositionAsync({});
+                  const { latitude, longitude } = location.coords;
+                  const msg = JSON.stringify({ type: 'set_center', lat: latitude, lng: longitude });
+                  
+                  if (mapRef.current) {
+                    mapRef.current.injectJavaScript(`window.postMessage(${JSON.stringify(msg)}, '*')`);
+                  }
+                } catch (error) {
+                  console.log('Native Geolocation error:', error);
+                }
               }
             }}
             style={{
-              position: 'absolute' as any, bottom: 20, right: 16,
-              width: 50, height: 50, borderRadius: 25, backgroundColor: '#FFFFFF',
+              position: 'absolute' as any, 
+              top: isDesktop ? undefined : insets.top + 210,
+              bottom: isDesktop ? 20 : undefined, 
+              right: 16,
+              width: 56, height: 56, borderRadius: 28, backgroundColor: '#FFFFFF',
               justifyContent: 'center', alignItems: 'center',
-              shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12,
+              shadowColor: '#63348C', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 10,
+              zIndex: 9999
             }}
           >
-            <Navigation size={22} color="#63348C" strokeWidth={2.5} />
+            <Navigation size={26} color="#63348C" strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
 
-        {/* INFO SECTION */}
-        <View style={{ flex: 1, paddingHorizontal: isDesktop ? 40 : 16, paddingVertical: isDesktop ? 20 : 16, width: '100%', justifyContent: 'space-between', zIndex: 50 }}>
-          
-          <View style={{ zIndex: 100 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: isDesktop ? 24 : 16 }}>
-              <Text style={{ fontSize: isDesktop ? 14 : 11, fontWeight: '800', color: '#111827', letterSpacing: 2, textTransform: 'uppercase' }}>Fijar Destino</Text>
+        {/* FLOATING SEARCH BAR (MOBILE) */}
+        {!isDesktop && (
+          <View style={{ 
+            position: 'absolute', top: insets.top + 10, left: 15, right: 15, 
+            zIndex: 1000 
+          }}>
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF',
+              borderRadius: 20, paddingHorizontal: 16, height: 56,
+              shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
+              borderWidth: 1, borderColor: '#F3F4F6'
+            }}>
+              <TouchableOpacity onPress={onClose} style={{ marginRight: 10 }}>
+                <X size={20} color="#111827" />
+              </TouchableOpacity>
+              <TextInput
+                placeholder="¿A dónde enviamos?"
+                placeholderTextColor="#9CA3AF"
+                value={mapSearchQuery}
+                onChangeText={async (text) => {
+                  setMapSearchQuery(text);
+                  setShowAutocomplete(text.length > 0);
+                  if (text.length > 2) {
+                    try {
+                      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg&language=es`;
+                      const fetchUrl = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(url)}` : url;
+                      const res = await fetch(fetchUrl);
+                      const data = await res.json();
+                      if (data.predictions) setSearchResults(data.predictions);
+                    } catch (e) { console.log('Search error:', e); }
+                  } else { setSearchResults([]); }
+                }}
+                onFocus={() => setShowAutocomplete(mapSearchQuery.length > 0)}
+                style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#111827' }}
+              />
+              {mapSearchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => { setMapSearchQuery(''); setShowAutocomplete(false); }}>
+                  <X size={18} color="#9CA3AF" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Mobile Autocomplete Results */}
+            {showAutocomplete && (
+              <View style={{
+                backgroundColor: '#FFFFFF', borderRadius: 20, marginTop: 10,
+                shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 30, elevation: 20,
+                maxHeight: 300, overflow: 'hidden'
+              }}>
+                <ScrollView keyboardShouldPersistTaps="handled">
+                  {searchResults.map((place, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      onPress={async () => {
+                        setMapSearchQuery(place.description);
+                        setShowAutocomplete(false);
+                        try {
+                          const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(place.description)}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg&language=es`;
+                          const fetchUrl = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(geoUrl)}` : geoUrl;
+                          const res = await fetch(fetchUrl);
+                          const data = await res.json();
+                          if (data.results?.[0]) {
+                            const { lat, lng } = data.results[0].geometry.location;
+                            const msg = JSON.stringify({ type: 'set_center', lat, lng });
+                            if (Platform.OS === 'web') {
+                              mapRef.current?.contentWindow.postMessage(msg, '*');
+                            } else {
+                              mapRef.current?.postMessage(msg);
+                            }
+                            setSelectedLocation({
+                              main: place.structured_formatting?.main_text || place.description,
+                              sub: place.structured_formatting?.secondary_text || '',
+                              fullAddress: data.results[0].formatted_address,
+                              lat, lng
+                            });
+                          }
+                        } catch (e) { console.log('Geocode error:', e); }
+                      }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}
+                    >
+                      <MapPin size={18} color="#9CA3AF" />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827' }} numberOfLines={1}>{place.structured_formatting?.main_text || place.description}</Text>
+                        <Text style={{ fontSize: 12, color: '#6B7280' }} numberOfLines={1}>{place.structured_formatting?.secondary_text}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* INFO CARD / BOTTOM SHEET (MOBILE) */}
+        <View style={{ 
+          flex: isDesktop ? 1 : undefined,
+          paddingHorizontal: isDesktop ? 40 : 20, 
+          paddingVertical: isDesktop ? 20 : 25,
+          backgroundColor: '#FFFFFF',
+          borderTopLeftRadius: isDesktop ? 0 : 32,
+          borderTopRightRadius: isDesktop ? 0 : 32,
+          position: isDesktop ? 'relative' : 'absolute',
+          bottom: 0, left: 0, right: 0,
+          shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, elevation: 15,
+          zIndex: 2000
+        }}>
+          {isDesktop && (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827', letterSpacing: 2, textTransform: 'uppercase' }}>Fijar Destino</Text>
               <TouchableOpacity onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
                 <X size={18} color="#6B7280" />
               </TouchableOpacity>
             </View>
+          )}
 
-            {/* Light Search Bar Container - OVERLAYS EVERYTHING BELOW */}
-            <View style={{ position: 'relative', zIndex: 9999, marginBottom: isDesktop ? 24 : 16 }}>
+          {isDesktop && (
+            <View style={{ position: 'relative', zIndex: 100, marginBottom: 24 }}>
               <View style={{
                 flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB',
-                borderRadius: 20, paddingHorizontal: 16, height: isDesktop ? 64 : 56, borderWidth: 1, borderColor: '#E5E7EB',
+                borderRadius: 20, paddingHorizontal: 16, height: 64, borderWidth: 1, borderColor: '#E5E7EB',
               }}>
                 <Search size={20} color="#9CA3AF" strokeWidth={2} />
                 <TextInput
@@ -277,170 +460,86 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
                   onChangeText={async (text) => {
                     setMapSearchQuery(text);
                     setShowAutocomplete(text.length > 0);
-                    
                     if (text.length > 2) {
                       try {
-                        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg`;
-                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                        const res = await fetch(proxyUrl);
+                        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg&language=es`;
+                        const fetchUrl = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(url)}` : url;
+                        const res = await fetch(fetchUrl);
                         const data = await res.json();
-                        if (data.predictions) {
-                          setSearchResults(data.predictions);
-                        }
-                      } catch (e) {
-                        console.log('Error fetching places:', e);
-                      }
-                    } else {
-                      setSearchResults([]);
-                    }
+                        if (data.predictions) setSearchResults(data.predictions);
+                      } catch (e) { console.log('Search error:', e); }
+                    } else { setSearchResults([]); }
                   }}
-                  onFocus={() => setShowAutocomplete(mapSearchQuery.length > 0)}
-                  style={{ flex: 1, marginLeft: 12, fontSize: isDesktop ? 16 : 14, fontWeight: '600', color: '#111827', outlineStyle: 'none' as any }}
+                  style={{ flex: 1, marginLeft: 12, fontSize: 16, fontWeight: '600', color: '#111827' }}
                 />
-                {mapSearchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => { setMapSearchQuery(''); setShowAutocomplete(false); setSearchResults([]); }}>
-                    <X size={18} color="#9CA3AF" />
-                  </TouchableOpacity>
-                )}
               </View>
-
-              {/* Autocomplete Dropdown */}
               {showAutocomplete && (
-                <View style={{
-                  position: 'absolute' as any, top: isDesktop ? 72 : 64, left: 0, right: 0,
-                  backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 8,
-                  shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.2, shadowRadius: 40, elevation: 50,
-                  borderWidth: 1, borderColor: '#E5E7EB',
-                  maxHeight: isDesktop ? 320 : 380, overflow: 'hidden',
-                  zIndex: 99999
-                }}>
-                  <ScrollView keyboardShouldPersistTaps="handled">
-                    {searchResults.length > 0 ? searchResults.map((place, idx) => {
-                      const mainText = place.structured_formatting?.main_text || place.description;
-                      const subText = place.structured_formatting?.secondary_text || '';
-                      
-                      return (
-                        <TouchableOpacity
-                          key={place.place_id || idx}
-                          onPress={async () => {
-                            setMapSearchQuery(place.description);
-                            setShowAutocomplete(false);
-                            
-                            setSelectedLocation(prev => ({
-                              ...prev,
-                              main: mainText,
-                              sub: subText || place.description
-                            }));
-                            
-                            try {
-                              const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(place.description)}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg&language=es`;
-                              const geoProxyUrl = `https://corsproxy.io/?${encodeURIComponent(geoUrl)}`;
-                              const res = await fetch(geoProxyUrl);
-                              const data = await res.json();
-                              
-                              if (data.results && data.results.length > 0) {
-                                const { lat, lng } = data.results[0].geometry.location;
-                                if (mapRef.current) {
-                                  mapRef.current.contentWindow.postMessage(JSON.stringify({ type: 'set_center', lat, lng }), '*');
-                                }
-                                setSelectedLocation({
-                                  main: mainText,
-                                  sub: subText || place.description,
-                                  fullAddress: data.results[0].formatted_address,
-                                  lat: lat,
-                                  lng: lng
-                                });
-
-                              }
-                            } catch (error) {
-                              console.log('Error fetching geocoding:', error);
+                <View style={{ position: 'absolute', top: 72, left: 0, right: 0, backgroundColor: '#FFFFFF', borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 40, elevation: 50, borderWidth: 1, borderColor: '#E5E7EB', maxHeight: 300, zIndex: 1000 }}>
+                  <ScrollView>
+                    {searchResults.map((place, idx) => (
+                      <TouchableOpacity key={idx} onPress={async () => {
+                        setMapSearchQuery(place.description);
+                        setShowAutocomplete(false);
+                        try {
+                          const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(place.description)}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg&language=es`;
+                          const fetchUrl = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(geoUrl)}` : geoUrl;
+                          const res = await fetch(fetchUrl);
+                          const data = await res.json();
+                          if (data.results?.[0]) {
+                            const { lat, lng } = data.results[0].geometry.location;
+                            if (mapRef.current) {
+                              const msg = JSON.stringify({ type: 'set_center', lat, lng });
+                              if (Platform.OS === 'web') mapRef.current.contentWindow.postMessage(msg, '*');
+                              else mapRef.current.postMessage(msg);
                             }
-                          }}
-                          style={{
-                            flexDirection: 'row', alignItems: 'center', gap: 12,
-                            paddingVertical: 12, paddingHorizontal: 16,
-                            borderBottomWidth: idx !== searchResults.length - 1 ? 1 : 0, borderBottomColor: '#F3F4F6'
-                          }}
-                        >
-                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
-                            <MapPin size={16} color="#6B7280" />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827' }} numberOfLines={1}>{mainText}</Text>
-                            {subText ? <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 1, fontWeight: '500' }} numberOfLines={1}>{subText}</Text> : null}
-                          </View>
-                        </TouchableOpacity>
-                      )
-                    }) : (
-                      <View style={{ padding: 16, alignItems: 'center' }}>
-                        <Text style={{ color: '#6B7280', fontSize: 13, fontWeight: '500' }}>
-                          {mapSearchQuery.length > 2 ? 'Buscando lugares...' : 'Escribe para buscar...'}
-                        </Text>
-                      </View>
-                    )}
+                            setSelectedLocation({
+                              main: place.structured_formatting?.main_text || place.description,
+                              sub: place.structured_formatting?.secondary_text || '',
+                              fullAddress: data.results[0].formatted_address,
+                              lat, lng
+                            });
+                          }
+                        } catch (e) { console.log('Geocode error:', e); }
+                      }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
+                        <MapPin size={16} color="#6B7280" />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827' }}>{place.structured_formatting?.main_text || place.description}</Text>
+                          <Text style={{ fontSize: 12, color: '#6B7280' }}>{place.structured_formatting?.secondary_text}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
                   </ScrollView>
                 </View>
               )}
             </View>
-          </View>
+          )}
 
-          <ScrollView showsVerticalScrollIndicator={false} bounces={false} style={{ flex: 1 }}>
-            <View>
-              {/* Detected Location */}
-              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: isDesktop ? 32 : 24 }}>
-                <View style={{ width: 4, height: isDesktop ? 50 : 40, backgroundColor: '#63348C', borderRadius: 4 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: isDesktop ? 26 : 20, fontWeight: '800', color: '#111827', letterSpacing: -0.5 }} numberOfLines={1}>{selectedLocation.main || 'Agregar ubicación'}</Text>
-                  <Text style={{ fontSize: isDesktop ? 15 : 13, color: '#6B7280', fontWeight: '600', marginTop: 2 }} numberOfLines={1}>{selectedLocation.sub}</Text>
-                </View>
-              </View>
-
-              {/* Type Toggles (Light Style) */}
-              <View style={{ flexDirection: 'row', gap: 10, marginBottom: isDesktop ? 0 : 20 }}>
-                {[
-                  { label: 'CASA', icon: Home },
-                  { label: 'TRABAJO', icon: Briefcase },
-                  { label: 'VET', icon: DogIcon },
-                ].map((cat) => {
-                  const isActive = selectedCategory === cat.label;
-                  return (
-                    <Pressable
-                      key={cat.label}
-                      onPress={() => setSelectedCategory(cat.label)}
-                      style={{
-                        flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6,
-                        paddingVertical: isDesktop ? 16 : 12, borderRadius: 16,
-                        backgroundColor: isActive ? '#FFF7ED' : '#F9FAFB',
-                        borderWidth: 1.5, borderColor: isActive ? '#63348C' : '#F3F4F6',
-                      }}
-                    >
-                      <cat.icon size={isDesktop ? 20 : 18} color={isActive ? '#63348C' : '#9CA3AF'} strokeWidth={isActive ? 2.5 : 2} />
-                      <Text style={{ fontSize: isDesktop ? 12 : 10, fontWeight: '800', color: isActive ? '#63348C' : '#6B7280', letterSpacing: 0.5 }}>{cat.label}</Text>
-                    </Pressable>
-                  );
-                })}
+          <View style={{ marginBottom: 25 }}>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 15 }}>
+              <View style={{ width: 4, height: 36, backgroundColor: '#63348C', borderRadius: 4 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: isDesktop ? 24 : 18, fontWeight: '900', color: '#111827' }} numberOfLines={1}>{selectedLocation.main || '¿Dónde estás?'}</Text>
+                <Text style={{ fontSize: isDesktop ? 14 : 12, color: '#9CA3AF', fontWeight: '700' }} numberOfLines={1}>{selectedLocation.sub || 'Fija un punto en el mapa'}</Text>
               </View>
             </View>
-          </ScrollView>
 
-          {/* Primary Action Button */}
-          <TouchableOpacity
-            onPress={() => {
-              if (onSave) onSave({ ...selectedLocation, category: selectedCategory });
-              onClose();
-            }}
-            style={{
-              backgroundColor: '#63348C', borderRadius: 20, paddingVertical: isDesktop ? 20 : 16,
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-              shadowColor: '#63348C', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 20,
-              marginTop: isDesktop ? 24 : 12
-            }}
-          >
-            <MapPin size={22} color="#FFFFFF" strokeWidth={3} />
-            <Text style={{ color: '#FFFFFF', fontSize: isDesktop ? 16 : 14, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>Guardar Ruta</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              {[ { label: 'CASA', icon: Home }, { label: 'TRABAJO', icon: Briefcase }, { label: 'VET', icon: DogIcon } ].map((cat) => (
+                <Pressable key={cat.label} onPress={() => setSelectedCategory(cat.label)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 12, borderRadius: 16, backgroundColor: selectedCategory === cat.label ? '#FFF7ED' : '#F9FAFB', borderWidth: 1.5, borderColor: selectedCategory === cat.label ? '#63348C' : '#F3F4F6' }}>
+                  <cat.icon size={18} color={selectedCategory === cat.label ? '#63348C' : '#9CA3AF'} strokeWidth={2.5} />
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: selectedCategory === cat.label ? '#63348C' : '#6B7280' }}>{cat.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <TouchableOpacity onPress={() => { if (onSave) onSave({ ...selectedLocation, category: selectedCategory }); onClose(); }} style={{ backgroundColor: '#63348C', borderRadius: 20, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: '#63348C', shadowOpacity: 0.3, shadowRadius: 15, elevation: 10 }}>
+            <MapPin size={20} color="#FFFFFF" strokeWidth={3} />
+            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 1 }}>CONFIRMAR UBICACIÓN</Text>
           </TouchableOpacity>
         </View>
       </View>
     </View>
-  );
+  </Modal>
+);
 }

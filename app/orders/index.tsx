@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ChevronRight, Store, Clock, Package, CheckCircle2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../../lib/firebase';
@@ -10,6 +11,7 @@ let cachedOrders: any[] | null = null;
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
   const [filter, setFilter] = useState('Todas');
@@ -40,7 +42,12 @@ export default function OrdersScreen() {
               if (data.fechaCreacion && data.fechaCreacion.toDate) {
                 dateStr = data.fechaCreacion.toDate().toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
               } else if (typeof data.fechaCreacion === 'string') {
-                dateStr = data.fechaCreacion;
+                try {
+                  const d = new Date(data.fechaCreacion);
+                  dateStr = d.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+                } catch (e) {
+                  dateStr = data.fechaCreacion;
+                }
               }
 
               // Process items from snapshot if directly available
@@ -121,14 +128,21 @@ export default function OrdersScreen() {
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       {/* Header */}
       <View style={{ 
-        backgroundColor: '#FFFFFF', paddingVertical: 20,
+        backgroundColor: '#FFFFFF', 
+        paddingTop: Platform.OS === 'web' ? 20 : insets.top + 10,
+        paddingBottom: 20,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         borderBottomWidth: 1, borderBottomColor: '#F3F4F6'
       }}>
         {!isDesktop && (
           <TouchableOpacity 
             onPress={() => router.back()}
-            style={{ position: 'absolute', left: 20, width: 44, height: 44, backgroundColor: '#F3F4F6', borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}
+            style={{ 
+              position: 'absolute', 
+              left: 20, 
+              top: Platform.OS === 'web' ? 20 : insets.top + 8,
+              width: 44, height: 44, backgroundColor: '#F3F4F6', borderRadius: 12, justifyContent: 'center', alignItems: 'center' 
+            }}
           >
             <ArrowLeft size={20} color="#111827" />
           </TouchableOpacity>
@@ -152,7 +166,12 @@ export default function OrdersScreen() {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingTop: 30, paddingBottom: isDesktop ? 30 : 120 }}>
         {/* Filters */}
-        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 30 }}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ gap: 12, paddingRight: 20 }}
+          style={{ marginBottom: 30, flexGrow: 0 }}
+        >
           {['Todas', 'Pendiente', 'Enviado', 'Entregado'].map((tab) => (
             <TouchableOpacity 
               key={tab}
@@ -169,7 +188,7 @@ export default function OrdersScreen() {
               <Text style={{ fontSize: 14, fontWeight: '800', color: filter === tab ? '#FFFFFF' : '#6B7280' }}>{tab}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         {/* Orders List */}
         {loading ? (
@@ -185,18 +204,34 @@ export default function OrdersScreen() {
           <View style={{ gap: 20 }}>
             {paginatedOrders.map((order) => (
             <View key={order.id} style={{ backgroundColor: '#FFFFFF', borderRadius: 32, padding: 32, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 20 }}>
-              <View style={{ flexDirection: isDesktop ? 'row' : 'column', justifyContent: 'space-between', alignItems: isDesktop ? 'center' : 'flex-start', gap: 20 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827' }}>#{order.id}</Text>
-                  <View style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#9CA3AF' }} />
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#6B7280' }}>{order.status}</Text>
+              <View style={{ 
+                flexDirection: isDesktop ? 'row' : 'column', 
+                justifyContent: 'space-between', 
+                alignItems: isDesktop ? 'center' : 'flex-start', 
+                gap: 16 
+              }}>
+                <View style={{ width: isDesktop ? 'auto' : '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>#{order.id.substring(0, 12)}...</Text>
+                  <View style={{ 
+                    backgroundColor: order.status === 'Entregado' ? '#F0FDF4' : order.status === 'Enviado' ? '#EFF6FF' : '#FFFBEB', 
+                    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, 
+                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                    borderWidth: 1, borderColor: order.status === 'Entregado' ? '#DCFCE7' : order.status === 'Enviado' ? '#DBEAFE' : '#FEF3C7'
+                  }}>
+                    <View style={{ 
+                      width: 6, height: 6, borderRadius: 3, 
+                      backgroundColor: order.status === 'Entregado' ? '#10B981' : order.status === 'Enviado' ? '#3B82F6' : '#D97706' 
+                    }} />
+                    <Text style={{ 
+                      fontSize: 11, fontWeight: '900', 
+                      color: order.status === 'Entregado' ? '#10B981' : order.status === 'Enviado' ? '#3B82F6' : '#D97706' 
+                    }}>{order.status.toUpperCase()}</Text>
                   </View>
                 </View>
 
-                <View style={{ alignItems: isDesktop ? 'flex-end' : 'flex-start' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString("de-DE")} CLP</Text>
-                  <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '600', marginTop: 4 }}>{order.date}</Text>
+                <View style={{ alignItems: isDesktop ? 'flex-end' : 'flex-start', width: isDesktop ? 'auto' : '100%', flexDirection: isDesktop ? 'column' : 'row', justifyContent: isDesktop ? 'center' : 'space-between' }}>
+                  <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827' }}>${order.total.toLocaleString("de-DE")} CLP</Text>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: isDesktop ? 4 : 0 }}>{order.date}</Text>
                 </View>
               </View>
 

@@ -56,6 +56,7 @@ export default function Login() {
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [registeredUid, setRegisteredUid] = useState<string | null>(null);
+  const [pushEnabled, setPushEnabled] = useState(true);
 
   const handleRegister = async () => {
 
@@ -109,11 +110,13 @@ export default function Login() {
         await addDoc(collection(db, 'Direcciones'), addressData);
       }
 
-      // Registrar para notificaciones Push
-      try {
-        await registerForPushNotificationsAsync(uid);
-      } catch (pushErr) {
-        console.log('Error registering push:', pushErr);
+      // Registrar para notificaciones Push solo si el usuario aceptó
+      if (pushEnabled) {
+        try {
+          await registerForPushNotificationsAsync(uid);
+        } catch (pushErr) {
+          console.log('Error registering push:', pushErr);
+        }
       }
 
       router.replace('/');
@@ -494,6 +497,39 @@ export default function Login() {
                     <Text style={{ flex: 1, fontSize: 16, fontWeight: '600', color: selectedLocation.main ? '#63348C' : '#9CA3AF' }}>
                       {selectedLocation.main || "Ubicación o dirección de entrega"}
                     </Text>
+                  </TouchableOpacity>
+
+                  {/* Push Notifications Toggle */}
+                  <TouchableOpacity 
+                    onPress={() => setPushEnabled(!pushEnabled)}
+                    style={{ 
+                      width: '100%', 
+                      backgroundColor: '#F9FAFB', 
+                      borderRadius: 16, 
+                      borderWidth: 2, 
+                      borderColor: pushEnabled ? '#63348C' : '#F3F4F6', 
+                      paddingHorizontal: 20, 
+                      height: 64, 
+                      flexDirection: 'row', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/1156/1156949.png' }} style={{ width: 24, height: 24, tintColor: pushEnabled ? '#63348C' : '#9CA3AF' }} />
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: pushEnabled ? '#63348C' : '#9CA3AF' }}>Recibir notificaciones Push</Text>
+                    </View>
+                    <View style={{ 
+                      width: 44, 
+                      height: 24, 
+                      borderRadius: 12, 
+                      backgroundColor: pushEnabled ? '#10B981' : '#D1D5DB', 
+                      padding: 2,
+                      justifyContent: 'center',
+                      alignItems: pushEnabled ? 'flex-end' : 'flex-start'
+                    }}>
+                      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: 'white' }} />
+                    </View>
                   </TouchableOpacity>
                 </View>
               )}

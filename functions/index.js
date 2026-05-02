@@ -76,7 +76,7 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
           <p style="color: rgba(255,255,255,0.8); margin-top: 10px;">${order.isServiceBooking ? 'Cita' : 'Pedido'} #${orderId.slice(-6).toUpperCase()}</p>
         </div>
         <div style="padding: 30px;">
-          <p style="font-size: 16px; color: #374151;">${isOwner ? `Hola Administrador, has recibido un nuevo pedido de <b>${clientName}</b> (${clientEmail}).` : `Hola <b>${clientName}</b>, tu pedido en <b>Saku Tienda</b> ha sido procesado con éxito.`}</p>
+          <p style="font-size: 16px; color: #374151;">${isOwner ? `Hola Administrador, has recibido un nuevo pedido de <b>${clientName}</b> (${clientEmail}).` : `Hola <b>${clientName}</b>, tu pedido en <b>Tienda Saku</b> ha sido procesado con éxito.`}</p>
           
           <table style="width: 100%; border-collapse: collapse; margin: 25px 0;">
             ${itemsHtml}
@@ -117,7 +117,7 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
           </div>
         </div>
         <div style="background-color: #F3F4F6; padding: 20px; text-align: center; font-size: 12px; color: #9CA3AF;">
-          Saku Tienda Chile © 2026 | Desarrollado con ❤️ por Saku Team
+          Tienda Saku Chile © 2026 | Desarrollado con ❤️ por Saku Team
         </div>
       </div>
     `;
@@ -128,7 +128,7 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
       : `🚨 Nueva Venta Recibida #${orderId.slice(-6).toUpperCase()} - $${(order.total || 0).toLocaleString()}`;
 
     await transporter.sendMail({
-      from: '"Saku Tienda" <sakudeveloperchile@gmail.com>',
+      from: '"Tienda Saku" <sakudeveloperchile@gmail.com>',
       to: OWNER_EMAIL,
       subject: subjectOwner,
       html: emailTemplate(true)
@@ -141,7 +141,7 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
 
     if (clientEmail && clientEmail !== "vendedor") {
       await transporter.sendMail({
-        from: '"Saku Tienda" <sakudeveloperchile@gmail.com>',
+        from: '"Tienda Saku" <sakudeveloperchile@gmail.com>',
         to: clientEmail,
         subject: subjectClient,
         html: emailTemplate(false)
@@ -152,38 +152,78 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
 
     // 4. Enviar Notificaciones Push a los Admins
     try {
-      const adminsSnap = await admin.firestore().collection("users").where("IsAdmin", "==", true).get();
-      const tokens = [];
+      // Buscar admins (soportando booleano true y string "true")
+      const adminsSnap = await admin.firestore().collection("users").get();
+      const admins = adminsSnap.docs.filter(doc => {
+        const data = doc.data();
+        return data.IsAdmin === true || data.IsAdmin === 'true';
+      });
 
-      for (const adminDoc of adminsSnap.docs) {
-        const fcmSnap = await admin.firestore().collection("users").doc(adminDoc.id).collection("fcm_tokens").get();
+      const tokens = [];
+      console.log(`[ORDEN] Se encontraron ${admins.length} administradores potenciales.`);
+
+      for (const adminDoc of admins) {
+        const adminId = adminDoc.id;
+        const fcmSnap = await admin.firestore().collection("users").doc(adminId).collection("fcm_tokens").get();
+        
+        if (fcmSnap.empty) {
+          console.log(`[ORDEN] Admin ${adminId} no tiene tokens registrados.`);
+          continue;
+        }
+
+        console.log(`[ORDEN] Admin ${adminId} tiene ${fcmSnap.size} tokens.`);
         fcmSnap.forEach(tDoc => {
-          if (tDoc.data().fcm_token) tokens.push(tDoc.data().fcm_token);
+          const tData = tDoc.data();
+          const token = tData.fcm_token || tData.fcmToken || tData.pushToken;
+          if (token) tokens.push(token);
         });
       }
 
       if (tokens.length > 0) {
-        const message = {
-          notification: {
-            title: order.isServiceBooking ? '🔔 Nueva Reserva de Servicio' : '📦 Nuevo Pedido Recibido',
-            body: order.isServiceBooking 
-              ? `${clientName} reservó ${order.items[0]?.nombre || 'un servicio'} para el ${order.horaReserva}.`
-              : `${clientName} realizó un pedido por $${(order.total || 0).toLocaleString()}.`
+        // Eliminar duplicados
+        const uniqueTokens = [...new Set(tokens)];
+        
+          const message = {
+            notification: {
+              title: order.isServiceBooking ? '🔔 Nueva Reserva de Servicio' : '📦 Nuevo Pedido Recibido',
+              body: order.isServiceBooking 
+                ? `${clientName} reservó ${order.items[0]?.nombre || 'un servicio'} para el ${order.horaReserva}.`
+                : `${clientName} realizó un pedido por $${(order.total || 0).toLocaleString()}.`,
+              imageUrl: (order.items && order.items[0] && order.items[0].foto) 
+                         ? order.items[0].foto 
+                         : 'https://firebasestorage.googleapis.com/v0/b/sakuchile.appspot.com/o/logo_saku.png?alt=media' // Fallback
+            },
+          android: {
+            notification: {
+              icon: 'notification_icon',
+              color: '#63348C',
+              channelId: 'default',
+              priority: 'high',
+            }
           },
           data: {
             orderId: orderId,
-            type: order.isServiceBooking ? 'service' : 'product'
+            type: order.isServiceBooking ? 'service' : 'product',
+            click_action: 'FLUTTER_NOTIFICATION_CLICK' // Para compatibilidad
           },
-          tokens: tokens,
+          tokens: uniqueTokens,
         };
 
         const response = await admin.messaging().sendEachForMulticast(message);
-        console.log(`Notificaciones push enviadas: ${response.successCount} exitosas, ${response.failureCount} fallidas.`);
+        console.log(`[ORDEN] Notificaciones push procesadas: ${response.successCount} exitosas, ${response.failureCount} fallidas.`);
+        
+        if (response.failureCount > 0) {
+          response.responses.forEach((res, idx) => {
+            if (!res.success) {
+              console.error(`[ORDEN] Fallo al enviar a token ${uniqueTokens[idx].slice(0, 10)}... : ${res.error.message}`);
+            }
+          });
+        }
       } else {
-        console.log("No se encontraron tokens de push para los administradores.");
+        console.log("[ORDEN] No se encontraron tokens de push válidos.");
       }
     } catch (pushErr) {
-      console.error("Error al enviar notificaciones push:", pushErr);
+      console.error("[ORDEN] Error crítico al enviar notificaciones push:", pushErr);
     }
 
   } catch (error) {
@@ -225,7 +265,7 @@ exports.processPayment = onCall({ cors: true }, async (request) => {
             last_name: data.payer.last_name || 'Saku',
           }
         },
-        statement_descriptor: 'SAKU TIENDA',
+        statement_descriptor: 'TIENDA SAKU',
         external_reference: data.external_reference || `SAKU-PAY-${Date.now()}`
       }
     };
@@ -389,5 +429,82 @@ exports.onNewsletterCampaignCreated = onDocumentCreated({
     console.log(`Campaña #${campaignId} completada. Enviada a ${emails.length} suscriptores.`);
   } catch (error) {
     console.error("Error crítico en el envío masivo:", error);
+  }
+});
+
+/**
+ * Trigger: Enviar notificaciones push manuales desde el panel administrativo.
+ */
+exports.onPushNotificationCreated = onDocumentCreated("ff_user_push_notifications/{id}", async (event) => {
+  const data = event.data.data();
+  const id = event.params.id;
+
+  if (data.status !== 'pending') return;
+
+  console.log(`Procesando notificación push manual: ${id}`);
+
+  try {
+    const userRefs = data.user_refs; // Puede ser Array de Referencias o String
+    let tokens = [];
+
+    // 1. Obtener los IDs de usuario
+    let userIds = [];
+    if (Array.isArray(userRefs)) {
+      userIds = userRefs.map(ref => ref.id || ref.split('/').pop());
+    } else if (typeof userRefs === 'string') {
+      userIds = userRefs.split(',').map(path => path.trim().split('/').pop());
+    }
+
+    // 2. Recolectar tokens de todos esos usuarios
+    for (const uId of userIds) {
+      console.log(`Buscando tokens para usuario: ${uId}`);
+      const fcmSnap = await admin.firestore().collection("users").doc(uId).collection("fcm_tokens").get();
+      console.log(`Usuario ${uId} tiene ${fcmSnap.size} tokens.`);
+      fcmSnap.forEach(tDoc => {
+        const token = tDoc.data().fcm_token || tDoc.data().fcmToken || tDoc.data().pushToken;
+        if (token) tokens.push(token);
+      });
+    }
+
+    if (tokens.length > 0) {
+      const message = {
+        notification: {
+          title: data.notification_title || 'Tienda Saku',
+          body: data.notification_text || '',
+        },
+        android: {
+          notification: {
+            icon: 'notification_icon',
+            color: '#63348C',
+            channelId: 'default',
+          }
+        },
+        data: JSON.parse(data.parameter_data || '{}'),
+        tokens: tokens,
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(`Resultado envío manual: ${response.successCount} éxitos, ${response.failureCount} fallos.`);
+      
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          console.error(`Fallo en token ${tokens[idx]}:`, resp.error);
+        } else {
+          console.log(`Éxito en token ${tokens[idx]}`);
+        }
+      });
+      await event.data.ref.update({
+        status: 'completed',
+        num_sent: response.successCount,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      console.log("No se encontraron tokens para los usuarios seleccionados.");
+      await event.data.ref.update({ status: 'no_tokens_found' });
+    }
+
+  } catch (error) {
+    console.error("Error crítico enviando push manual:", error);
+    await event.data.ref.update({ status: 'failed', error: error.message });
   }
 });

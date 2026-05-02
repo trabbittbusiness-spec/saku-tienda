@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Image } from 'react-native';
+import { Image, Platform } from 'react-native';
 
 interface Product {
   id: string;
@@ -51,8 +51,10 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
         const data = doc.data();
         const imageUrl = data.foto1 || 'https://via.placeholder.com/500';
         
-        // Prefetch images for smoother experience
-        Image.prefetch(imageUrl);
+        // Prefetch images for smoother experience ONLY ON WEB to prevent mobile freezing
+        if (Platform.OS === 'web') {
+          Image.prefetch(imageUrl);
+        }
 
         return {
           id: data.ID_productos || doc.id,
@@ -77,8 +79,8 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     // 2. Escuchar Publicidad (Banners)
     const unsubBanners = onSnapshot(collection(db, 'publicidad'), (snapshot) => {
       const allBanners = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Banner[];
-      setMobileBanners(allBanners.filter(b => b.type === 'mobile'));
-      setDesktopBanners(allBanners.filter(b => b.type === 'desktop'));
+      setMobileBanners(allBanners.filter(b => (b.type || b.tipo) === 'mobile'));
+      setDesktopBanners(allBanners.filter(b => (b.type || b.tipo) === 'desktop'));
     });
 
     // 3. Escuchar Portadas (Banners Grid)
@@ -98,15 +100,17 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     // onSnapshot already handles updates, but we can add a manual trigger if needed
   };
 
+  const value = React.useMemo(() => ({
+    products,
+    loadingProducts,
+    mobileBanners,
+    desktopBanners,
+    portadasData,
+    refreshData
+  }), [products, loadingProducts, mobileBanners, desktopBanners, portadasData]);
+
   return (
-    <ProductsContext.Provider value={{ 
-      products, 
-      loadingProducts, 
-      mobileBanners, 
-      desktopBanners, 
-      portadasData,
-      refreshData 
-    }}>
+    <ProductsContext.Provider value={value}>
       {children}
     </ProductsContext.Provider>
   );

@@ -6,7 +6,7 @@ interface LoadingScreenProps {
   message?: string;
 }
 
-export default function LoadingScreen({ message = 'Conectando con Saku Vet...' }: LoadingScreenProps) {
+export default function LoadingScreen({ message = 'Conectando con Tienda Saku...' }: LoadingScreenProps) {
   const { width } = useWindowDimensions();
   const pulseValue = useRef(new Animated.Value(1)).current;
   const lineTranslate = useRef(new Animated.Value(-100)).current;
@@ -104,7 +104,7 @@ export default function LoadingScreen({ message = 'Conectando con Saku Vet...' }
 
         {/* Brand Text */}
         <View style={styles.textWrapper}>
-          <Text style={styles.brand}>SAKU<Text style={{color: '#63348C'}}>VET</Text></Text>
+          <Text style={styles.brand}>Tienda <Text style={{color: '#63348C'}}>Saku</Text></Text>
           <Animated.Text style={[styles.status, { opacity: opacityValue }]}>
             {message}
           </Animated.Text>

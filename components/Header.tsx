@@ -231,7 +231,18 @@ const Header = React.memo(function Header() {
                         <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginLeft: 8 }}>{getRelativeTime(notif.creadaEn)}</Text>
                       </View>
                       <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>{notif.mensaje}</Text>
-                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: st.iconColor, marginTop: 6 }} />
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: st.iconColor }} />
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: st.iconColor }}>Nueva</Text>
+                        </View>
+                        <TouchableOpacity 
+                          onPress={(e) => { e.stopPropagation(); markAsRead(notif); }}
+                          style={{ backgroundColor: 'rgba(99, 52, 140, 0.05)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}
+                        >
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#63348C' }}>Marcar como leída</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </TouchableOpacity>
                 );
@@ -322,22 +333,13 @@ const Header = React.memo(function Header() {
           onPress={() => router.push('/')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}
         >
-          <View style={{
-            backgroundColor: '#63348C',
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            <Image 
+          <Image 
               source={require('../assets/images/logo_saku_cl.png')} 
-              style={{ width: 32, height: 32 }} 
+              style={{ width: 44, height: 44 }} 
               resizeMode="contain" 
             />
-          </View>
           <Text style={{ fontSize: 24, fontWeight: '900', color: '#1A1A2E', letterSpacing: -1 }}>
-            SAKU<Text style={{ color: '#63348C' }}>.</Text>
+            Tienda Saku<Text style={{ color: '#63348C' }}>.</Text>
           </Text>
         </TouchableOpacity>
 
@@ -993,80 +995,63 @@ const Header = React.memo(function Header() {
   return (
     <>
     <LinearGradient
-      colors={['#FB923C', '#F47321']} // Bright Orange to Saku Orange
+      colors={['#63348C', '#4A236E']} // Deep Purple to Darker Purple
       style={{
-        paddingTop: insets.top + 16,
-        paddingBottom: 180,
-        paddingHorizontal: 15,
+        paddingTop: insets.top + 10,
+        paddingBottom: 120,
+        paddingHorizontal: 20,
+        borderBottomLeftRadius: 36,
+        borderBottomRightRadius: 36,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ flex: 1, marginRight: 15 }}>
-          <Text
-            style={{
-              color: 'rgba(255,255,255,0.9)',
-              fontSize: 10,
-              fontWeight: '800',
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-            }}
-          >
-            ENTREGAR A
-          </Text>
-          <TouchableOpacity 
-            onPress={() => {
-              if (!user) {
-                setShowAuthModal(true);
-                return;
-              }
-              setIsAddressPickerOpen(!isAddressPickerOpen);
-            }}
-            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}
-          >
-            <MapPin size={16} color="white" strokeWidth={2.5} />
-            <Text numberOfLines={1} style={{ color: 'white', fontWeight: '900', fontSize: 17, marginLeft: 6, marginRight: 4, flexShrink: 1 }}>
-              {selectedLocation.main || 'Agregar ubicación'}
-            </Text>
-            <ChevronDown size={18} color="white" strokeWidth={2.5} />
-          </TouchableOpacity>
+      {/* Top Row: Brand & Notifications */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Image source={require('../assets/images/logo_saku_cl.png')} style={{ width: 36, height: 36 }} resizeMode="contain" />
+          <Text style={{ fontSize: 22, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1 }}>Tienda Saku<Text style={{ color: '#FFD700' }}>.</Text></Text>
         </View>
 
-        <View style={{ position: 'relative' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <TouchableOpacity
             onPress={() => setIsNotificationsOpen(true)}
             style={{
-              backgroundColor: 'rgba(255,255,255,0.25)',
+              backgroundColor: 'rgba(255,255,255,0.15)',
               width: 44,
               height: 44,
-              borderRadius: 16,
+              borderRadius: 14,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
             <Bell size={22} color="white" strokeWidth={2} />
+            {unreadCount > 0 && (
+              <View style={{ position: 'absolute', top: -2, right: -2, backgroundColor: '#EF4444', borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#63348C' }}>
+                <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
-          {/* Notification Badge */}
-          {unreadCount > 0 && (
-            <View
-              style={{
-                position: 'absolute',
-                top: -4,
-                right: -4,
-                backgroundColor: '#FF3B30',
-                borderRadius: 11,
-                minWidth: 22,
-                height: 22,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 2,
-                borderColor: '#F47321',
-              }}
-            >
-              <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>{unreadCount}</Text>
-            </View>
-          )}
         </View>
       </View>
+
+      {/* Second Row: Delivery Location */}
+      <View style={{ marginBottom: 20 }}>
+        <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 }}>Entregar en:</Text>
+        <TouchableOpacity 
+          onPress={() => {
+            if (!user) { setShowAuthModal(true); return; }
+            setIsAddressPickerOpen(!isAddressPickerOpen);
+          }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+        >
+          <MapPin size={16} color="#FFD700" strokeWidth={2.5} />
+          <Text numberOfLines={1} style={{ color: 'white', fontWeight: '900', fontSize: 16, flexShrink: 1 }}>
+            {selectedLocation.main || 'Configurar ubicación'}
+          </Text>
+          <ChevronDown size={16} color="white" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </View>
+
+    </LinearGradient>
 
       {/* MOBILE ADDRESS PICKER DROPDOWN */}
       {isAddressPickerOpen && (
@@ -1129,7 +1114,6 @@ const Header = React.memo(function Header() {
           </Pressable>
         </Modal>
       )}
-    </LinearGradient>
 
     {/* MAP ADDRESS MODAL (UNIVERSAL) */}
     <LocationMapModal

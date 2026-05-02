@@ -1,70 +1,122 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getMessaging, getToken } from 'firebase/messaging';
+
+// Configure how notifications should be handled when the app is foregrounded
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 export async function registerForPushNotificationsAsync(userId: string) {
-  let token;
-
-  try {
-    if (Platform.OS === 'web') {
-      const messaging = getMessaging();
-      // For web, you might need a VAPID key.
-      token = await getToken(messaging, {
-        vapidKey: 'BIsS8-t_ZJ8r49_z5hH9z_GZ5H9z_GZ5H9z_GZ5H9z_GZ5H9z_GZ5H9z_GZ5H9z_GZ5H9z_GZ5H9z_GZ5H9' // Replace with actual VAPID key if needed
-      });
-    } else {
-      if (Device.isDevice) {
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-        if (existingStatus !== 'granted') {
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
-        if (finalStatus !== 'granted') {
-          console.log('Failed to get push token for push notification!');
-          return;
-        }
-        // In Expo, getDevicePushTokenAsync gives the native FCM/APNs token
-        const tokenData = await Notifications.getDevicePushTokenAsync();
-        token = tokenData.data;
-      } else {
-        console.log('Must use physical device for Push Notifications');
-      }
-    }
-
-    if (token) {
-      console.log('FCM Token obtained:', token);
-      await saveTokenToFirestore(userId, token);
-    }
-  } catch (error) {
-    console.error('Error in registerForPushNotificationsAsync:', error);
+  if (!userId) {
+    console.warn('Cannot register for push notifications: No userId provided');
+    return null;
   }
 
-  return token;
-}
+  if (Platform.OS === 'android' && Constants.appOwnership === 'expo') {
+    console.warn('Push Notifications not supported in Expo Go Android.');
+    return null;
+  }
 
-async function saveTokenToFirestore(userId: string, token: string) {
+  console.log(`Starting push notification registration for user: ${userId}`);
+
   try {
-    const tokensRef = collection(db, 'users', userId, 'fcm_tokens');
-    const q = query(tokensRef, where('fcm_token', '==', token));
-    const querySnapshot = await getDocs(q);
+    let deviceToken;
+    let expoToken;
 
-    if (querySnapshot.empty) {
-      console.log('Saving new FCM token to Firestore...');
-      await addDoc(tokensRef, {
-        fcm_token: token,
-        device_type: Platform.OS === 'web' ? 'Web' : (Platform.OS === 'ios' ? 'iOS' : 'Android'),
-        app: 'tienda',
-        created_at: serverTimestamp(),
-        device_name: Device.modelName || 'Unknown Device'
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
       });
-    } else {
-      console.log('FCM token already exists in Firestore');
     }
+
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        console.warn('Permission for push notifications not granted.');
+        return null;
+      }
+
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId || "a57684e9-cbfa-45dc-8991-74193b1b62a7";
+      
+      // Attempt to get both tokens for maximum reliability
+      try {
+        deviceToken = (await Notifications.getDevicePushTokenAsync()).data;
+        console.log('Device token obtained:', deviceToken);
+      } catch (e) {
+        console.warn('Failed to get device token:', e);
+      }
+
+      try {
+        expoToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+        console.log('Expo token obtained:', expoToken);
+      } catch (e) {
+        console.warn('Failed to get Expo token:', e);
+      }
+    } else {
+      console.warn('Must use physical device for push notifications');
+      return null;
+    }
+
+    const primaryToken = deviceToken || expoToken;
+
+    if (primaryToken) {
+      console.log('--- STARTING FIRESTORE UPDATE ---');
+      try {
+        const tokenData = {
+          fcm_token: deviceToken || null,
+          expo_token: expoToken || null,
+          fcmToken: deviceToken || null, // Compatibility
+          pushToken: expoToken || null, // Compatibility
+          device_type: Platform.OS === 'ios' ? 'iOS' : 'Android',
+          updated_at: serverTimestamp(),
+        };
+
+        // 1. Save to subcollection (using deviceToken as ID if possible, else expoToken)
+        const tokenId = deviceToken || expoToken.replace(/[^a-zA-Z0-9]/g, '_');
+        const subRef = collection(db, 'users', userId, 'fcm_tokens');
+        const tokenDocRef = doc(subRef, tokenId);
+        await setDoc(tokenDocRef, tokenData, { merge: true });
+        console.log('Subcollection updated.');
+
+        // 2. Update main user doc
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          fcm_token: deviceToken || null,
+          expo_token: expoToken || null,
+          fcmToken: deviceToken || null,
+          pushToken: expoToken || null,
+          last_token_update: serverTimestamp(),
+          device_platform: Platform.OS
+        });
+        console.log('Main user doc updated.');
+
+      } catch (err) {
+        console.error('CRITICAL ERROR in Firestore update:', err);
+      }
+      console.log('--- ENDING FIRESTORE UPDATE ---');
+    }
+
+    return primaryToken;
   } catch (error) {
-    console.error('Error saving token to Firestore:', error);
+    console.error('Push Notifications registration failed:', error);
+    return null;
   }
 }
