@@ -56,10 +56,12 @@ const ProfileScreen = React.memo(function ProfileScreen() {
 
   const handleLogout = async () => {
     try {
+      console.log('Logging out...');
       await auth.signOut();
-      router.replace('/');
+      router.replace('/login');
     } catch (error) {
       console.error('Error logging out:', error);
+      Alert.alert('Error', 'No se pudo cerrar la sesión');
     }
   };
 

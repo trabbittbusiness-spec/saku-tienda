@@ -58,6 +58,8 @@ export async function registerForPushNotificationsAsync(userId: string) {
       }
       
       if (finalStatus !== 'granted') {
+        const { Alert } = require('react-native');
+        // Alert.alert('Aviso', 'Por favor activa las notificaciones en los ajustes de tu iPhone.');
         console.warn('Permission for push notifications not granted.');
         return null;
       }
