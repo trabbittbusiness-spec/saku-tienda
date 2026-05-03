@@ -14,8 +14,7 @@ import {
   Pressable,
   ActivityIndicator,
   Platform,
-  Linking,
-  InteractionManager
+  Linking
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';

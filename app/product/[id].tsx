@@ -27,6 +27,14 @@ export default function ProductDetailsScreen() {
   const scrollRef = React.useRef<any>(null);
   const [scrollX, setScrollX] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -193,26 +201,37 @@ export default function ProductDetailsScreen() {
   
   const handleShare = async () => {
     if (!product) return;
-    // Solo el URL limpio, sin texto extra
     const shareUrl = `https://saku-tienda.web.app/product/${id}`;
+    const shareText = `¡Mira este producto en Tienda Saku: ${product.name}!`;
 
     try {
       if (Platform.OS === 'web') {
-        // En web siempre copiar SOLO el URL al portapapeles para evitar
-        // que el texto descriptivo se mezcle con el link al pegar
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Tienda Saku',
+              text: shareText,
+              url: shareUrl
+            });
+            return; // Si funcionó, terminamos aquí
+          } catch (e) {
+            console.log('User cancelled share or not supported via navigator');
+          }
+        }
+        
+        // Fallback si navigator.share falla o no está disponible en PC
         try {
           await navigator.clipboard.writeText(shareUrl);
         } catch {
-          // Fallback si clipboard no está disponible
           const { setStringAsync } = await import('expo-clipboard');
           await setStringAsync(shareUrl);
         }
-        Alert.alert('✓ Enlace copiado', `El link ha sido copiado:\n${shareUrl}`);
+        showToast('Enlace copiado');
       } else {
         // En móvil nativo usar el share sheet del sistema
         await Share.share({
-          message: `¡Mira este producto en Tienda Saku: ${product.name}!\n${shareUrl}`,
-          url: shareUrl, // iOS usa este campo para el link
+          message: Platform.OS === 'ios' ? shareText : `${shareText}\n${shareUrl}`,
+          url: shareUrl, // iOS usa este campo para que abra correctamente el link universal
           title: 'Tienda Saku'
         });
       }
@@ -966,6 +985,11 @@ export default function ProductDetailsScreen() {
           isVisible={showAuthModal} 
           onClose={() => setShowAuthModal(false)} 
         />
+        {toastMessage && (
+          <View style={{ position: 'absolute', bottom: 120, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 30, zIndex: 10000 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800' }}>{toastMessage}</Text>
+          </View>
+        )}
       </View>
     );
 }

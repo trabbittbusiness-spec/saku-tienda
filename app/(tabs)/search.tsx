@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, useWindowDimensions, ActivityIndicator, Modal, FlatList, InteractionManager } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, useWindowDimensions, ActivityIndicator, Modal, FlatList } from 'react-native';
 import { Search, Heart, ShoppingBag, ShoppingCart, ArrowUpDown, Check, X, ChevronDown, ChevronUp, Filter, ChevronLeft, ArrowUp } from 'lucide-react-native';
 import Header from '../../components/Header';
 import AuthModal from '../../components/AuthModal';
@@ -64,17 +64,15 @@ const FilterAccordion = ({ title, options, selected, onToggle, isExpanded, onTog
   )
 };
 
-const SearchProductCardBody = React.memo(({ prod, isDesktop, isFavorite, toggleFavorite, addToCart, setShowAuthModal, cart }: any) => {
+const SearchProductCardBody = React.memo(({ prod, isDesktop, isFavorite, toggleFavorite, addToCart, setShowAuthModal, cartQty }: any) => {
   const [selectedVarIndex, setSelectedVarIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const router = useRouter();
+  
   const currentVariant = prod.variants && prod.variants.length > 0 ? prod.variants[selectedVarIndex] : null;
   const displayPrice = currentVariant 
     ? 'CLP $' + Math.round(currentVariant.price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
     : prod.price;
-
-  const cartQty = cart
-    .filter((item: any) => String(item.ID_productos) === String(prod.id))
-    .reduce((acc: number, item: any) => acc + (item.cantidad || 0), 0);
 
   return (
     <>
@@ -186,6 +184,50 @@ const SearchProductCardBody = React.memo(({ prod, isDesktop, isFavorite, toggleF
   );
 });
 
+const SearchInput = React.memo(({ value, onChange, isFocused, onFocus, onBlur }: any) => {
+  const [localValue, setLocalValue] = useState(value);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (value !== localValue) {
+      setLocalValue(value);
+    }
+  }, [value]);
+
+  const handleChangeText = (text: string) => {
+    setLocalValue(text);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onChange(text);
+    }, 400);
+  };
+
+  const handleClear = () => {
+    setLocalValue('');
+    onChange('');
+  };
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 16, paddingHorizontal: 15, height: 54, borderWidth: 1, borderColor: isFocused ? '#10B981' : 'transparent' }}>
+      <Search size={20} color={isFocused ? '#10B981' : '#9CA3AF'} />
+      <TextInput 
+        placeholder="Buscar productos, marcas..." 
+        style={{ flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '600', outlineStyle: 'none' } as any}
+        placeholderTextColor="#9CA3AF"
+        value={localValue}
+        onChangeText={handleChangeText}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />
+      {localValue.length > 0 && (
+        <TouchableOpacity onPress={handleClear} style={{ padding: 4 }}>
+          <X size={16} color="#9CA3AF" />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+});
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SearchScreen = React.memo(function SearchScreen() {
@@ -227,30 +269,44 @@ const SearchScreen = React.memo(function SearchScreen() {
     setter((prev: string[]) => prev.includes(val) ? prev.filter((x: string) => x !== val) : [...prev, val]);
   };
   
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOrder, setSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Defer heavy rendering — show shell first, load content after paint
+  const [isReady, setIsReady] = useState(false);
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setSearchQuery(localSearchQuery);
-    }, 400); // Debounce de 400ms para evitar congelamientos
-    return () => clearTimeout(handler);
-  }, [localSearchQuery]);
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 80);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const availableAnimals = React.useMemo(() => Array.from(new Set((products || []).map(p => p.animal).filter(Boolean))), [products]);
-  const availableMarcas = React.useMemo(() => Array.from(new Set((products || []).map(p => p.marca).filter(Boolean))), [products]);
-  const availableCategorias = React.useMemo(() => Array.from(new Set((products || []).map(p => p.categoriaReal).filter(Boolean))), [products]);
-  const baseTipos = React.useMemo(() => Array.from(new Set((products || []).map(p => p.tipo).filter(Boolean))), [products]);
+  const cartMap = React.useMemo(() => {
+    if (!isReady) return {};
+    const map: Record<string, number> = {};
+    (cart || []).forEach((item: any) => {
+      const id = String(item.ID_productos);
+      map[id] = (map[id] || 0) + (item.cantidad || 0);
+    });
+    return map;
+  }, [cart, isReady]);
+
+  /* Debounce handled in SearchInput */
+
+  const availableAnimals = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.animal).filter(Boolean))), [products, isReady]);
+  const availableMarcas = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.marca).filter(Boolean))), [products, isReady]);
+  const availableCategorias = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.categoriaReal).filter(Boolean))), [products, isReady]);
+  const baseTipos = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.tipo).filter(Boolean))), [products, isReady]);
   const availableTipos = React.useMemo(() => 
     selectedTipos.includes('Exoticos') && !baseTipos.includes('Exoticos') ? ['Exoticos', ...baseTipos] : baseTipos,
     [baseTipos, selectedTipos]
   );
 
   const filteredProducts = React.useMemo(() => {
+    if (!isReady) return [];
     return (products || []).filter(p => {
       if (!p) return false;
       const name = String(p.name || '');
@@ -281,22 +337,22 @@ const SearchScreen = React.memo(function SearchScreen() {
       if (sortOrder === 'desc') return priceB - priceA;
       return String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' });
     });
-  }, [products, searchQuery, selectedAnimals, selectedMarcas, selectedCategorias, selectedTipos, selectedPromo, sortOrder]);
+  }, [products, searchQuery, selectedAnimals, selectedMarcas, selectedCategorias, selectedTipos, selectedPromo, sortOrder, isReady]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(8);
   const PRODUCTS_PER_PAGE = 20;
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
   const paginatedProducts = filteredProducts.slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE);
 
   useEffect(() => {
     setCurrentPage(1);
-    setMobileVisibleCount(20);
+    setMobileVisibleCount(8);
   }, [searchQuery, selectedAnimals, selectedMarcas, selectedCategorias, selectedTipos, selectedPromo, sortOrder]);
 
   const handleLoadMoreMobile = () => {
     if (mobileVisibleCount < filteredProducts.length) {
-      setMobileVisibleCount(prev => prev + 20);
+      setMobileVisibleCount(prev => prev + 8);
     }
   };
 
@@ -341,6 +397,65 @@ const SearchScreen = React.memo(function SearchScreen() {
 
   // MOBILE VIEW
   if (!isDesktop) {
+    // Show lightweight shell immediately, defer heavy product grid
+    if (!isReady) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          <View style={{ 
+            paddingTop: insets.top,
+            backgroundColor: '#FFFFFF',
+            borderBottomWidth: 1,
+            borderBottomColor: '#F3F4F6',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            elevation: 3,
+            zIndex: 100
+          }}>
+            <View style={{ 
+              height: 64,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 15
+            }}>
+              <TouchableOpacity 
+                onPress={() => router.push('/')}
+                style={{ 
+                  position: 'absolute', 
+                  left: 15, 
+                  width: 44, 
+                  height: 44, 
+                  borderRadius: 22, 
+                  backgroundColor: '#F9FAFB', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: '#F3F4F6'
+                }}
+              >
+                <ChevronLeft size={24} color="#111827" strokeWidth={3} />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 19, fontWeight: '900', color: '#111827', letterSpacing: -0.5 }}>Buscar</Text>
+            </View>
+          </View>
+          {/* Search bar placeholder */}
+          <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 15 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 16, paddingHorizontal: 15, height: 54 }}>
+              <Search size={20} color="#9CA3AF" />
+              <Text style={{ marginLeft: 10, fontSize: 15, fontWeight: '600', color: '#9CA3AF' }}>Buscar productos, marcas...</Text>
+            </View>
+          </View>
+          {/* Loading indicator */}
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#63348C" />
+            <Text style={{ marginTop: 12, fontSize: 14, fontWeight: '600', color: '#9CA3AF' }}>Cargando productos...</Text>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         {/* Header Optimizado para Notch */}
@@ -402,23 +517,13 @@ const SearchScreen = React.memo(function SearchScreen() {
             <View>
               {/* Search Bar & Brand Filter */}
               <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 15, gap: 15 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 16, paddingHorizontal: 15, height: 54, borderWidth: 1, borderColor: isSearchFocused ? '#10B981' : 'transparent' }}>
-                  <Search size={20} color={isSearchFocused ? '#10B981' : '#9CA3AF'} />
-                  <TextInput 
-                    placeholder="Buscar productos, marcas..." 
-                    style={{ flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '600', outlineStyle: 'none' } as any}
-                    placeholderTextColor="#9CA3AF"
-                    value={localSearchQuery}
-                    onChangeText={setLocalSearchQuery}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                  />
-                  {localSearchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setLocalSearchQuery('')} style={{ padding: 4 }}>
-                      <X size={16} color="#9CA3AF" />
-                    </TouchableOpacity>
-                  )}
-                </View>
+                <SearchInput 
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  isFocused={isSearchFocused}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                />
 
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <TouchableOpacity 
@@ -588,7 +693,15 @@ const SearchScreen = React.memo(function SearchScreen() {
                 shadowRadius: 10, overflow: 'hidden', marginBottom: 15
               }}
             >
-              <SearchProductCardBody prod={prod} isDesktop={false} isFavorite={isFavorite(prod.id)} toggleFavorite={toggleFavorite} addToCart={addToCart} setShowAuthModal={setShowAuthModal} cart={cart} />
+              <SearchProductCardBody 
+                prod={prod} 
+                isDesktop={false} 
+                isFavorite={isFavorite(prod.id)} 
+                toggleFavorite={toggleFavorite} 
+                addToCart={addToCart} 
+                setShowAuthModal={setShowAuthModal} 
+                cartQty={cartMap[String(prod.id)] || 0} 
+              />
             </TouchableOpacity>
           )}
           ListFooterComponent={
@@ -596,6 +709,10 @@ const SearchScreen = React.memo(function SearchScreen() {
               <ActivityIndicator size="small" color="#10B981" style={{ marginVertical: 20 }} />
             ) : null
           }
+          maxToRenderPerBatch={4}
+          windowSize={5}
+          initialNumToRender={4}
+          updateCellsBatchingPeriod={100}
         />
 
         {/* Filter Modal */}
@@ -741,24 +858,15 @@ const SearchScreen = React.memo(function SearchScreen() {
             {/* Navegación y Tab Bar superior */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 20, marginBottom: 20 }}>
               
-              {/* Input Buscar productos... controlado anti-desbordamiento */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 30, paddingHorizontal: 16, paddingVertical: 12, flex: 1, maxWidth: 400, overflow: 'hidden', borderWidth: 1, borderColor: isSearchFocused ? '#10B981' : 'transparent' }}>
-                <Search size={18} color={isSearchFocused ? '#10B981' : '#9CA3AF'} />
-                <TextInput 
-                  placeholder="Buscar productos..." 
-                  style={{ flex: 1, marginLeft: 10, fontSize: 15, fontWeight: '500', minWidth: 0, outlineStyle: 'none' } as any}
-                  placeholderTextColor="#9CA3AF"
-                  numberOfLines={1}
-                  value={localSearchQuery}
-                  onChangeText={setLocalSearchQuery}
+              {/* Input Buscar productos... optimizado */}
+              <View style={{ flex: 1, maxWidth: 400 }}>
+                <SearchInput 
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  isFocused={isSearchFocused}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
                 />
-                {localSearchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setLocalSearchQuery('')} style={{ padding: 4 }}>
-                    <X size={16} color="#9CA3AF" />
-                  </TouchableOpacity>
-                )}
               </View>
 
               <View style={{ flex: 1 }} />
@@ -799,9 +907,18 @@ const SearchScreen = React.memo(function SearchScreen() {
                      shadowRadius: 15, position: 'relative'
                    }}
                  >
-                   <SearchProductCardBody prod={prod} isDesktop={true} isFavorite={isFavorite(prod.id)} toggleFavorite={toggleFavorite} addToCart={addToCart} setShowAuthModal={setShowAuthModal} cart={cart} />
+                   <SearchProductCardBody 
+                      prod={prod} 
+                      isDesktop={true} 
+                      isFavorite={isFavorite(prod.id)} 
+                      toggleFavorite={toggleFavorite} 
+                      addToCart={addToCart} 
+                      setShowAuthModal={setShowAuthModal} 
+                      cartQty={cartMap[String(prod.id)] || 0} 
+                    />
                  </TouchableOpacity>
-               )))}
+                 ))
+               )}
 
                {/* Paginación Escritorio */}
                {totalPages > 1 && (

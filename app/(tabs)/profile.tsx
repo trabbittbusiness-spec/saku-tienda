@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image, ActivityIndicator, InteractionManager } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -53,6 +53,15 @@ const ProfileScreen = React.memo(function ProfileScreen() {
       if (unsubUser) unsubUser();
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   if (!isDesktop) {
     return (
@@ -159,10 +168,13 @@ const ProfileScreen = React.memo(function ProfileScreen() {
 
           {/* Logout Button */}
           <View style={{ margin: 20, marginTop: 30 }}>
-            <TouchableOpacity style={{ 
-              backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 16,
-              borderWidth: 1, borderColor: '#FEE2E2'
-            }}>
+            <TouchableOpacity 
+              onPress={handleLogout}
+              style={{ 
+                backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 16,
+                borderWidth: 1, borderColor: '#FEE2E2'
+              }}
+            >
               <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center' }}>
                 <LogOut size={20} color="#EF4444" />
               </View>
@@ -262,7 +274,7 @@ const ProfileScreen = React.memo(function ProfileScreen() {
                 iconBg="#FEE2E2" 
                 title="Cerrar sesión" 
                 subtitle="Salir de tu cuenta de forma segura"
-                onPress={() => {}}
+                onPress={handleLogout}
                 isDesktop
                 isLast
               />

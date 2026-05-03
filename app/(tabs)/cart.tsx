@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image, Platform, ActivityIndicator, InteractionManager } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image, Platform, ActivityIndicator } from 'react-native';
 import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
@@ -21,7 +21,49 @@ const CartScreen = React.memo(function CartScreen() {
     }
   }, [isDesktop]);
 
+  const [isReady, setIsReady] = React.useState(false);
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 80);
+    return () => clearTimeout(timer);
+  }, []);
+
   const renderContent = () => {
+    if (!isReady) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          {/* Header Optimizado para Notch */}
+          <View style={{ 
+            paddingTop: insets.top,
+            backgroundColor: '#FFFFFF',
+            borderBottomWidth: 1,
+            borderBottomColor: '#F3F4F6',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            elevation: 3,
+            zIndex: 100
+          }}>
+            <View style={{ 
+              height: 64,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 20
+            }}>
+              <Text style={{ fontSize: 19, fontWeight: '900', color: '#111827', letterSpacing: -0.5 }}>Mi Carrito</Text>
+            </View>
+          </View>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#63348C" />
+            <Text style={{ marginTop: 12, fontSize: 14, fontWeight: '600', color: '#9CA3AF' }}>Cargando carrito...</Text>
+          </View>
+        </View>
+      );
+    }
+
     if (cart.length === 0) {
       return (
         <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>

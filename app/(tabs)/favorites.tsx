@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Image, ActivityIndicator, InteractionManager } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HeartOff, ArrowLeft, Heart, ShoppingCart, Clock, CreditCard, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -166,6 +166,14 @@ const FavoritesScreen = React.memo(function FavoritesScreen() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const isDesktop = width >= 1024;
 
+  const [isReady, setIsReady] = useState(false);
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 80);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       {/* HEADER Optimizado para Notch */}
@@ -221,7 +229,12 @@ const FavoritesScreen = React.memo(function FavoritesScreen() {
         </View>
       </View>
 
-      {favorites.length === 0 ? (
+      {!isReady ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#63348C" />
+          <Text style={{ marginTop: 12, fontSize: 14, fontWeight: '600', color: '#9CA3AF' }}>Cargando favoritos...</Text>
+        </View>
+      ) : favorites.length === 0 ? (
         <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: '#FFFFFF', padding: 15, paddingBottom: 100 }}>
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30, paddingBottom: 100 }}>
             <View style={{ alignItems: 'center' }}>

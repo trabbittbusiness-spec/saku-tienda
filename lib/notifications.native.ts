@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -6,13 +5,16 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, update
 import { db } from './firebase';
 
 // Configure how notifications should be handled when the app is foregrounded
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+if (Constants.appOwnership !== 'expo') {
+  const Notifications = require('expo-notifications');
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
 export async function registerForPushNotificationsAsync(userId: string) {
   if (!userId) {
@@ -28,14 +30,21 @@ export async function registerForPushNotificationsAsync(userId: string) {
   console.log(`Starting push notification registration for user: ${userId}`);
 
   try {
+    const Notifications = require('expo-notifications');
     let token;
 
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+      // We use a specific channel ID to ensure Android creates it fresh with the new sound/vibration
+      await Notifications.setNotificationChannelAsync('saku_tienda_v5', {
+        name: 'Saku Alertas v5',
         importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
+        vibrationPattern: [0, 1000, 500, 1000, 500, 1000],
+        lightColor: '#63348C',
+        sound: 'saku_compra',
+        enableVibrate: true,
+        showBadge: true,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        bypassDnd: true,
       });
     }
 

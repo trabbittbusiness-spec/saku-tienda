@@ -164,7 +164,7 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
 
       for (const adminDoc of admins) {
         const adminId = adminDoc.id;
-        const fcmSnap = await admin.firestore().collection("users").doc(adminId).collection("fcm_tokens").get();
+        const fcmSnap = await admin.firestore().collection("users").doc(adminId).collection("push_tokens").get();
         
         if (fcmSnap.empty) {
           console.log(`[ORDEN] Admin ${adminId} no tiene tokens registrados.`);
@@ -193,21 +193,36 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
                          ? order.items[0].foto 
                          : 'https://firebasestorage.googleapis.com/v0/b/sakuchile.appspot.com/o/logo_saku.png?alt=media' // Fallback
             },
-          android: {
-            notification: {
-              icon: 'notification_icon',
-              color: '#63348C',
-              channelId: 'default',
+            android: {
               priority: 'high',
-            }
-          },
-          data: {
-            orderId: orderId,
-            type: order.isServiceBooking ? 'service' : 'product',
-            click_action: 'FLUTTER_NOTIFICATION_CLICK' // Para compatibilidad
-          },
-          tokens: uniqueTokens,
-        };
+              notification: {
+                icon: 'notification_icon',
+                color: '#63348C',
+                channelId: 'admin_alerts_v5',
+                priority: 'high',
+                sound: 'admin_push',
+                defaultSound: false,
+                visibility: 'public',
+              }
+            },
+            data: {
+              orderId: orderId,
+              type: order.isServiceBooking ? 'service' : 'product',
+              click_action: 'FLUTTER_NOTIFICATION_CLICK',
+              sound: 'admin_push', // Duplicate in data for extra compatibility
+              channelId: 'admin_alerts_v5'
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: 'admin_push.mp3',
+                  badge: 1,
+                  contentAvailable: true,
+                },
+              },
+            },
+            tokens: uniqueTokens,
+          };
 
         const response = await admin.messaging().sendEachForMulticast(message);
         console.log(`[ORDEN] Notificaciones push procesadas: ${response.successCount} exitosas, ${response.failureCount} fallidas.`);
@@ -458,7 +473,7 @@ exports.onPushNotificationCreated = onDocumentCreated("ff_user_push_notification
     // 2. Recolectar tokens de todos esos usuarios
     for (const uId of userIds) {
       console.log(`Buscando tokens para usuario: ${uId}`);
-      const fcmSnap = await admin.firestore().collection("users").doc(uId).collection("fcm_tokens").get();
+      const fcmSnap = await admin.firestore().collection("users").doc(uId).collection("push_tokens").get();
       console.log(`Usuario ${uId} tiene ${fcmSnap.size} tokens.`);
       fcmSnap.forEach(tDoc => {
         const token = tDoc.data().fcm_token || tDoc.data().fcmToken || tDoc.data().pushToken;
@@ -473,15 +488,44 @@ exports.onPushNotificationCreated = onDocumentCreated("ff_user_push_notification
           body: data.notification_text || '',
         },
         android: {
+          priority: 'high',
           notification: {
             icon: 'notification_icon',
             color: '#63348C',
-            channelId: 'default',
+            channelId: 'saku_tienda_v5',
+            sound: 'saku_compra',
+            defaultSound: false,
+            priority: 'high',
+            visibility: 'public',
           }
         },
-        data: JSON.parse(data.parameter_data || '{}'),
+        data: {
+          ...JSON.parse(data.parameter_data || '{}'),
+          sound: 'saku_compra',
+          channelId: 'saku_tienda_v5'
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: data.is_admin_alert ? 'admin_push.mp3' : 'saku_compra.mp3',
+              badge: 1,
+              contentAvailable: true,
+            },
+          },
+        },
         tokens: tokens,
       };
+
+      // If we are sending to specific users, we could check their roles, 
+      // but for manual pushes from the panel, we'll use compra_push by default 
+      // unless specified otherwise.
+      if (data.is_admin_alert) {
+        message.android.notification.channelId = 'admin_alerts_v5';
+        message.android.notification.sound = 'admin_push';
+        message.data.channelId = 'admin_alerts_v5';
+        message.data.sound = 'admin_push';
+      }
+
 
       const response = await admin.messaging().sendEachForMulticast(message);
       console.log(`Resultado envío manual: ${response.successCount} éxitos, ${response.failureCount} fallos.`);

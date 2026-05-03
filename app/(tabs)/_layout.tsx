@@ -7,8 +7,12 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: { display: 'none' },
-        // Mantiene las pantallas en memoria para navegación instantánea
+        // Lazy mount: tabs only render when the user first navigates to them
+        lazy: true,
+        // Mantiene las pantallas en memoria después de visitarlas
         unmountOnBlur: false,
+        // Freeze inactive tabs to stop unnecessary re-renders
+        freezeOnBlur: true,
       }}
     >
       <Tabs.Screen name="index" />
@@ -19,3 +23,4 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+

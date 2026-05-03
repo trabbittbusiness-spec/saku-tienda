@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, ActivityIndicator, useWindowDimensions, StatusBar, Modal, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, ActivityIndicator, useWindowDimensions, StatusBar, Modal, Linking, Share, Platform, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -19,6 +19,14 @@ export default function ServicioDetailScreen() {
   const [videoModalVisible, setVideoModalVisible] = useState(false);
   const [categoriaPrincipal, setCategoriaPrincipal] = useState<string>('');
   const { toggleFavorite, isFavorite } = useFavorites();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
 
   const player = useVideoPlayer(service?.video1 || null, player => {
     player.loop = true;
@@ -77,6 +85,44 @@ export default function ServicioDetailScreen() {
     if (min === max) return `CLP $${min.toLocaleString("de-DE")}`;
     return `CLP $${min.toLocaleString("de-DE")} - $${max.toLocaleString("de-DE")}`;
   };
+
+  const handleShare = async () => {
+    if (!service) return;
+    const shareUrl = `https://saku-tienda.web.app/servicio/${id}`;
+    const shareText = `¡Mira este servicio en Tienda Saku: ${service.nombre}!`;
+
+    try {
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Tienda Saku',
+              text: shareText,
+              url: shareUrl
+            });
+            return;
+          } catch (e) {
+            console.log('User cancelled share');
+          }
+        }
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+        } catch {
+          const { setStringAsync } = await import('expo-clipboard');
+          await setStringAsync(shareUrl);
+        }
+        showToast('Enlace copiado');
+      } else {
+        await Share.share({
+          message: Platform.OS === 'ios' ? shareText : `${shareText}\n${shareUrl}`,
+          url: shareUrl,
+          title: 'Tienda Saku'
+        });
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
@@ -117,6 +163,12 @@ export default function ServicioDetailScreen() {
                 </View>
                 <View style={{ flex: 1 }} />
                 <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity
+                    style={styles.webActionIconBtn}
+                    onPress={handleShare}
+                  >
+                    <Share2 size={20} color="#64748B" />
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.webActionIconBtn}
                     onPress={() => toggleFavorite({
@@ -291,6 +343,12 @@ export default function ServicioDetailScreen() {
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <TouchableOpacity
                     style={styles.iconBtn}
+                    onPress={handleShare}
+                  >
+                    <Share2 size={20} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.iconBtn}
                     onPress={() => toggleFavorite({
                       id: service.id,
                       name: service.nombre,
@@ -413,6 +471,11 @@ export default function ServicioDetailScreen() {
           >
             <Text style={styles.reserveBtnText}>Reservar Ahora</Text>
           </TouchableOpacity>
+        </View>
+      )}
+      {toastMessage && (
+        <View style={{ position: 'absolute', bottom: isDesktop ? 40 : 120, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 30, zIndex: 10000 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800' }}>{toastMessage}</Text>
         </View>
       )}
     </View>

@@ -11,5 +11,8 @@
       }
     },
     "production": {}
+  },
+  "submit": {
+    "production": {}
   }
 }
