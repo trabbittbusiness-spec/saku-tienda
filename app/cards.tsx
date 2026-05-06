@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 export default function CardsScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
   const [showAddForm, setShowAddForm] = React.useState(false);
 
   if (!isDesktop) {

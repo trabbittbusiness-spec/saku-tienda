@@ -2,12 +2,11 @@
   "expo": {
     "name": "Tienda Saku",
     "slug": "tienda-saku",
-    "version": "10.90.12",
+    "version": "10.90.21",
     "orientation": "portrait",
     "icon": "./assets/images/logo_saku_cl.png",
     "scheme": "tiendasaku",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/logo_saku_cl.png",
       "resizeMode": "contain",
@@ -16,17 +15,22 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.SAKUtienda.cl",
-      "buildNumber": "41",
+      "buildNumber": "56",
+      "appleTeamId": "4H4BJH5HJX",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "associatedDomains": ["applinks:saku-tienda.web.app"],
+      "associatedDomains": [
+        "applinks:saku-tienda.web.app"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
       "package": "com.SAKUtienda.cl",
-      "versionCode": 43,
+      "versionCode": 53,
       "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
@@ -67,7 +71,10 @@
           ]
         }
       ],
-      "expo-video"
+      "expo-video",
+      "expo-image",
+      "expo-audio",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

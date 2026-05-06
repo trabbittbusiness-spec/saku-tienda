@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Image, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Platform, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../context/CartContext';
@@ -13,7 +14,7 @@ const CartScreen = React.memo(function CartScreen() {
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart();
   const [showAuthModal, setShowAuthModal] = React.useState(false);
   const insets = useSafeAreaInsets();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
 
   React.useEffect(() => {
     if (isDesktop) {
@@ -217,7 +218,12 @@ const CartScreen = React.memo(function CartScreen() {
             }}>
               {/* Image Container */}
               <View style={{ width: 85, height: 85, backgroundColor: '#FFF9F5', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
-                <Image source={{ uri: item.foto }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
+                <Image 
+                  source={{ uri: item.foto }} 
+                  style={{ width: '80%', height: '80%' }} 
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                />
               </View>
 
               <View style={{ flex: 1, marginLeft: 15 }}>
@@ -276,7 +282,7 @@ const CartScreen = React.memo(function CartScreen() {
         {/* Floating Checkout Button */}
         <View style={{ 
           position: 'absolute', 
-          bottom: isDesktop ? 40 : (Platform.OS === 'web' ? 125 : 100 + insets.bottom), 
+          bottom: isDesktop ? 40 : insets.bottom + 135, 
           left: 0, right: 0, 
           paddingHorizontal: 20, zIndex: 100 
         }}>

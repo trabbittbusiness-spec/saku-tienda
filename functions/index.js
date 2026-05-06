@@ -164,43 +164,68 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
 
       for (const adminDoc of admins) {
         const adminId = adminDoc.id;
-        const fcmSnap = await admin.firestore().collection("users").doc(adminId).collection("push_tokens").get();
         
-        if (fcmSnap.empty) {
-          console.log(`[ORDEN] Admin ${adminId} no tiene tokens registrados.`);
-          continue;
+        // Check both collections for compatibility
+        const collectionsToTry = ["push_tokens", "fcm_tokens"];
+        
+        for (const collName of collectionsToTry) {
+          const fcmSnap = await admin.firestore().collection("users").doc(adminId).collection(collName).get();
+          
+          if (!fcmSnap.empty) {
+            console.log(`[ORDEN] Admin ${adminId} tiene ${fcmSnap.size} tokens en ${collName}.`);
+            fcmSnap.forEach(tDoc => {
+              const tData = tDoc.data();
+              // Recolectar TODOS los tokens del documento, no solo uno
+              const allTokenFields = [tData.expo_token, tData.pushToken, tData.fcm_token, tData.fcmToken];
+              for (const t of allTokenFields) {
+                if (t && !tokens.includes(t)) tokens.push(t);
+              }
+            });
+          }
         }
-
-        console.log(`[ORDEN] Admin ${adminId} tiene ${fcmSnap.size} tokens.`);
-        fcmSnap.forEach(tDoc => {
-          const tData = tDoc.data();
-          const token = tData.fcm_token || tData.fcmToken || tData.pushToken;
-          if (token) tokens.push(token);
-        });
       }
 
       if (tokens.length > 0) {
         // Eliminar duplicados
         const uniqueTokens = [...new Set(tokens)];
         
+        const fcmTokens = [];
+        const expoTokens = [];
+        
+        for (const t of uniqueTokens) {
+          if (t.startsWith('ExponentPushToken') || t.startsWith('ExpoPushToken')) {
+            expoTokens.push(t);
+          } else if (t.length >= 64) {
+            // Support both long FCM tokens and 64-char APNs/FCM hex tokens
+            fcmTokens.push(t);
+          } else {
+            console.log(`[ORDEN] Ignorando token APNs crudo (se usará ExpoToken): ${t}`);
+          }
+        }
+        
+        const title = order.isServiceBooking ? '🔔 Nueva Reserva de Servicio' : '📦 Nuevo Pedido Recibido';
+        const body = order.isServiceBooking 
+                 ? `${clientName} reservó ${order.items[0]?.nombre || 'un servicio'} para el ${order.horaReserva}.`
+                 : `${clientName} realizó un pedido por $${(order.total || 0).toLocaleString()}.`;
+
+        // 1. Enviar vía Firebase (Android nativo o iOS con p8 correcto)
+        if (fcmTokens.length > 0) {
           const message = {
             notification: {
-              title: order.isServiceBooking ? '🔔 Nueva Reserva de Servicio' : '📦 Nuevo Pedido Recibido',
-              body: order.isServiceBooking 
-                ? `${clientName} reservó ${order.items[0]?.nombre || 'un servicio'} para el ${order.horaReserva}.`
-                : `${clientName} realizó un pedido por $${(order.total || 0).toLocaleString()}.`,
+              title: title,
+              body: body,
               imageUrl: (order.items && order.items[0] && order.items[0].foto) 
                          ? order.items[0].foto 
-                         : 'https://firebasestorage.googleapis.com/v0/b/sakuchile.appspot.com/o/logo_saku.png?alt=media' // Fallback
+                         : 'https://firebasestorage.googleapis.com/v0/b/sakuchile.appspot.com/o/logo_saku.png?alt=media'
             },
             android: {
               priority: 'high',
               notification: {
                 icon: 'notification_icon',
                 color: '#63348C',
-                channelId: 'admin_alerts_v5',
+                channelId: 'admin_alerts_v6',
                 priority: 'high',
-                sound: 'admin_push',
+                sound: 'admin_push_android',
                 defaultSound: false,
                 visibility: 'public',
               }
@@ -209,8 +234,8 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
               orderId: orderId,
               type: order.isServiceBooking ? 'service' : 'product',
               click_action: 'FLUTTER_NOTIFICATION_CLICK',
-              sound: 'admin_push', // Duplicate in data for extra compatibility
-              channelId: 'admin_alerts_v5'
+              sound: 'admin_push_android',
+              channelId: 'admin_alerts_v6'
             },
             apns: {
               payload: {
@@ -221,19 +246,41 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
                 },
               },
             },
-            tokens: uniqueTokens,
+            tokens: fcmTokens,
           };
 
-        const response = await admin.messaging().sendEachForMulticast(message);
-        console.log(`[ORDEN] Notificaciones push procesadas: ${response.successCount} exitosas, ${response.failureCount} fallidas.`);
-        
-        if (response.failureCount > 0) {
-          response.responses.forEach((res, idx) => {
-            if (!res.success) {
-              console.error(`[ORDEN] Fallo al enviar a token ${uniqueTokens[idx].slice(0, 10)}... : ${res.error.message}`);
-            }
-          });
+          const response = await admin.messaging().sendEachForMulticast(message);
+          console.log(`[ORDEN] Notificaciones FCM: ${response.successCount} exitosas, ${response.failureCount} fallidas.`);
         }
+
+        // 2. Enviar vía Expo (Principalmente para iOS Expo Notifications)
+        if (expoTokens.length > 0) {
+          const expoMessages = expoTokens.map(t => ({
+            to: t,
+            sound: 'admin_push.mp3',
+            title: title,
+            subtitle: 'Saku Tienda',
+            body: body,
+            data: { orderId: orderId, type: order.isServiceBooking ? 'service' : 'product' },
+            priority: 'high',
+            badge: 1,
+            mutableContent: true,
+            _displayInForeground: true
+          }));
+          
+          try {
+            const expRes = await fetch('https://exp.host/--/api/v2/push/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(expoMessages)
+            });
+            const expData = await expRes.json();
+            console.log(`[ORDEN] Resultado Expo completo:`, JSON.stringify(expData));
+          } catch (e) {
+            console.error(`[ORDEN] Fallo al enviar notificaciones Expo:`, e);
+          }
+        }
+
       } else {
         console.log("[ORDEN] No se encontraron tokens de push válidos.");
       }
@@ -473,73 +520,137 @@ exports.onPushNotificationCreated = onDocumentCreated("ff_user_push_notification
     // 2. Recolectar tokens de todos esos usuarios
     for (const uId of userIds) {
       console.log(`Buscando tokens para usuario: ${uId}`);
-      const fcmSnap = await admin.firestore().collection("users").doc(uId).collection("push_tokens").get();
-      console.log(`Usuario ${uId} tiene ${fcmSnap.size} tokens.`);
-      fcmSnap.forEach(tDoc => {
-        const token = tDoc.data().fcm_token || tDoc.data().fcmToken || tDoc.data().pushToken;
-        if (token) tokens.push(token);
-      });
+      
+      const collectionsToTry = ["push_tokens", "fcm_tokens"];
+      for (const collName of collectionsToTry) {
+        const fcmSnap = await admin.firestore().collection("users").doc(uId).collection(collName).get();
+        if (!fcmSnap.empty) {
+          console.log(`Usuario ${uId} tiene ${fcmSnap.size} tokens en ${collName}.`);
+          fcmSnap.forEach(tDoc => {
+            const tData = tDoc.data();
+            // Recolectar TODOS los tokens del documento, no solo uno
+            const allTokenFields = [tData.expo_token, tData.pushToken, tData.fcm_token, tData.fcmToken];
+            for (const t of allTokenFields) {
+              if (t && !tokens.includes(t)) tokens.push(t);
+            }
+          });
+        }
+      }
     }
 
     if (tokens.length > 0) {
-      const message = {
-        notification: {
-          title: data.notification_title || 'Tienda Saku',
-          body: data.notification_text || '',
-        },
-        android: {
-          priority: 'high',
-          notification: {
-            icon: 'notification_icon',
-            color: '#63348C',
-            channelId: 'saku_tienda_v5',
-            sound: 'saku_compra',
-            defaultSound: false,
-            priority: 'high',
-            visibility: 'public',
-          }
-        },
-        data: {
-          ...JSON.parse(data.parameter_data || '{}'),
-          sound: 'saku_compra',
-          channelId: 'saku_tienda_v5'
-        },
-        apns: {
-          payload: {
-            aps: {
-              sound: data.is_admin_alert ? 'admin_push.mp3' : 'saku_compra.mp3',
-              badge: 1,
-              contentAvailable: true,
-            },
-          },
-        },
-        tokens: tokens,
-      };
-
-      // If we are sending to specific users, we could check their roles, 
-      // but for manual pushes from the panel, we'll use compra_push by default 
-      // unless specified otherwise.
-      if (data.is_admin_alert) {
-        message.android.notification.channelId = 'admin_alerts_v5';
-        message.android.notification.sound = 'admin_push';
-        message.data.channelId = 'admin_alerts_v5';
-        message.data.sound = 'admin_push';
+      const uniqueTokens = [...new Set(tokens)];
+      const fcmTokens = [];
+      const expoTokens = [];
+      
+      for (const t of uniqueTokens) {
+        if (t.startsWith('ExponentPushToken') || t.startsWith('ExpoPushToken')) {
+          expoTokens.push(t);
+        } else if (t.length >= 64) {
+          // Allow 64-char tokens (common in iOS/FCM)
+          fcmTokens.push(t);
+        } else {
+          console.log(`[PUSH MANUAL] Ignorando token APNs crudo: ${t}`);
+        }
       }
 
+      const title = data.notification_title || 'Tienda Saku';
+      const body = data.notification_text || '';
+      const channelId = data.is_admin_alert ? 'admin_alerts_v6' : 'saku_tienda_v5';
+      const soundName = data.is_admin_alert ? 'admin_push_android' : 'saku_compra';
+      const soundFile = data.is_admin_alert ? 'admin_push.mp3' : 'saku_compra.mp3';
 
-      const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(`Resultado envío manual: ${response.successCount} éxitos, ${response.failureCount} fallos.`);
-      
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          console.error(`Fallo en token ${tokens[idx]}:`, resp.error);
-        } else {
-          console.log(`Éxito en token ${tokens[idx]}`);
+      let totalSent = 0;
+
+      if (fcmTokens.length > 0) {
+        const message = {
+          notification: {
+            title: title,
+            body: body,
+          },
+          android: {
+            priority: 'high',
+            notification: {
+              icon: 'notification_icon',
+              color: '#63348C',
+              channelId: channelId,
+              sound: soundName,
+              defaultSound: false,
+              priority: 'high',
+              visibility: 'public',
+            }
+          },
+          data: {
+            ...JSON.parse(data.parameter_data || '{}'),
+            sound: soundName,
+            channelId: channelId
+          },
+          apns: {
+            payload: {
+              aps: {
+                sound: soundFile,
+                badge: 1,
+                contentAvailable: true,
+              },
+            },
+          },
+          tokens: fcmTokens,
+        };
+
+        const fcmResponse = await admin.messaging().sendEachForMulticast(message);
+        console.log(`Resultado FCM manual: ${fcmResponse.successCount} éxitos, ${fcmResponse.failureCount} fallos.`);
+        totalSent += fcmResponse.successCount;
+        
+        fcmResponse.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            console.error(`Fallo en FCM token ${fcmTokens[idx]}:`, resp.error);
+          } else {
+            console.log(`Éxito en FCM token ${fcmTokens[idx]}`);
+          }
+        });
+      }
+
+      if (expoTokens.length > 0) {
+        console.log(`[PUSH] Enviando a ${expoTokens.length} tokens vía Expo: ${expoTokens.join(', ')}`);
+        const expoMessages = expoTokens.map(t => ({
+          to: t,
+          sound: soundFile,
+          title: title,
+          body: body,
+          data: {
+            ...JSON.parse(data.parameter_data || '{}'),
+            sound: soundName,
+            channelId: channelId
+          },
+          priority: 'high',
+          badge: 1,
+          mutableContent: true,
+          contentAvailable: true, // Crucial para iOS background
+          _displayInForeground: true
+        }));
+        
+        try {
+          const expRes = await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(expoMessages)
+          });
+          const expData = await expRes.json();
+          console.log(`[PUSH MANUAL] Resultado Expo completo:`, JSON.stringify(expData));
+          
+          if (expRes.ok) {
+            const expoResults = Array.isArray(expData.data) ? expData.data : [];
+            const expoSuccesses = expoResults.filter(r => r.status === 'ok').length;
+            totalSent += expoSuccesses;
+          }
+        } catch (e) {
+          console.error(`Fallo al enviar notificaciones Expo:`, e);
         }
-      });
+      }
+      
       await event.data.ref.update({
         status: 'completed',
-        num_sent: response.successCount,
+        num_sent: totalSent,
         timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
     } else {

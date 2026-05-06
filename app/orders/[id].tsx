@@ -6,13 +6,14 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { db } from '../../lib/firebase';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import Skeleton from '../../components/Skeleton';
 
 export default function OrderDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
   const [copied, setCopied] = React.useState(false);
   const [order, setOrder] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -91,8 +92,25 @@ export default function OrderDetailsScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#111827" />
+      <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ 
+          paddingHorizontal: isDesktop ? 40 : 20, 
+          paddingTop: Platform.OS === 'web' ? 10 : insets.top + 10,
+          paddingBottom: 10,
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <Skeleton width={100} height={40} borderRadius={12} />
+          <Skeleton width={150} height={40} borderRadius={12} />
+        </View>
+
+        <ScrollView contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingTop: 10 }}>
+           <Skeleton width="100%" height={150} borderRadius={28} style={{ marginBottom: 20 }} />
+           <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 20 }}>
+              <Skeleton width={isDesktop ? '35%' : '100%'} height={300} borderRadius={28} />
+              <Skeleton width={isDesktop ? '40%' : '100%'} height={250} borderRadius={28} />
+              <Skeleton width={isDesktop ? '25%' : '100%'} height={350} borderRadius={28} />
+           </View>
+        </ScrollView>
       </View>
     );
   }

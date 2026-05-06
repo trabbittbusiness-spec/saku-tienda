@@ -19,7 +19,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="search" />
       <Tabs.Screen name="favorites" />
       <Tabs.Screen name="cart" />
-      <Tabs.Screen name="profile" />
+      <Tabs.Screen name="cuenta" />
     </Tabs>
   );
 }

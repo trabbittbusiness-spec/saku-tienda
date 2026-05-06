@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Pressable, Modal, ScrollView, Image } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Pressable, Modal, ScrollView, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { BellDot, ChevronDown, MapPin, Search, ShoppingCart, Heart, Store, Truck, Dog as DogIcon, LogOut, User, CreditCard, Shield, ChevronRight, X, Trash2, Minus, Plus, ArrowRight, Bell, ShoppingBag, Home, Briefcase, Star, Check, Navigation, Clock, Package, Calendar } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, interpolate } from 'react-native-reanimated';
@@ -11,7 +12,7 @@ import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
-import { doc, getDoc, onSnapshot, query, collection, where, updateDoc, serverTimestamp, addDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, query, collection, where, updateDoc, serverTimestamp, addDoc, arrayUnion, or, limit, startAfter, getDocs, orderBy, and } from 'firebase/firestore';
 import AuthModal from './AuthModal';
 
 
@@ -43,6 +44,10 @@ const Header = React.memo(function Header() {
   const [defaultAddrId, setDefaultAddrId] = useState<string | null>(null);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -68,48 +73,65 @@ const Header = React.memo(function Header() {
         });
 
         const userRef = doc(db, 'users', currentUser.uid);
+        
+        // 1. Lightweight listener for unread badge count
+        const qUnread = query(
+          collection(db, 'notificaciones'),
+          or(
+            where('creador', '==', userRef),
+            where('tipo', '==', 'global')
+          )
+        );
+        
+        const unsubUnread = onSnapshot(qUnread, (snapshot) => {
+          const count = snapshot.docs.filter((d: any) => {
+            const data = d.data();
+            if (data.tipo === 'global') return !(data.leidaPor || []).includes(currentUser.uid);
+            return !data.leida;
+          }).length;
+          setUnreadCount(count);
+        });
+
+        // 2. Real-time listener for the notifications list (latest 20)
+        const qNotifs = query(
+          collection(db, 'notificaciones'),
+          or(where('creador', '==', userRef), where('tipo', '==', 'global')),
+          orderBy('creadaEn', 'desc'),
+          limit(20)
+        );
+        const unsubNotifs = onSnapshot(qNotifs, (snapshot) => {
+          const fetched = snapshot.docs.map(d => ({
+            id: d.id,
+            _tipo: d.data().tipo === 'global' ? 'global' : 'personal',
+            ...d.data()
+          }));
+          setNotifications(fetched);
+          setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
+          setHasMore(snapshot.docs.length >= 20);
+          setIsLoadingMore(false);
+        });
+
         const qOrders = query(collection(db, 'Orden'), where('creador', '==', userRef));
         const unsubOrders = onSnapshot(qOrders, (snapshot) => {
           const fetchedOrders = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o: any) => {
             const status = (o.estado || '').toLowerCase();
             return ['pendiente', 'procesando', 'enviado', 'pago aceptado'].includes(status);
           });
-          
-          // Sort by creation date (newest first)
           fetchedOrders.sort((a: any, b: any) => {
             const dateA = a.fechaCreacion?.toDate ? a.fechaCreacion.toDate().getTime() : new Date(a.fechaCreacion).getTime() || 0;
             const dateB = b.fechaCreacion?.toDate ? b.fechaCreacion.toDate().getTime() : new Date(b.fechaCreacion).getTime() || 0;
             return (dateB || 0) - (dateA || 0);
           });
-          
           setActiveOrders(fetchedOrders);
         });
 
-        // Real-time personal notifications filtered by creador reference
-        const qNotif = query(collection(db, 'notificaciones'), where('creador', '==', userRef));
-        const unsubNotif = onSnapshot(qNotif, (snapshot) => {
-          const personal = snapshot.docs.map(d => ({ id: d.id, _tipo: 'personal', ...d.data() }));
-          setNotifications(prev => {
-            const global = prev.filter((n: any) => n._tipo === 'global');
-            const merged = [...personal, ...global];
-            merged.sort((a: any, b: any) => (b.creadaEn?.seconds || 0) - (a.creadaEn?.seconds || 0));
-            return merged;
-          });
-        });
-
-        // Real-time global notifications (coupons, broadcasts)
-        const qGlobal = query(collection(db, 'notificaciones'), where('tipo', '==', 'global'));
-        const unsubGlobal = onSnapshot(qGlobal, (snapshot) => {
-          const global = snapshot.docs.map(d => ({ id: d.id, _tipo: 'global', ...d.data() }));
-          setNotifications(prev => {
-            const personal = prev.filter((n: any) => n._tipo === 'personal');
-            const merged = [...personal, ...global];
-            merged.sort((a: any, b: any) => (b.creadaEn?.seconds || 0) - (a.creadaEn?.seconds || 0));
-            return merged;
-          });
-        });
-
-        return () => { unsubUser(); unsubAddresses(); unsubOrders(); unsubNotif(); unsubGlobal(); };
+        return () => { 
+          unsubUser(); 
+          unsubAddresses(); 
+          unsubOrders(); 
+          unsubUnread();
+          unsubNotifs();
+        };
 
       } else {
         setUserName('');
@@ -123,6 +145,68 @@ const Header = React.memo(function Header() {
     });
     return unsubscribeAuth;
   }, []);
+
+  const loadInitialNotifications = async (userId: string) => {
+    setIsLoadingMore(true);
+    setHasMore(true);
+    const userRef = doc(db, 'users', userId);
+    const q = query(
+      collection(db, 'notificaciones'),
+      or(where('creador', '==', userRef), where('tipo', '==', 'global')),
+      orderBy('creadaEn', 'desc'),
+      limit(10)
+    );
+
+    try {
+      const snapshot = await getDocs(q);
+      const fetched = snapshot.docs.map(d => ({ 
+        id: d.id, 
+        _tipo: d.data().tipo === 'global' ? 'global' : 'personal', 
+        ...d.data() 
+      }));
+      setNotifications(fetched);
+      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+      if (snapshot.docs.length < 10) setHasMore(false);
+    } catch (err) {
+      console.error("Error loading notifications:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const loadMoreNotifications = async () => {
+    if (isLoadingMore || !hasMore || !lastVisible || !user) return;
+    setIsLoadingMore(true);
+    
+    const userRef = doc(db, 'users', user.uid);
+    const q = query(
+      collection(db, 'notificaciones'),
+      or(where('creador', '==', userRef), where('tipo', '==', 'global')),
+      orderBy('creadaEn', 'desc'),
+      startAfter(lastVisible),
+      limit(10)
+    );
+
+    try {
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        setHasMore(false);
+        return;
+      }
+      const fetched = snapshot.docs.map(d => ({ 
+        id: d.id, 
+        _tipo: d.data().tipo === 'global' ? 'global' : 'personal', 
+        ...d.data() 
+      }));
+      setNotifications(prev => [...prev, ...fetched]);
+      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+      if (snapshot.docs.length < 10) setHasMore(false);
+    } catch (err) {
+      console.error("Error loading more notifications:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // Drawer Slide Animation
   const drawerTranslateX = useSharedValue(width);
@@ -138,12 +222,20 @@ const Header = React.memo(function Header() {
     transform: [{ translateX: drawerTranslateX.value }],
   }));
 
-  const unreadCount = notifications.filter((n: any) => {
-    if (n._tipo === 'global') return !(n.leidaPor || []).includes(user?.uid);
-    return !n.leida;
-  }).length;
 
   const markAllAsRead = async () => {
+    if (!user) return;
+    // Optimistic local update
+    setNotifications(prev => prev.map(n => {
+      if (n._tipo === 'global') {
+        const leidaPor = n.leidaPor || [];
+        if (!leidaPor.includes(user.uid)) return { ...n, leidaPor: [...leidaPor, user.uid] };
+      } else {
+        return { ...n, leida: true };
+      }
+      return n;
+    }));
+
     await Promise.all(notifications.map(async (n: any) => {
       if (n._tipo === 'global') {
         if (!(n.leidaPor || []).includes(user?.uid))
@@ -156,6 +248,20 @@ const Header = React.memo(function Header() {
   };
 
   const markAsRead = async (notif: any) => {
+    if (!user) return;
+    // Optimistic local update
+    setNotifications(prev => prev.map(n => {
+      if (n.id === notif.id) {
+        if (n._tipo === 'global') {
+          const leidaPor = n.leidaPor || [];
+          if (!leidaPor.includes(user.uid)) return { ...n, leidaPor: [...leidaPor, user.uid] };
+        } else {
+          return { ...n, leida: true };
+        }
+      }
+      return n;
+    }));
+
     if (notif._tipo === 'global') {
       await updateDoc(doc(db, 'notificaciones', notif.id), { leidaPor: arrayUnion(user?.uid) });
     } else {
@@ -202,35 +308,62 @@ const Header = React.memo(function Header() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 12 }}>
-            {unreadCount === 0 ? (
+          <FlatList 
+            data={notifications}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ padding: 20, gap: 12 }}
+            onEndReached={loadMoreNotifications}
+            onEndReachedThreshold={0.5}
+            ListEmptyComponent={() => (
               <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 }}>
                 <Bell size={48} color="#E5E7EB" strokeWidth={1} />
                 <Text style={{ fontSize: 16, fontWeight: '800', color: '#9CA3AF' }}>Sin notificaciones</Text>
                 <Text style={{ fontSize: 13, color: '#D1D5DB', fontWeight: '500', textAlign: 'center' }}>Estás al día con todos tus pedidos</Text>
               </View>
-            ) : (
-              notifications.filter((n: any) => {
-                if (n._tipo === 'global') return !(n.leidaPor || []).includes(user?.uid);
-                return !n.leida;
-              }).map((notif: any) => {
-                const st = getNotifStyle(notif);
-                const IconComp = st.Icon;
-                return (
-                  <TouchableOpacity
-                    key={notif.id}
-                    onPress={() => markAsRead(notif)}
-                    style={{ flexDirection: 'row', padding: 16, backgroundColor: st.bg, borderRadius: 16, borderWidth: 1, borderColor: st.border, gap: 14 }}
-                  >
-                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: st.iconBg, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
-                      <IconComp size={20} color={st.iconColor} />
+            )}
+            ListFooterComponent={() => (
+              isLoadingMore ? (
+                <View style={{ paddingVertical: 20 }}>
+                  <ActivityIndicator color="#63348C" />
+                </View>
+              ) : !hasMore && notifications.length > 0 ? (
+                <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>No hay más notificaciones</Text>
+                </View>
+              ) : null
+            )}
+            renderItem={({ item: notif }) => {
+              const st = getNotifStyle(notif);
+              const IconComp = st.Icon;
+              const isUnread = notif._tipo === 'global' 
+                ? !(notif.leidaPor || []).includes(user?.uid) 
+                : !notif.leida;
+
+              return (
+                <TouchableOpacity
+                  onPress={() => markAsRead(notif)}
+                  style={{ 
+                    flexDirection: 'row', 
+                    padding: 16, 
+                    backgroundColor: isUnread ? st.bg : '#FFFFFF', 
+                    borderRadius: 16, 
+                    borderWidth: 1, 
+                    borderColor: isUnread ? st.border : '#F3F4F6', 
+                    gap: 14,
+                    opacity: isUnread ? 1 : 0.7
+                  }}
+                >
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: isUnread ? st.iconBg : '#F9FAFB', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                    <IconComp size={20} color={isUnread ? st.iconColor : '#9CA3AF'} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: isUnread ? '#111827' : '#4B5563', flex: 1 }} numberOfLines={1}>{notif.titulo}</Text>
+                      <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginLeft: 8 }}>{getRelativeTime(notif.creadaEn)}</Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827', flex: 1 }} numberOfLines={1}>{notif.titulo}</Text>
-                        <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginLeft: 8 }}>{getRelativeTime(notif.creadaEn)}</Text>
-                      </View>
-                      <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }}>{notif.mensaje}</Text>
+                    <Text style={{ fontSize: 13, color: isUnread ? '#6B7280' : '#9CA3AF', fontWeight: '500', lineHeight: 18 }}>{notif.mensaje}</Text>
+                    
+                    {isUnread && (
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: st.iconColor }} />
@@ -243,18 +376,13 @@ const Header = React.memo(function Header() {
                           <Text style={{ fontSize: 11, fontWeight: '800', color: '#63348C' }}>Marcar como leída</Text>
                         </TouchableOpacity>
                       </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </ScrollView>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
 
-          <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingBottom: insets.bottom + 20 }}>
-            <TouchableOpacity onPress={markAllAsRead} style={{ backgroundColor: '#F3F4F6', borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, fontWeight: '800', color: '#6B7280' }}>Marcar todas como leídas</Text>
-            </TouchableOpacity>
-          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -603,7 +731,12 @@ const Header = React.memo(function Header() {
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                                 <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
                                   {order.items && order.items[0]?.foto ? (
-                                    <Image source={{ uri: order.items[0].foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                                    <Image 
+                                      source={{ uri: order.items[0].foto }} 
+                                      style={{ width: '100%', height: '100%' }} 
+                                      contentFit="cover"
+                                      cachePolicy="memory-disk"
+                                    />
                                   ) : (
                                     <Package size={28} color="#D1D5DB" />
                                   )}
@@ -905,7 +1038,12 @@ const Header = React.memo(function Header() {
                   cart.map((item) => (
                     <View key={item.firebaseId || `${item.ID_productos}-${item.medida}`} style={{ flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 15, borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } }}>
                       <View style={{ width: 100, height: 100, backgroundColor: '#FFF7F0', borderRadius: 16, overflow: 'hidden' }}>
-                        <Image source={{ uri: item.foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                        <Image 
+                          source={{ uri: item.foto }} 
+                          style={{ width: '100%', height: '100%' }} 
+                          contentFit="cover"
+                          cachePolicy="memory-disk"
+                        />
                       </View>
                       <View style={{ flex: 1, marginLeft: 15, justifyContent: 'space-between' }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>

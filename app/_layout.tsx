@@ -14,26 +14,42 @@ import { ProductsProvider } from '../context/ProductsContext';
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { useState } from 'react';
-import { Vibration, AppState } from 'react-native';
+import { Vibration, AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
-let Notifications: any = null;
-try {
-  Notifications = require('expo-notifications');
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    }),
-  });
-} catch (e) {
-  console.log('Notifications not available in this environment');
+// Unified dynamic import helper to avoid crashes in Expo Go Android
+const getNotificationsModule = () => {
+  if (Platform.OS === 'android' && Constants.appOwnership === 'expo') {
+    return null;
+  }
+  try {
+    return require('expo-notifications');
+  } catch (e) {
+    return null;
+  }
+};
+
+const Notifications = getNotificationsModule();
+if (Notifications) {
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  } catch (e) {
+    console.log('Error setting notification handler');
+  }
 }
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const alarmSound = useAudioPlayer(require('../assets/audio/saku_compra.mp3'));
+  alarmSound.loop = true;
   const pathname = usePathname();
   const [loaded, error] = useFonts({
     'Ionicons': require('../assets/fonts/Ionicons.ttf'),
@@ -46,157 +62,110 @@ export default function RootLayout() {
 
 
   useEffect(() => {
+    // 1. Auth & Push Registration
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // Registrar para notificaciones Push cada vez que se inicia la app o cambia el usuario
-        const { registerForPushNotificationsAsync } = require('../lib/notifications');
-        registerForPushNotificationsAsync(currentUser.uid).catch((err: any) => {
-          console.log('Error registering push notifications on layout load:', err);
-        });
+        // Defer push registration to avoid blocking the UI thread
+        setTimeout(() => {
+          const { registerForPushNotificationsAsync } = require('../lib/notifications');
+          registerForPushNotificationsAsync(currentUser.uid).catch((err: any) => {
+            console.log('Error registering push notifications:', err);
+          });
+        }, 2000); // 2 seconds delay
       }
     });
-    return () => unsubscribe();
-  }, []);
 
-  useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, error]);
+    // 2. Heavy Setup (Audio, Notifications, Alarm) - Defer until interactions finish
+    const { InteractionManager } = require('react-native');
+    InteractionManager.runAfterInteractions(() => {
+      setupHeavyModules();
+    });
 
-  useEffect(() => {
-    // Listen for notification responses (clicks)
-    let subscription: any = null;
-    try {
-      if (Notifications && Notifications.addNotificationResponseReceivedListener) {
-        subscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
-          const data = response.notification.request.content.data;
-          if (data?.orderId) {
-            router.push(`/orders/${data.orderId}`);
-          } else {
-            router.push('/orders');
-          }
-        });
+    // 3. Clear Notification Badge on Open (iOS)
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        const NotificationsModule = getNotificationsModule();
+        if (NotificationsModule && Platform.OS === 'ios') {
+          NotificationsModule.setBadgeCountAsync(0).catch(() => {});
+        }
       }
-    } catch (e) {
-      console.log('Notifications not available in this environment');
+    };
+
+    const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+    
+    // Initial clear
+    const NotificationsModule = getNotificationsModule();
+    if (NotificationsModule && Platform.OS === 'ios') {
+      NotificationsModule.setBadgeCountAsync(0).catch(() => {});
     }
 
     return () => {
-      if (subscription) subscription.remove();
+      unsubscribe();
+      appStateSubscription.remove();
     };
   }, []);
 
-  // Persistent Alarm Logic (Replicating Admin behavior)
-  useEffect(() => {
-    let soundObject: any = null;
-    let vibrationInterval: any = null;
-    
-    const getAudio = () => {
-      try { return require('expo-av').Audio; } catch (e) { return null; }
-    };
-    const getNotifications = () => {
-      try { return require('expo-notifications'); } catch (e) { return null; }
-    };
+  const setupHeavyModules = async () => {
+    // Setup Audio Mode (permite sonido en modo silencioso en iOS)
+    try {
+      await setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+    } catch (e) { console.log("Audio setup error:", e); }
 
-    const setupAudio = async () => {
-      const AudioModule = getAudio();
-      if (AudioModule) {
-        try {
-          await AudioModule.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            staysActiveInBackground: true,
-            interruptionModeIOS: (AudioModule as any).INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            interruptionModeAndroid: (AudioModule as any).INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-            playThroughEarpieceAndroid: false,
-          });
-        } catch (e) { console.log("Audio mode setup error:", e); }
-      }
-    };
-    setupAudio();
-
-    const startAlarm = async () => {
-      if (isAlarmActive) return;
-      console.log("ALARM: Starting persistent alert for Tienda...");
-      setIsAlarmActive(true);
-      const AudioModule = getAudio();
-      if (!AudioModule) return;
-
-      try {
-        if (!soundObject) {
-          const { sound } = await AudioModule.Sound.createAsync(
-            require('../assets/audio/saku_compra.mp3'),
-            { 
-              shouldPlay: true, 
-              isLooping: true, 
-              volume: 1.0,
-              androidImplementation: 'MediaPlayer'
-            },
-            (status: any) => {
-               if (status.isLoaded && !status.isPlaying && status.didJustFinish && !status.isLooping) {
-                 sound.replayAsync();
-               }
-            }
-          );
-          soundObject = sound;
-        }
-        
-        await soundObject.setStatusAsync({ shouldPlay: true, isLooping: true, volume: 1.0 });
-
-        Vibration.cancel();
-        Vibration.vibrate([1000, 500, 1000, 500], true);
-        vibrationInterval = "active";
-      } catch (err) { console.error("Error starting alarm:", err); }
-    };
-
-    const stopAlarm = async () => {
-      setIsAlarmActive(false);
-      try {
-        if (soundObject) {
-          await soundObject.stopAsync();
-          await soundObject.unloadAsync();
-          soundObject = null;
-        }
-        if (vibrationInterval) {
-          Vibration.cancel();
-          vibrationInterval = null;
-        }
-      } catch (err) { console.error("Error stopping alarm:", err); }
-    };
-
-    let notificationListener: any;
-    let responseListener: any;
-    const NotificationsModule = getNotifications();
-
+    // Setup Notification Listeners
+    const NotificationsModule = getNotificationsModule();
     if (NotificationsModule && Constants.appOwnership !== 'expo') {
-      notificationListener = NotificationsModule.addNotificationReceivedListener((notification: any) => {
-        console.log("ALARM: Notification received, triggering alarm");
+      NotificationsModule.addNotificationReceivedListener((notification: any) => {
+        const { Alert: RNAlert } = require('react-native');
+        RNAlert.alert(
+          notification.request.content.title || 'Notificación Recibida',
+          notification.request.content.body || 'Has recibido una nueva actualización.',
+          [{ text: 'OK' }]
+        );
         startAlarm();
       });
 
-      responseListener = NotificationsModule.addNotificationResponseReceivedListener((response: any) => {
+      NotificationsModule.addNotificationResponseReceivedListener((response: any) => {
         stopAlarm();
+        const data = response.notification.request.content.data;
+        if (data?.orderId) router.push(`/orders/${data.orderId}`);
+        else router.push('/orders');
       });
     }
+  };
 
-    const appStateListener = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        stopAlarm();
-      }
-    });
+  const startAlarm = async () => {
+    if (isAlarmActive) return;
+    setIsAlarmActive(true);
+    try {
+      alarmSound.play();
+      Vibration.vibrate([1000, 500, 1000, 500], true);
+    } catch (err) { console.error("Alarm error:", err); }
+  };
 
-    stopAlarm(); 
+  const stopAlarm = async () => {
+    setIsAlarmActive(false);
+    try {
+      alarmSound.pause();
+      Vibration.cancel();
+    } catch (err) { console.error("Stop alarm error:", err); }
+  };
 
-    return () => {
-      if (notificationListener) notificationListener.remove();
-      if (responseListener) responseListener.remove();
-      appStateListener.remove();
-      stopAlarm();
-    };
-  }, []);
+  useEffect(() => {
+    if (loaded || error) {
+      // Small delay to ensure the first frame is painted before hiding splash
+      setTimeout(() => SplashScreen.hideAsync(), 100);
+    }
+  }, [loaded, error]);
+
+  // Rest of the component logic...
+
 
   if (!loaded && !error) {
     return null;

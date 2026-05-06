@@ -1,0 +1,1722 @@
+★ eas-cli@18.10.0 is now available.
+To upgrade, run:
+npm install -g eas-cli
+Proceeding with outdated version.
+
+
+⚠️ Detected that your app uses Expo Go for development, this is not recommended when building production apps.
+Learn more: https://expo.fyi/why-not-build-expo-go-for-production
+To suppress this warning, set EAS_BUILD_NO_EXPO_GO_WARNING=true.
+
+The field "cli.appVersionSource" is not set, but it will be required in the future. Learn more: https://docs.expo.dev/build-reference/app-versions/
+Resolved "production" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
+No environment variables with visibility "Plain text" and "Sensitive" found for the "production" environment on EAS.
+
+The field "cli.appVersionSource" is not set, but it will be required in the future. Learn more: https://docs.expo.dev/build-reference/app-versions/
+✔ Using remote iOS credentials (Expo server)
+
+Distribution Certificate is not validated for non-interactive builds.
+Skipping Provisioning Profile validation on Apple Servers because we aren't authenticated.
+
+Project Credentials Configuration
+
+Project                   @lusvin502gt/tienda-saku
+Bundle Identifier         com.SAKUtienda.cl
+                          
+App Store Configuration   
+                          
+Distribution Certificate  
+Serial Number             E58473DC744A9566969C88D219FA623
+Expiration Date           Mon, 01 Mar 2027 14:11:38 CST
+Apple Team                4H4BJH5HJX (Vet animal welfare Diana delgado E.I.R.L (Company/Organization))
+Updated                   2 months ago
+                          
+Provisioning Profile      
+Developer Portal ID       J5UC6863BF
+Status                    active
+Expiration                Mon, 01 Mar 2027 14:11:38 CST
+Apple Team                4H4BJH5HJX (Vet animal welfare Diana delgado E.I.R.L (Company/Organization))
+Updated                   2 days ago
+                          
+All credentials are ready to build @lusvin502gt/tienda-saku (com.SAKUtienda.cl)
+
+⠋ Compressing project files⠙ Compressing project files⠹ Compressing project files⠸ Compressing project files⠼ Compressing project files⠴ Compressing project files✔ Compressed project files 1s (25.7 MB)
+⠋ Computing project fingerprint⠙ Computing project fingerprint⠹ Computing project fingerprint⠸ Computing project fingerprint⠼ Computing project fingerprint⠴ Computing project fingerprint⠦ Computing project fingerprint⠧ Computing project fingerprint⠇ Computing project fingerprint⠏ Computing project fingerprint⠋ Computing project fingerprint⠙ Computing project fingerprint⠹ Computing project fingerprint⠸ Computing project fingerprint⠼ Computing project fingerprint⠴ Computing project fingerprint⠦ Computing project fingerprint✔ Computed project fingerprint
+[SETUP_WORKINGDIR] Preparing workingdir /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8
+[START_BUILD] Starting build
+  "job": {
+    "type": "managed",
+    "platform": "ios",
+    "projectArchive": {
+      "type": "PATH",
+      "path": "/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-cli-nodejs/da52feeb-03cc-4ce2-af68-73c52662dace.tar.gz"
+    },
+    "projectRootDirectory": ".",
+    "builderEnvironment": {
+      "env": {}
+    },
+    "cache": {
+      "disabled": false,
+      "paths": [],
+      "clear": false
+    },
+    "updates": {},
+    "scheme": "TiendaSaku",
+    "username": "lusvin502gt",
+    "experimental": {},
+    "mode": "build",
+    "triggeredBy": "EAS_CLI",
+    "appId": "a57684e9-cbfa-45dc-8991-74193b1b62a7",
+    "initiatingUserId": "af5db41a-9aa8-4978-aa7c-46d5ee177a26"
+  }
+Local build, skipping project archive refresh
+[READ_EAS_JSON] Using eas.json:
+[READ_EAS_JSON] {
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {}
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "sakudeveloperchile@gmail.com",
+        "ascAppId": "6472793617"
+      }
+    }
+  }
+}
+
+[READ_PACKAGE_JSON] Using package.json:
+[READ_PACKAGE_JSON] {
+  "name": "tienda",
+  "version": "1.0.1",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~55.0.3",
+    "expo-av": "^16.0.8",
+    "expo-blur": "~55.0.14",
+    "expo-clipboard": "~55.0.13",
+    "expo-constants": "~55.0.15",
+    "expo-device": "~55.0.15",
+    "expo-font": "~55.0.4",
+    "expo-image": "~55.0.9",
+    "expo-image-picker": "~55.0.19",
+    "expo-linear-gradient": "^55.0.13",
+    "expo-linking": "~55.0.7",
+    "expo-location": "~55.1.8",
+    "expo-notifications": "~55.0.20",
+    "expo-router": "~55.0.3",
+    "expo-splash-screen": "~55.0.10",
+    "expo-status-bar": "~55.0.4",
+    "expo-video": "~55.0.15",
+    "firebase": "^12.9.0",
+    "framer-motion": "^12.38.0",
+    "lucide-react-native": "^1.8.0",
+    "nativewind": "^4.2.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.4",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.23.0",
+    "react-native-svg": "15.15.3",
+    "react-native-web": "~0.21.0",
+    "react-native-webview": "13.16.0",
+    "react-native-worklets": "0.7.2",
+    "tailwindcss": "3.4.1",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
+[INSTALL_DEPENDENCIES] Running "npm ci --include=dev" in /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build directory
+[INSTALL_DEPENDENCIES] npm warn ERESOLVE overriding peer dependency
+[INSTALL_DEPENDENCIES] npm warn While resolving: expo-modules-core@55.0.22
+[INSTALL_DEPENDENCIES] npm warn Found: react-native-worklets@0.7.2
+[INSTALL_DEPENDENCIES] npm warn node_modules/react-native-worklets
+[INSTALL_DEPENDENCIES] npm warn   react-native-worklets@"0.7.2" from the root project
+[INSTALL_DEPENDENCIES] npm warn   1 more (react-native-reanimated)
+[INSTALL_DEPENDENCIES] npm warn
+[INSTALL_DEPENDENCIES] npm warn Could not resolve dependency:
+[INSTALL_DEPENDENCIES] npm warn peerOptional react-native-worklets@"^0.7.4 || ^0.8.0" from expo-modules-core@55.0.22
+[INSTALL_DEPENDENCIES] npm warn node_modules/expo-modules-core
+[INSTALL_DEPENDENCIES] npm warn   expo-modules-core@"55.0.22" from expo@55.0.15
+[INSTALL_DEPENDENCIES] npm warn   node_modules/expo
+[INSTALL_DEPENDENCIES] npm warn
+[INSTALL_DEPENDENCIES] npm warn Conflicting peer dependency: react-native-worklets@0.8.3
+[INSTALL_DEPENDENCIES] npm warn node_modules/react-native-worklets
+[INSTALL_DEPENDENCIES] npm warn   peerOptional react-native-worklets@"^0.7.4 || ^0.8.0" from expo-modules-core@55.0.22
+[INSTALL_DEPENDENCIES] npm warn   node_modules/expo-modules-core
+[INSTALL_DEPENDENCIES] npm warn     expo-modules-core@"55.0.22" from expo@55.0.15
+[INSTALL_DEPENDENCIES] npm warn     node_modules/expo
+[INSTALL_DEPENDENCIES] npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+[INSTALL_DEPENDENCIES] npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+[INSTALL_DEPENDENCIES] npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+[INSTALL_DEPENDENCIES] npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+[INSTALL_DEPENDENCIES] npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+[INSTALL_DEPENDENCIES] npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+[INSTALL_DEPENDENCIES] added 829 packages, and audited 830 packages in 8s
+[INSTALL_DEPENDENCIES] 
+[INSTALL_DEPENDENCIES] 67 packages are looking for funding
+[INSTALL_DEPENDENCIES] run `npm fund` for details
+[INSTALL_DEPENDENCIES] 11 moderate severity vulnerabilities
+[INSTALL_DEPENDENCIES] 
+[INSTALL_DEPENDENCIES] To address all issues (including breaking changes), run:
+[INSTALL_DEPENDENCIES]   npm audit fix --force
+[INSTALL_DEPENDENCIES] 
+[INSTALL_DEPENDENCIES] Run `npm audit` for details.
+The NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set.
+Proceeding without mode-specific .env
+[READ_APP_CONFIG] Using app configuration:
+[READ_APP_CONFIG] {
+  "name": "Tienda Saku",
+  "slug": "tienda-saku",
+  "version": "10.90.15",
+  "orientation": "portrait",
+  "icon": "./assets/images/logo_saku_cl.png",
+  "scheme": "tiendasaku",
+  "userInterfaceStyle": "automatic",
+  "newArchEnabled": true,
+  "splash": {
+    "image": "./assets/images/logo_saku_cl.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#ffffff"
+  },
+  "ios": {
+    "supportsTablet": true,
+    "bundleIdentifier": "com.SAKUtienda.cl",
+    "buildNumber": "50",
+    "appleTeamId": "4H4BJH5HJX",
+    "googleServicesFile": "./GoogleService-Info.plist",
+    "associatedDomains": [
+      "applinks:saku-tienda.web.app"
+    ],
+    "infoPlist": {
+      "ITSAppUsesNonExemptEncryption": false,
+      "UIBackgroundModes": [
+        "remote-notification"
+      ]
+    }
+  },
+  "android": {
+    "package": "com.SAKUtienda.cl",
+    "versionCode": 46,
+    "googleServicesFile": "./google-services.json",
+    "intentFilters": [
+      {
+        "action": "VIEW",
+        "autoVerify": true,
+        "data": [
+          {
+            "scheme": "https",
+            "host": "saku-tienda.web.app",
+            "pathPrefix": "/"
+          }
+        ],
+        "category": [
+          "BROWSABLE",
+          "DEFAULT"
+        ]
+      }
+    ],
+    "adaptiveIcon": {
+      "backgroundColor": "#ffffff",
+      "foregroundImage": "./assets/images/logo_saku_cl.png"
+    }
+  },
+  "web": {
+    "bundler": "metro",
+    "output": "static",
+    "favicon": "./assets/images/logo_saku_cl.png"
+  },
+  "plugins": [
+    "expo-router",
+    [
+      "expo-notifications",
+      {
+        "icon": "./assets/images/ic_stat_notification.png",
+        "color": "#63348C",
+        "sounds": [
+          "./assets/audio/saku_compra.mp3"
+        ]
+      }
+    ],
+    "expo-video",
+    "expo-image"
+  ],
+  "experiments": {
+    "typedRoutes": true
+  },
+  "extra": {
+    "router": {},
+    "eas": {
+      "projectId": "a57684e9-cbfa-45dc-8991-74193b1b62a7"
+    }
+  },
+  "sdkVersion": "55.0.0",
+  "platforms": [
+    "ios",
+    "android",
+    "web"
+  ]
+}
+[RUN_EXPO_DOCTOR] Running "expo doctor"
+[RUN_EXPO_DOCTOR] Running 18 checks on your project...
+[RUN_EXPO_DOCTOR] 15/18 checks passed. 3 checks failed. Possible issues detected:
+[RUN_EXPO_DOCTOR] Use the --verbose flag to see more details about passed checks.
+[RUN_EXPO_DOCTOR] 
+[RUN_EXPO_DOCTOR] ✖ Check Expo config (app.json/ app.config.js) schema
+[RUN_EXPO_DOCTOR] Error validating fields in /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/app.json:
+[RUN_EXPO_DOCTOR]  should NOT have additional property 'newArchEnabled'.
+[RUN_EXPO_DOCTOR] Advice:
+[RUN_EXPO_DOCTOR] Resolve schema errors in your app config. Learn more: https://docs.expo.dev/workflow/configuration/
+[RUN_EXPO_DOCTOR] ✖ Validate packages against React Native Directory package metadata
+[RUN_EXPO_DOCTOR] The following issues were found when validating your dependencies against React Native Directory:
+[RUN_EXPO_DOCTOR]   Unmaintained: expo-av
+[RUN_EXPO_DOCTOR] Advice:
+[RUN_EXPO_DOCTOR] Use libraries that are actively maintained and support the New Architecture. Find alternative libraries with https://reactnative.directory.
+[RUN_EXPO_DOCTOR] Add packages to expo.doctor.reactNativeDirectoryCheck.exclude in package.json to selectively skip validations, if the warning is not relevant.
+[RUN_EXPO_DOCTOR] 
+[RUN_EXPO_DOCTOR] ✖ Check that packages match versions required by installed Expo SDK
+[RUN_EXPO_DOCTOR] 
+[RUN_EXPO_DOCTOR] 🔧 Patch version mismatches
+[RUN_EXPO_DOCTOR] package                expected  found    
+[RUN_EXPO_DOCTOR] expo                   ~55.0.20  55.0.15  
+[RUN_EXPO_DOCTOR] expo-linking           ~55.0.14  55.0.13  
+[RUN_EXPO_DOCTOR] expo-notifications     ~55.0.22  55.0.20  
+[RUN_EXPO_DOCTOR] expo-router            ~55.0.13  55.0.12  
+[RUN_EXPO_DOCTOR] expo-splash-screen     ~55.0.19  55.0.18  
+[RUN_EXPO_DOCTOR] react-native           0.83.6    0.83.4   
+[RUN_EXPO_DOCTOR] react-native-worklets  0.7.4     0.7.2    
+[RUN_EXPO_DOCTOR] 
+[RUN_EXPO_DOCTOR] Changelogs:
+[RUN_EXPO_DOCTOR] - expo-linking → https://github.com/expo/expo/blob/sdk-55/packages/expo-linking/CHANGELOG.md
+[RUN_EXPO_DOCTOR] - expo-notifications → https://github.com/expo/expo/blob/sdk-55/packages/expo-notifications/CHANGELOG.md
+[RUN_EXPO_DOCTOR] - expo-router → https://github.com/expo/expo/blob/sdk-55/packages/expo-router/CHANGELOG.md
+[RUN_EXPO_DOCTOR] - expo-splash-screen → https://github.com/expo/expo/blob/sdk-55/packages/expo-splash-screen/CHANGELOG.md
+[RUN_EXPO_DOCTOR] 
+[RUN_EXPO_DOCTOR] 7 packages out of date.
+[RUN_EXPO_DOCTOR] Advice:
+[RUN_EXPO_DOCTOR] Use 'npx expo install --check' to review and upgrade your dependencies.
+[RUN_EXPO_DOCTOR] To ignore specific packages, add them to "expo.install.exclude" in package.json. Learn more: https://expo.fyi/dependency-validation
+[RUN_EXPO_DOCTOR] 3 checks failed, indicating possible issues with the project.
+[RUN_EXPO_DOCTOR] Command "expo doctor" failed.
+Error: npx -y expo-doctor exited with non-zero code: 1
+    at ChildProcess.completionListener (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/spawn-async/build/spawnAsync.js:42:23)
+    at Object.onceWrapper (node:events:623:12)
+    at ChildProcess.emit (node:events:508:20)
+    at maybeClose (node:internal/child_process:1084:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5)
+    ...
+    at spawnAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/spawn-async/build/spawnAsync.js:7:23)
+    at spawn (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/turtle-spawn/dist/index.js:16:47)
+    at runExpoDoctor (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/common/setup.js:143:52)
+    at async /Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/common/setup.js:122:17
+    at async BuildContext.runBuildPhase (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/context.js:123:28)
+    at async setupAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/common/setup.js:120:9)
+    at async buildAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/builders/ios.js:50:5)
+    at async runBuilderWithHooksAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/builders/common.js:12:13)
+    at async Object.iosBuilder (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/builders/ios.js:37:16)
+    at async buildIosAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/eas-cli-local-build-plugin/dist/ios.js:43:12)
+[PREPARE_CREDENTIALS] Preparing credentials
+[PREPARE_CREDENTIALS] Creating keychain
+[PREPARE_CREDENTIALS] Preparing credentials for target 'TiendaSaku'
+[PREPARE_CREDENTIALS] Getting distribution certificate fingerprint and common name
+[PREPARE_CREDENTIALS] Fingerprint = "62D2EF2D9E362A1EF049320646A95A448097CC8D", common name = iPhone Distribution: Vet animal welfare Diana delgado E.I.R.L (4H4BJH5HJX)
+[PREPARE_CREDENTIALS] Writing distribution certificate to /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/1948ebdf-370a-4f53-ad92-a10c3b7462f4.p12
+[PREPARE_CREDENTIALS] Importing distribution certificate into the keychain
+[PREPARE_CREDENTIALS] Initializing provisioning profile
+[PREPARE_CREDENTIALS] Validating whether the distribution certificate has been imported successfully
+[PREPARE_CREDENTIALS] Verifying whether the distribution certificate and provisioning profile match
+[PREBUILD] - Creating native directory (./ios)
+[PREBUILD] ✔ Created native directory
+[PREBUILD] - Updating package.json
+[PREBUILD] ✔ Updated package.json | no changes
+[PREBUILD] - Running prebuild
+[PREBUILD] ✔ Finished prebuild
+[PREBUILD] Running "npm install" in /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build directory
+[PREBUILD] npm warn ERESOLVE overriding peer dependency
+[PREBUILD] npm warn While resolving: expo-modules-core@55.0.22
+[PREBUILD] npm warn Found: react-native-worklets@0.7.2
+[PREBUILD] npm warn node_modules/react-native-worklets
+[PREBUILD] npm warn   react-native-worklets@"0.7.2" from the root project
+[PREBUILD] npm warn   1 more (react-native-reanimated)
+[PREBUILD] npm warn
+[PREBUILD] npm warn Could not resolve dependency:
+[PREBUILD] npm warn peerOptional react-native-worklets@"^0.7.4 || ^0.8.0" from expo-modules-core@55.0.22
+[PREBUILD] npm warn node_modules/expo-modules-core
+[PREBUILD] npm warn   expo-modules-core@"55.0.22" from expo@55.0.15
+[PREBUILD] npm warn   node_modules/expo
+[PREBUILD] npm warn
+[PREBUILD] npm warn Conflicting peer dependency: react-native-worklets@0.8.3
+[PREBUILD] npm warn node_modules/react-native-worklets
+[PREBUILD] npm warn   peerOptional react-native-worklets@"^0.7.4 || ^0.8.0" from expo-modules-core@55.0.22
+[PREBUILD] npm warn   node_modules/expo-modules-core
+[PREBUILD] npm warn     expo-modules-core@"55.0.22" from expo@55.0.15
+[PREBUILD] npm warn     node_modules/expo
+[PREBUILD] up to date, audited 830 packages in 1s
+[PREBUILD] 67 packages are looking for funding
+[PREBUILD]   run `npm fund` for details
+[PREBUILD] 11 moderate severity vulnerabilities
+[PREBUILD] 
+[PREBUILD] To address all issues (including breaking changes), run:
+[PREBUILD]   npm audit fix --force
+[PREBUILD] 
+[PREBUILD] Run `npm audit` for details.
+[RESTORE_CACHE] Local builds do not support restoring cache
+[INSTALL_PODS] Using Expo modules
+[INSTALL_PODS] [Expo] Enabling modular headers for pod ExpoModulesCore
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-RCTAppDelegate
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-RCTFabric
+[INSTALL_PODS] [Expo] Enabling modular headers for pod ReactAppDependencyProvider
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-Core
+[INSTALL_PODS] [Expo] Enabling modular headers for pod ReactCodegen
+[INSTALL_PODS] [Expo] Enabling modular headers for pod RCTRequired
+[INSTALL_PODS] [Expo] Enabling modular headers for pod RCTTypeSafety
+[INSTALL_PODS] [Expo] Enabling modular headers for pod ReactCommon
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-NativeModulesApple
+[INSTALL_PODS] [Expo] Enabling modular headers for pod Yoga
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-Fabric
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-graphics
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-utils
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-featureflags
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-debug
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-ImageManager
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-rendererdebug
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-jsi
+[INSTALL_PODS] [Expo] Enabling modular headers for pod React-renderercss
+[INSTALL_PODS] [Expo] Enabling modular headers for pod hermes-engine
+[INSTALL_PODS] [Expo] Enabling modular headers for pod glog
+[INSTALL_PODS] [Expo] Enabling modular headers for pod boost
+[INSTALL_PODS] [Expo] Enabling modular headers for pod DoubleConversion
+[INSTALL_PODS] [Expo] Enabling modular headers for pod fast_float
+[INSTALL_PODS] [Expo] Enabling modular headers for pod fmt
+[INSTALL_PODS] [Expo] Enabling modular headers for pod RCT-Folly
+[INSTALL_PODS] [Expo] Enabling modular headers for pod SocketRocket
+[INSTALL_PODS] [Expo] Enabling modular headers for pod SDWebImage
+[INSTALL_PODS] [Expo] Enabling modular headers for pod SDWebImageAVIFCoder
+[INSTALL_PODS] [Expo] Enabling modular headers for pod SDWebImageSVGCoder
+[INSTALL_PODS] [Expo] Enabling modular headers for pod SDWebImageWebPCoder
+[INSTALL_PODS] [Expo] Enabling modular headers for pod libavif
+[INSTALL_PODS] [Expo] Enabling modular headers for pod RNScreens
+[INSTALL_PODS] [RNScreens] Gamma project enabled. Including source files.
+[INSTALL_PODS] Found 8 modules for target `TiendaSaku`
+[INSTALL_PODS] link_native_modules! {ios_packages: [{configurations: [], name: "@react-native-async-storage/async-storage", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/@react-native-async-storage/async-storage", path: "../node_modules/@react-native-async-storage/async-storage", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec", script_phases: []}, {configurations: [], name: "expo", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo", path: "../node_modules/expo", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo/Expo.podspec", script_phases: []}, {configurations: [], name: "react-native-reanimated", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-reanimated", path: "../node_modules/react-native-reanimated", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-reanimated/RNReanimated.podspec", script_phases: []}, {configurations: [], name: "react-native-safe-area-context", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-safe-area-context", path: "../node_modules/react-native-safe-area-context", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec", script_phases: []}, {configurations: [], name: "react-native-screens", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-screens", path: "../node_modules/react-native-screens", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-screens/RNScreens.podspec", script_phases: []}, {configurations: [], name: "react-native-svg", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-svg", path: "../node_modules/react-native-svg", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-svg/RNSVG.podspec", script_phases: []}, {configurations: [], name: "react-native-webview", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-webview", path: "../node_modules/react-native-webview", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-webview/react-native-webview.podspec", script_phases: []}, {configurations: [], name: "react-native-worklets", root: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-worklets", path: "../node_modules/react-native-worklets", podspec_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-worklets/RNWorklets.podspec", script_phases: []}], ios_project_root_path: "/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios", react_native_path: "../node_modules/react-native"}
+[INSTALL_PODS] [RNScreens] Gamma project enabled. Including source files.
+[INSTALL_PODS] Auto-linking React Native modules for target `TiendaSaku`: RNCAsyncStorage, RNReanimated, RNSVG, RNScreens, RNWorklets, react-native-safe-area-context, and react-native-webview
+[INSTALL_PODS] Framework build type is static library
+[INSTALL_PODS] [ReactNativeDependencies] Setting up ReactNativeDependencies...
+[INSTALL_PODS] [ReactNativeDependencies] Building from source: false
+[INSTALL_PODS] [ReactNativeDependencies] Using tarball from URL: https://repo1.maven.org/maven2/com/facebook/react/react-native-artifacts/0.83.4/react-native-artifacts-0.83.4-reactnative-dependencies-debug.tar.gz
+[INSTALL_PODS] % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+[INSTALL_PODS] Dload  Upload   Total   Spent    Left  Speed
+[INSTALL_PODS]   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 100 17.8M  100 17.8M    0     0  21.8
+[INSTALL_PODS] M      0 --:--:-- --:--:-- --:--:-- 21.8M
+[INSTALL_PODS] % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+[INSTALL_PODS] Dload  Upload   Total   Spent    Left  Speed
+[INSTALL_PODS]   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 100  9.9M  100  9.9M    0     0  12.9M      0 --:--:-- --:--:-- --:--:-- 12.9M
+[INSTALL_PODS] [ReactNativeDependencies] Source: {http: "file:///private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/Pods/ReactNativeDependencies-artifacts/reactnative-dependencies-0.83.4-debug.tar.gz"}
+[INSTALL_PODS] [ReactNativeCore] Setting up ReactNativeCore...
+[INSTALL_PODS] [ReactNativeCore] Building from source: false
+[INSTALL_PODS] Configuring the target with the New Architecture
+[INSTALL_PODS] [ReactNativeCore] Using React Native Core and React Native Dependencies prebuilt versions.
+[INSTALL_PODS] [36m[1m[Codegen][0m Analyzing /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/package.json[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for codegen-enabled libraries in the app.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mThe "codegenConfig" field is not defined in package.json. Assuming there is nothing to generate at the app level.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for codegen-enabled libraries in react-native.config.js[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Found @react-native-async-storage/async-storage[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Found react-native-reanimated[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Found react-native-safe-area-context[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Found react-native-screens[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Found react-native-svg[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Found react-native-webview[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Found react-native-worklets[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Processing rnasyncstorage[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rnasyncstorage[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Processing rnreanimated[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rnreanimated[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Processing safeareacontext[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for safeareacontext[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Processing rnscreens[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Supported Apple platforms: ios, tvos, visionos for rnscreens[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Processing rnsvg[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rnsvg[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Processing RNCWebViewSpec[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Supported Apple platforms: ios, macos, visionos for RNCWebViewSpec[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Processing rnworklets[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rnworklets[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Native Code for rnasyncstorage - ios[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifacts: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Native Code for rnreanimated - ios[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifacts: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Native Code for safeareacontext - ios[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifacts: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Native Code for rnscreens - ios[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifacts: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Native Code for rnsvg - ios[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifacts: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Native Code for RNCWebViewSpec - ios[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifacts: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Native Code for rnworklets - ios[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifacts: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating RCTThirdPartyComponentsProvider.h[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifact: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen/RCTThirdPartyComponentsProvider.h[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating RCTThirdPartyComponentsProvider.mm[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifact: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen/RCTThirdPartyComponentsProvider.mm[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating RCTModulesProvider.h[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifact: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen/RCTModuleProviders.h[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating RCTModuleProviders.mm[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifact: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen/RCTModuleProviders.mm[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating RCTAppDependencyProvider[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifact: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactAppDependencyProvider/RCTAppDependencyProvider.h[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifact: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactAppDependencyProvider/RCTAppDependencyProvider.mm[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated podspec: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactAppDependencyProvider/ReactAppDependencyProvider.podspec[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated podspec: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/ReactCodegen/ReactCodegen.podspec[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generating Package.swift[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m Generated artifact: /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/build/generated/ios/Package.swift[0m
+[INSTALL_PODS] [36m[1m[Codegen][0m [33mDone.[0m
+[INSTALL_PODS] Analyzing dependencies
+[INSTALL_PODS] [RNScreens] Gamma project enabled. Including source files.
+[INSTALL_PODS] Fetching podspec for `React-Core-prebuilt` from `../node_modules/react-native/React-Core-prebuilt.podspec`
+[INSTALL_PODS] [ReactNativeCore] Downloading ReactNativeCore-prebuilt debug tarball from https://repo1.maven.org/maven2/com/facebook/react/react-native-artifacts/0.83.4/react-native-artifacts-0.83.4-reactnative-core-debug.tar.gz to ../../ios/Pods/ReactNativeCore-artifacts/reactnative-core-0.83.4-debug.tar.gz
+[INSTALL_PODS] % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+[INSTALL_PODS] Dload  Upload   Total   Spent    Left  Speed
+[INSTALL_PODS]   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 21 87.3M   21 18.6M    0     0  20.7M      0  0:00:04 --:--:--  0:00:04 20.7M
+[INSTALL_PODS] 63 87.3M   63 55.5M    0     0  29.2M      0  0:00:02  0:00:01  0:00:01 29.2M
+[INSTALL_PODS] 92 87.3M   92 80.8M    0     0  27.8M      0  0:00:03  0:00:02  0:00:01 27.8M
+[INSTALL_PODS] 100 87.3M  100 87.3M    0     0  27.3M      0  0:00:03  0:00:03 --:--:-- 27.3M
+[INSTALL_PODS] [ReactNativeCore] Downloading ReactNativeCore-prebuilt release tarball from https://repo1.maven.org/maven2/com/facebook/react/react-native-artifacts/0.83.4/react-native-artifacts-0.83.4-reactnative-core-release.tar.gz to ../../ios/Pods/ReactNativeCore-artifacts/reactnative-core-0.83.4-release.tar.gz
+[INSTALL_PODS] % Total    % Received % Xferd  Average Speed
+[INSTALL_PODS] Time    Time     Time  Current
+[INSTALL_PODS]                                  Dload  Upload   Total   Spent    Left  Speed
+[INSTALL_PODS]   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 58 27.7M   58 16.3M    0     0  23.8M      0  0:00:01 --:--:--  0:00:01 2
+[INSTALL_PODS] 3.8M
+[INSTALL_PODS] 100 27.7M  100 27.7M    0     0  23.4M      0  0:00:01  0:0
+[INSTALL_PODS] 0:01 --:--:-- 23.4M
+[INSTALL_PODS] [ReactNativeCore] Resolved stable ReactNativeCore-prebuilt version:
+[INSTALL_PODS] [ReactNativeCore]   ../../ios/Pods/ReactNativeCore-artifacts/reactnative-core-0.83.4-debug.tar.gz
+[INSTALL_PODS] [ReactNativeCore]   ../../ios/Pods/ReactNativeCore-artifacts/reactnative-core-0.83.4-release.tar.gz
+[INSTALL_PODS] Fetching podspec for `ReactNativeDependencies` from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`
+[INSTALL_PODS] [ReactNativeDependencies] Using tarball from URL: https://repo1.maven.org/maven2/com/facebook/react/react-native-artifacts/0.83.4/react-native-artifacts-0.83.4-reactnative-dependencies-debug.tar.gz
+[INSTALL_PODS] Fetching podspec for `hermes-engine` from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`
+[INSTALL_PODS] [Hermes] Using release tarball from URL: https://repo1.maven.org/maven2/com/facebook/hermes/hermes-ios/0.14.1/hermes-ios-0.14.1-hermes-ios-debug.tar.gz
+[INSTALL_PODS] % Total    % Received % Xferd  Average Speed   Time    Time     Time  Curren
+[INSTALL_PODS] t
+[INSTALL_PODS]                                  Dload  Upload   Total   Spent    Left  Speed
+[INSTALL_PODS]   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 69 29.0M   69 20.3M    0     0  19.0M      0  0:00:01  0:00:01 --:--:-- 19.0
+[INSTALL_PODS] M
+[INSTALL_PODS] 100 29.0M  100 29.0M    0     0  19.8M      0  0:00:01  0:00:01 --:--:-- 19.8M
+[INSTALL_PODS] % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+[INSTALL_PODS] Dload  Upload   Total   Spent    Left  Speed
+[INSTALL_PODS]   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+[INSTALL_PODS] 40 20.7M   40 8594k    0     0  15.8M      0  0:00:01 --:--:--  0:00:01 15.8M
+[INSTALL_PODS] 100 20.7M  100 20.7M    0     0  25.0M      0 --:-
+[INSTALL_PODS] -:-- --:--:-- --:--:-- 25.0M
+[INSTALL_PODS] Downloading dependencies
+[INSTALL_PODS] Installing EXAV (16.0.8)
+[INSTALL_PODS] Installing EXApplication (55.0.14)
+[INSTALL_PODS] Installing EXConstants (55.0.15)
+[INSTALL_PODS] Installing Expo (55.0.15)
+[INSTALL_PODS] Installing ExpoAsset (55.0.15)
+[INSTALL_PODS] Installing ExpoBlur (55.0.14)
+[INSTALL_PODS] Installing ExpoClipboard (55.0.13)
+[INSTALL_PODS] Installing ExpoDevice (55.0.15)
+[INSTALL_PODS] Installing ExpoDomWebView (55.0.5)
+[INSTALL_PODS] Installing ExpoFileSystem (55.0.16)
+[INSTALL_PODS] Installing ExpoFont (55.0.6)
+[INSTALL_PODS] Installing ExpoGlassEffect (55.0.10)
+[INSTALL_PODS] Installing ExpoImage (55.0.9)
+[INSTALL_PODS] Installing ExpoImagePicker (55.0.19)
+[INSTALL_PODS] Installing ExpoKeepAwake (55.0.6)
+[INSTALL_PODS] Installing ExpoLinearGradient (55.0.13)
+[INSTALL_PODS] Installing ExpoLinking (55.0.13)
+[INSTALL_PODS] Installing ExpoLocation (55.1.8)
+[INSTALL_PODS] Installing ExpoLogBox (55.0.10)
+[INSTALL_PODS] Installing ExpoModulesCore (55.0.22)
+[INSTALL_PODS] Installing ExpoModulesJSI (55.0.22)
+[INSTALL_PODS] Installing ExpoNotifications (55.0.20)
+[INSTALL_PODS] Installing ExpoRouter (55.0.12)
+[INSTALL_PODS] Installing ExpoSplashScreen (55.0.18)
+[INSTALL_PODS] Installing ExpoSymbols (55.0.7)
+[INSTALL_PODS] Installing ExpoVideo (55.0.15)
+[INSTALL_PODS] Installing FBLazyVector (0.83.4)
+[INSTALL_PODS] Installing RCTDeprecation (0.83.4)
+[INSTALL_PODS] Installing RCTRequired (0.83.4)
+[INSTALL_PODS] Installing RCTSwiftUI (0.83.4)
+[INSTALL_PODS] Installing RCTSwiftUIWrapper (0.83.4)
+[INSTALL_PODS] Installing RCTTypeSafety (0.83.4)
+[INSTALL_PODS] Installing RNCAsyncStorage (2.2.0)
+[INSTALL_PODS] Installing RNReanimated (4.2.1)
+[INSTALL_PODS] Installing RNSVG (15.15.3)
+[INSTALL_PODS] Installing RNScreens (4.23.0)
+[INSTALL_PODS] Installing RNWorklets (0.7.2)
+[INSTALL_PODS] Installing React (0.83.4)
+[INSTALL_PODS] Installing React-Core (0.83.4)
+[INSTALL_PODS] Installing React-Core-prebuilt (0.83.4)
+[INSTALL_PODS] Installing React-CoreModules (0.83.4)
+[INSTALL_PODS] Installing React-Fabric (0.83.4)
+[INSTALL_PODS] Installing React-FabricComponents (0.83.4)
+[INSTALL_PODS] Installing React-FabricImage (0.83.4)
+[INSTALL_PODS] Installing React-ImageManager (0.83.4)
+[INSTALL_PODS] Installing React-Mapbuffer (0.83.4)
+[INSTALL_PODS] Installing React-NativeModulesApple (0.83.4)
+[INSTALL_PODS] Installing React-RCTActionSheet (0.83.4)
+[INSTALL_PODS] Installing React-RCTAnimation (0.83.4)
+[INSTALL_PODS] Installing React-RCTAppDelegate (0.83.4)
+[INSTALL_PODS] Installing React-RCTBlob (0.83.4)
+[INSTALL_PODS] Installing React-RCTFBReactNativeSpec (0.83.4)
+[INSTALL_PODS] Installing React-RCTFabric (0.83.4)
+[INSTALL_PODS] Installing React-RCTImage (0.83.4)
+[INSTALL_PODS] Installing React-RCTLinking (0.83.4)
+[INSTALL_PODS] Installing React-RCTNetwork (0.83.4)
+[INSTALL_PODS] Installing React-RCTRuntime (0.83.4)
+[INSTALL_PODS] Installing React-RCTSettings (0.83.4)
+[INSTALL_PODS] Installing React-RCTText (0.83.4)
+[INSTALL_PODS] Installing React-RCTVibration (0.83.4)
+[INSTALL_PODS] Installing React-RuntimeApple (0.83.4)
+[INSTALL_PODS] Installing React-RuntimeCore (0.83.4)
+[INSTALL_PODS] Installing React-RuntimeHermes (0.83.4)
+[INSTALL_PODS] Installing React-callinvoker (0.83.4)
+[INSTALL_PODS] Installing React-cxxreact (0.83.4)
+[INSTALL_PODS] Installing React-debug (0.83.4)
+[INSTALL_PODS] Installing React-defaultsnativemodule (0.83.4)
+[INSTALL_PODS] Installing React-domnativemodule (0.83.4)
+[INSTALL_PODS] Installing React-featureflags (0.83.4)
+[INSTALL_PODS] Installing React-featureflagsnativemodule (0.83.4)
+[INSTALL_PODS] Installing React-graphics (0.83.4)
+[INSTALL_PODS] Installing React-hermes (0.83.4)
+[INSTALL_PODS] Installing React-idlecallbacksnativemodule (0.83.4)
+[INSTALL_PODS] Installing React-intersectionobservernativemodule (0.83.4)
+[INSTALL_PODS] Installing React-jserrorhandler (0.83.4)
+[INSTALL_PODS] Installing React-jsi (0.83.4)
+[INSTALL_PODS] Installing React-jsiexecutor (0.83.4)
+[INSTALL_PODS] Installing React-jsinspector (0.83.4)
+[INSTALL_PODS] Installing React-jsinspectorcdp (0.83.4)
+[INSTALL_PODS] Installing React-jsinspectornetwork (0.83.4)
+[INSTALL_PODS] Installing React-jsinspectortracing (0.83.4)
+[INSTALL_PODS] Installing React-jsitooling (0.83.4)
+[INSTALL_PODS] Installing React-jsitracing (0.83.4)
+[INSTALL_PODS] Installing React-logger (0.83.4)
+[INSTALL_PODS] Installing React-microtasksnativemodule (0.83.4)
+[INSTALL_PODS] Installing React-networking (0.83.4)
+[INSTALL_PODS] Installing React-oscompat (0.83.4)
+[INSTALL_PODS] Installing React-perflogger (0.83.4)
+[INSTALL_PODS] Installing React-performancecdpmetrics (0.83.4)
+[INSTALL_PODS] Installing React-performancetimeline (0.83.4)
+[INSTALL_PODS] Installing React-rendererconsistency (0.83.4)
+[INSTALL_PODS] Installing React-renderercss (0.83.4)
+[INSTALL_PODS] Installing React-rendererdebug (0.83.4)
+[INSTALL_PODS] Installing React-runtimeexecutor (0.83.4)
+[INSTALL_PODS] Installing React-runtimescheduler (0.83.4)
+[INSTALL_PODS] Installing React-timing (0.83.4)
+[INSTALL_PODS] Installing React-utils (0.83.4)
+[INSTALL_PODS] Installing React-webperformancenativemodule (0.83.4)
+[INSTALL_PODS] Installing ReactAppDependencyProvider (0.83.4)
+[INSTALL_PODS] Installing ReactCodegen (0.83.4)
+[INSTALL_PODS] Installing ReactCommon (0.83.4)
+[INSTALL_PODS] Installing ReactNativeDependencies (0.83.4)
+[INSTALL_PODS] Installing SDWebImage (5.21.7)
+[INSTALL_PODS] Installing SDWebImageAVIFCoder (0.11.1)
+[INSTALL_PODS] Installing SDWebImageSVGCoder (1.7.0)
+[INSTALL_PODS] Installing SDWebImageWebPCoder (0.14.6)
+[INSTALL_PODS] Installing Yoga (0.0.0)
+[INSTALL_PODS] Installing hermes-engine (0.14.1)
+[INSTALL_PODS] Installing libavif (1.0.0)
+[INSTALL_PODS] Installing libdav1d (1.2.0)
+[INSTALL_PODS] Installing libwebp (1.5.0)
+[INSTALL_PODS] Installing react-native-safe-area-context (5.6.2)
+[INSTALL_PODS] Installing react-native-webview (13.16.0)
+[INSTALL_PODS] Generating Pods project
+[INSTALL_PODS] Setting USE_HERMES build settings
+[INSTALL_PODS] Setting REACT_NATIVE_PATH build settings
+[INSTALL_PODS] Setting SWIFT_ACTIVE_COMPILATION_CONDITIONS build settings
+[INSTALL_PODS] [Ccache]: Removing Ccache from CC, LD, CXX & LDPLUSPLUS build settings
+[INSTALL_PODS] Setting SWIFT_ENABLE_EXPLICIT_MODULES build settings
+[INSTALL_PODS] [SPM] Cleaning old SPM dependencies from Pods project
+[INSTALL_PODS] [SPM] Adding SPM dependencies to Pods project
+[INSTALL_PODS] [Privacy Manifest Aggregation] No existing PrivacyInfo.xcprivacy file found, creating a new one.
+[INSTALL_PODS] [Privacy Manifest Aggregation] Reading .xcprivacy files to aggregate all used Required Reason APIs.
+[INSTALL_PODS] file_root: TiendaSaku
+[INSTALL_PODS] Setting CLANG_CXX_LANGUAGE_STANDARD to c++20 on /private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/TiendaSaku.xcodeproj
+[INSTALL_PODS] ==================== DEPRECATION NOTICE =====================
+[INSTALL_PODS] Calling `pod install` directly is deprecated in React Native
+[INSTALL_PODS] because we are moving away from Cocoapods toward alternative
+[INSTALL_PODS] solutions to build the project.
+[INSTALL_PODS] * If you are using Expo, please run:
+[INSTALL_PODS] `npx expo run:ios`
+[INSTALL_PODS] * If you are using the Community CLI, please run:
+[INSTALL_PODS] `yarn ios`
+[INSTALL_PODS] =============================================================
+[INSTALL_PODS] Pod install took 42 [s] to run
+[INSTALL_PODS] Integrating client project
+[INSTALL_PODS] [!] Please close any current Xcode sessions and use `TiendaSaku.xcworkspace` for this project from now on.
+[INSTALL_PODS] [Expo] Installing the build script for target TiendaSaku
+[INSTALL_PODS] Pod installation complete! There are 107 dependencies from the Podfile and 113 total pods installed.
+[INSTALL_PODS] [Expo] Adding '[Expo Autolinking] Run Codegen with autolinking' build phase to ReactCodegen
+[INSTALL_PODS] [Expo] Disabling SWIFT_EMIT_MODULE_INTERFACE for pod targets (prebuilt React compatibility)
+[INSTALL_PODS] [!] React-Core-prebuilt has added 1 script phase. Please inspect before executing a build. See `https://guides.cocoapods.org/syntax/podspec.html#script_phases` for more information.
+[INSTALL_PODS] [!] ReactNativeDependencies has added 1 script phase. Please inspect before executing a build. See `https://guides.cocoapods.org/syntax/podspec.html#script_phases` for more information.
+[INSTALL_PODS] [!] hermes-engine has added 1 script phase. Please inspect before executing a build. See `https://guides.cocoapods.org/syntax/podspec.html#script_phases` for more information.
+[CONFIGURE_XCODE_PROJECT] Configuring Xcode project
+[CONFIGURE_XCODE_PROJECT] Assigning provisioning profile '*[expo] com.SAKUtienda.cl AppStore 2026-05-03T02:42:05.680Z' (Apple Team ID: 4H4BJH5HJX) to target 'TiendaSaku'
+[EAGER_BUNDLE] Starting Metro Bundler
+[EAGER_BUNDLE] iOS node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+[EAGER_BUNDLE] iOS node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 29.8% (332/699)
+[EAGER_BUNDLE] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 80.2% (2693/3007)
+[EAGER_BUNDLE] iOS node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (3467/3468)
+[EAGER_BUNDLE] iOS Bundled 11595ms node_modules/expo-router/entry.js (3468 modules)
+[EAGER_BUNDLE] Writing bundle output to: /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/cn1unpty6gt/main.jsbundle
+[EAGER_BUNDLE] Copying 49 asset files
+[EAGER_BUNDLE] Done writing bundle output
+[RUN_FASTLANE] Creating Gymfile
+[RUN_FASTLANE] Gymfile created
+[RUN_FASTLANE] Top level ::CompositeIO is deprecated, require 'multipart/post' and use `Multipart::Post::CompositeReadIO` instead!
+[RUN_FASTLANE] Top level ::Parts is deprecated, require 'multipart/post' and use `Multipart::Post::Parts` instead!
+[RUN_FASTLANE] Successfully loaded '/private/var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/Gymfile' 📄
+[RUN_FASTLANE] 
+[RUN_FASTLANE] +--------------------------------------------------------------+
+[RUN_FASTLANE] |               Detected Values from './Gymfile'               |
+[RUN_FASTLANE] +-----------------------+--------------------------------------+
+[RUN_FASTLANE] | suppress_xcode_output | true                                 |
+[RUN_FASTLANE] | clean                 | false                                |
+[RUN_FASTLANE] | scheme                | TiendaSaku                           |
+[RUN_FASTLANE] | configuration         | Release                              |
+[RUN_FASTLANE] | export_options        | {method: "app-store",                |
+[RUN_FASTLANE] |                       | provisioningProfiles:                |
+[RUN_FASTLANE] |                       | {"com.SAKUtienda.cl" =>              |
+[RUN_FASTLANE] |                       | "767322f8-0ebf-4e74-8352-19b8d76095  |
+[RUN_FASTLANE] |                       | 96"}}                                |
+[RUN_FASTLANE] | export_xcargs         | OTHER_CODE_SIGN_FLAGS="--keychain    |
+[RUN_FASTLANE] |                       | /var/folders/_4/xf81z6h105b9z0x8j65  |
+[RUN_FASTLANE] |                       | 34rg00000gn/T/eas-build-cc06f0e7-9d  |
+[RUN_FASTLANE] |                       | 65-47fa-857b-328d95782861.keychain"  |
+[RUN_FASTLANE] | disable_xcpretty      | true                                 |
+[RUN_FASTLANE] | buildlog_path         | /var/folders/_4/xf81z6h105b9z0x8j65  |
+[RUN_FASTLANE] |                       | 34rg00000gn/T/eas-build-local-nodej  |
+[RUN_FASTLANE] |                       | s/66b65231-0577-4901-a515-198d9a3e5  |
+[RUN_FASTLANE] |                       | 5d8/logs                             |
+[RUN_FASTLANE] | output_directory      | ./build                              |
+[RUN_FASTLANE] +-----------------------+--------------------------------------+
+[RUN_FASTLANE] Resolving Swift Package Manager dependencies...
+[RUN_FASTLANE] $ xcodebuild -resolvePackageDependencies -workspace ./TiendaSaku.xcworkspace -scheme TiendaSaku -configuration Release
+[RUN_FASTLANE] ▸ Command line invocation:
+[RUN_FASTLANE] ▸     /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -resolvePackageDependencies -workspace ./TiendaSaku.xcworkspace -scheme TiendaSaku -configuration Release
+[RUN_FASTLANE] ▸ resolved source packages:
+[RUN_FASTLANE] $ xcodebuild -showBuildSettings -workspace ./TiendaSaku.xcworkspace -scheme TiendaSaku -configuration Release 2>&1
+[RUN_FASTLANE] Detected provisioning profile mapping: {"com.SAKUtienda.cl": "767322f8-0ebf-4e74-8352-19b8d7609596"}
+[RUN_FASTLANE] 
+[RUN_FASTLANE] +-----------------------------------------------------------------------------+
+[RUN_FASTLANE] |                           Summary for gym 2.232.2                           |
+[RUN_FASTLANE] +--------------------------------------+--------------------------------------+
+[RUN_FASTLANE] | workspace                            | ./TiendaSaku.xcworkspace             |
+[RUN_FASTLANE] | scheme                               | TiendaSaku                           |
+[RUN_FASTLANE] | clean                                | false                                |
+[RUN_FASTLANE] | output_directory                     | ./build                              |
+[RUN_FASTLANE] | output_name                          | TiendaSaku                           |
+[RUN_FASTLANE] | configuration                        | Release                              |
+[RUN_FASTLANE] | silent                               | false                                |
+[RUN_FASTLANE] | skip_package_ipa                     | false                                |
+[RUN_FASTLANE] | skip_package_pkg                     | false                                |
+[RUN_FASTLANE] | export_options.method                | app-store                            |
+[RUN_FASTLANE] | export_options.provisioningProfiles  | 767322f8-0ebf-4e74-8352-19b8d760959  |
+[RUN_FASTLANE] | .com.SAKUtienda.cl                   | 6                                    |
+[RUN_FASTLANE] | export_xcargs                        | OTHER_CODE_SIGN_FLAGS="--keychain    |
+[RUN_FASTLANE] |                                      | /var/folders/_4/xf81z6h105b9z0x8j65  |
+[RUN_FASTLANE] |                                      | 34rg00000gn/T/eas-build-cc06f0e7-9d  |
+[RUN_FASTLANE] |                                      | 65-47fa-857b-328d95782861.keychain"  |
+[RUN_FASTLANE] | build_path                           | /Users/usuario/Library/Developer/Xc  |
+[RUN_FASTLANE] |                                      | ode/Archives/2026-05-04              |
+[RUN_FASTLANE] | result_bundle                        | false                                |
+[RUN_FASTLANE] | buildlog_path                        | /var/folders/_4/xf81z6h105b9z0x8j65  |
+[RUN_FASTLANE] |                                      | 34rg00000gn/T/eas-build-local-nodej  |
+[RUN_FASTLANE] |                                      | s/66b65231-0577-4901-a515-198d9a3e5  |
+[RUN_FASTLANE] |                                      | 5d8/logs                             |
+[RUN_FASTLANE] | destination                          | generic/platform=iOS                 |
+[RUN_FASTLANE] | suppress_xcode_output                | true                                 |
+[RUN_FASTLANE] | xcodebuild_formatter                 | xcpretty                             |
+[RUN_FASTLANE] | build_timing_summary                 | false                                |
+[RUN_FASTLANE] | disable_xcpretty                     | true                                 |
+[RUN_FASTLANE] | skip_profile_detection               | false                                |
+[RUN_FASTLANE] | xcodebuild_command                   | xcodebuild                           |
+[RUN_FASTLANE] | skip_package_dependencies_resolutio  | false                                |
+[RUN_FASTLANE] | n                                    |                                      |
+[RUN_FASTLANE] | disable_package_automatic_updates    | false                                |
+[RUN_FASTLANE] | skip_package_repository_fetches      | false                                |
+[RUN_FASTLANE] | use_system_scm                       | false                                |
+[RUN_FASTLANE] | generate_appstore_info               | false                                |
+[RUN_FASTLANE] | xcode_path                           | /Applications/Xcode.app              |
+[RUN_FASTLANE] +--------------------------------------+--------------------------------------+
+[RUN_FASTLANE] $ set -o pipefail && xcodebuild -workspace ./TiendaSaku.xcworkspace -scheme TiendaSaku -configuration Release -destination 'generic/platform=iOS' -archivePath /Users/usuario/Library/Developer/Xcode/Archives/2026-05-04/TiendaSaku\ 2026-05-04\ 21.22.40.xcarchive archive | tee /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/logs/TiendaSaku-TiendaSaku.log > /dev/null
+[RUN_FASTLANE] › Executing react-native Pods/hermes-engine » [CP-User] [Hermes] Replace Hermes for the right configuration, if needed
+[RUN_FASTLANE] › Executing react-native Pods/ReactNativeDependencies » [CP-User] [RNDeps] Replace React Native Dependencies for the right configuration, if needed
+[RUN_FASTLANE] › Preparing expo-image Pods/SDWebImage-SDWebImage » ResourceBundle-SDWebImage-SDWebImage-Info.plist
+[RUN_FASTLANE] › Copying   expo-image ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/SDWebImage.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/ios/Pods/SDWebImage/WebImage/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Preparing Pods/React-cxxreact-React-cxxreact_privacy » ResourceBundle-React-cxxreact_privacy-React-cxxreact-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/React-cxxreact_privacy.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native/ReactCommon/cxxreact/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Preparing Pods/React-Core-React-Core_privacy » ResourceBundle-React-Core_privacy-React-Core-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/React-Core_privacy.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native/React/Resources/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Preparing Pods/RNSVG-RNSVGFilters » ResourceBundle-RNSVGFilters-RNSVG-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/RNSVGFilters.bundle/RNSVGCompositeXor.iphoneos.metallib ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-svg/apple/Filters/MetalCI/RNSVGCompositeXor.iphoneos.metallib
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/RNSVGFilters.bundle/RNSVGArithmeticFilter.iphoneos.metallib ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/react-native-svg/apple/Filters/MetalCI/RNSVGArithmeticFilter.iphoneos.metallib
+[RUN_FASTLANE] › Preparing Pods/RNCAsyncStorage-RNCAsyncStorage_resources » ResourceBundle-RNCAsyncStorage_resources-RNCAsyncStorage-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/RNCAsyncStorage_resources.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/@react-native-async-storage/async-storage/ios/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Preparing Pods/ExpoNotifications-ExpoNotifications_privacy » ResourceBundle-ExpoNotifications_privacy-ExpoNotifications-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/ExpoNotifications_privacy.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo-notifications/ios/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Preparing Pods/ExpoFileSystem-ExpoFileSystem_privacy » ResourceBundle-ExpoFileSystem_privacy-ExpoFileSystem-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/ExpoFileSystem_privacy.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo-file-system/ios/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Preparing Pods/ExpoDevice-ExpoDevice_privacy » ResourceBundle-ExpoDevice_privacy-ExpoDevice-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/ExpoDevice_privacy.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo-device/ios/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Creating  Pods/React-cxxreact-React-cxxreact_privacy » React-cxxreact_privacy.bundle
+[RUN_FASTLANE] › Preparing Pods/EXConstants-ExpoConstants_privacy » ResourceBundle-ExpoConstants_privacy-EXConstants-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/ExpoConstants_privacy.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo-constants/ios/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Creating  expo-image Pods/SDWebImage-SDWebImage » SDWebImage.bundle
+[RUN_FASTLANE] › Preparing expo-constants Pods/EXConstants-EXConstants » ResourceBundle-EXConstants-EXConstants-Info.plist
+[RUN_FASTLANE] › Creating  Pods/RNCAsyncStorage-RNCAsyncStorage_resources » RNCAsyncStorage_resources.bundle
+[RUN_FASTLANE] › Preparing Pods/EXApplication-ExpoApplication_privacy » ResourceBundle-ExpoApplication_privacy-EXApplication-Info.plist
+[RUN_FASTLANE] › Copying   ../../Library/Developer/Xcode/DerivedData/TiendaSaku-becljxetfbxnecczgctzgqloeazf/Build/Intermediates.noindex/ArchiveIntermediates/TiendaSaku/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/ExpoApplication_privacy.bundle/PrivacyInfo.xcprivacy ➜ ../../../../var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo-application/ios/PrivacyInfo.xcprivacy
+[RUN_FASTLANE] › Creating  Pods/React-Core-React-Core_privacy » React-Core_privacy.bundle
+[RUN_FASTLANE] › Creating  Pods/RNSVG-RNSVGFilters » RNSVGFilters.bundle
+[RUN_FASTLANE] › Creating  Pods/ExpoNotifications-ExpoNotifications_privacy » ExpoNotifications_privacy.bundle
+[RUN_FASTLANE] › Creating  Pods/ExpoFileSystem-ExpoFileSystem_privacy » ExpoFileSystem_privacy.bundle
+[RUN_FASTLANE] › Creating  Pods/ExpoDevice-ExpoDevice_privacy » ExpoDevice_privacy.bundle
+[RUN_FASTLANE] › Creating  Pods/EXConstants-ExpoConstants_privacy » ExpoConstants_privacy.bundle
+[RUN_FASTLANE] › Creating  expo-constants Pods/EXConstants-EXConstants » EXConstants.bundle
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » sharpyuv_csp.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » yuv_sse41.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » yuv_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » yuv_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » yuv_mips32.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » upsampling_sse41.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » upsampling_msa.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » upsampling_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » upsampling.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » tree_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » tree_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » thread_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » syntax_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » ssim_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » sharpyuv_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » sharpyuv_gamma.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » sharpyuv_cpu.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » rescaler_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » rescaler_msa.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » rescaler_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » rescaler_mips32.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » random_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » rescaler.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » quant_levels_dec_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » quant_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » picture_tools_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_sse41.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_msa.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_enc_sse41.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_enc_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_enc_msa.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_enc_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » iterator_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » yuv.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » webp_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » webp_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » vp8l_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » vp8l_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » vp8_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » yuv_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » upsampling_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » token_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » ssim.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » sharpyuv_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » sharpyuv_dsp.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » sharpyuv.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » rescaler_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » rescaler_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » quant_levels_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » quant_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » predictor_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » picture_rescale_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » picture_psnr_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » picture_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » picture_csp_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » palette.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » near_lossless_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » muxread.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » muxinternal.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » muxedit.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_enc_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_enc_mips32.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » lossless.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » io_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » idec_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » huffman_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » huffman_encode_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » frame_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » frame_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » filters_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » filters_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » filters_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » filters_msa.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » filters_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » filters.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » filter_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » enc_sse41.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » enc_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » enc_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » enc_msa.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » enc_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » enc_mips32.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec_sse41.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » demux.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec_msa.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec_mips32.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec_clip_tables.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » cpu.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » cost_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » cost_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » cost_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » cost_mips32.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » cost_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » color_cache_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » config_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » cost.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » buffer_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » bit_writer_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » bit_reader_utils.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » backward_references_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » backward_references_cost_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » anim_encode.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » anim_decode.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » analysis_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » alpha_processing_sse41.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » alpha_processing_sse2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » alpha_processing_mips_dsp_r2.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » alpha_processing_neon.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » alpha_processing.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » alpha_dec.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » alpha_enc.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » cpu.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » wedge.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » tables.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » scan.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » qm.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » lf_mask.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » itx_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » itx_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » itx_1d.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » getbits.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » filmgrain_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » filmgrain_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » dequant_tables.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » warpmv.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » thread_task.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » refmvs.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » ref.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » recon_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » recon_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » picture.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » obu.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » msac.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » mem.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » mc_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » mc_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » lr_apply_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » lr_apply_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » looprestoration_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » looprestoration_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » loopfilter_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » loopfilter_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » log.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » lib.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » lf_apply_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » lf_apply_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » ipred_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » ipred_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » ipred_prepare_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » ipred_prepare_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » intra_edge.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » fg_apply_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » fg_apply_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » data.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » cdf.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » cdef_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » cdef_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » cdef_apply_tmpl_16.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » cdef_apply_tmpl.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » decode.c
+[RUN_FASTLANE] › Compiling Pods/libavif » write.c
+[RUN_FASTLANE] › Compiling Pods/libavif » utils.c
+[RUN_FASTLANE] › Compiling Pods/libavif » scale.c
+[RUN_FASTLANE] › Compiling Pods/libavif » reformat_libyuv.c
+[RUN_FASTLANE] › Compiling Pods/libavif » reformat_libsharpyuv.c
+[RUN_FASTLANE] › Compiling Pods/libavif » rawdata.c
+[RUN_FASTLANE] › Compiling Pods/libavif » obu.c
+[RUN_FASTLANE] › Compiling Pods/libavif » reformat.c
+[RUN_FASTLANE] › Compiling Pods/libavif » mem.c
+[RUN_FASTLANE] › Compiling Pods/libavif » io.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » cpu.c
+[RUN_FASTLANE] › Compiling Pods/libavif » stream.c
+[RUN_FASTLANE] › Compiling Pods/libavif » read.c
+[RUN_FASTLANE] › Compiling Pods/libavif » exif.c
+[RUN_FASTLANE] › Compiling Pods/libavif » diag.c
+[RUN_FASTLANE] › Compiling Pods/libavif » colr.c
+[RUN_FASTLANE] › Compiling Pods/libavif » codec_dav1d.c
+[RUN_FASTLANE] › Compiling Pods/libavif » avif.c
+[RUN_FASTLANE] › Compiling Pods/libavif » alpha.c
+[RUN_FASTLANE] › Compiling expo-image Pods/libwebp » libwebp-dummy.m
+[RUN_FASTLANE] › Compiling expo-image Pods/libdav1d » libdav1d-dummy.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageSVGCoder » SDWebImageSVGCoderDefine.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageSVGCoder » SDWebImageSVGCoder-dummy.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageSVGCoder » SDImageSVGCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageAVIFCoder » SDWebImageAVIFCoder-dummy.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIView+WebCacheState.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIView+WebCacheOperation.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIView+WebCache.m
+[RUN_FASTLANE] › Packaging expo-image Pods/libdav1d » liblibdav1d.a
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImageView+WebCache.m
+[RUN_FASTLANE] › Packaging expo-image Pods/libwebp » liblibwebp.a
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImageView+HighlightedWebCache.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImage+MultiFormat.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImage+Metadata.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImage+MemoryCacheCost.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImage+GIF.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImage+ForceDecode.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImage+ExtendedCacheData.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIColor+SDHexString.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIButton+WebCache.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageTransition.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImagePrefetcher.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageOptionsProcessor.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageOperation.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageManager.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageIndicator.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageError.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageDownloaderResponseModifier.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageDownloaderRequestModifier.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageDownloaderOperation.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageDownloaderDecryptor.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageDownloaderConfig.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageDownloader.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageDefine.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageCompat.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageCacheSerializer.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImageCacheKeyFilter.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWebImage-dummy.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDWeakProxy.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDInternalMacros.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDMemoryCache.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageTransformer.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageLoadersManager.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageLoader.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageHEICCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageIOCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageIOAnimatedCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageGraphics.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageFramePool.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageFrame.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCodersManager.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageGIFCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageAVIFCoder » SDImageAVIFCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageAVIFCoder » Conversion.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageAVIFCoder » ColorSpace.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » UIImage+Transform.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCoderHelper.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCachesManagerOperation.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCachesManager.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCacheDefine.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCacheConfig.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageCache.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageAWebPCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageAPNGCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDImageAssetManager.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDGraphicsImageRenderer.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDDisplayLink.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDFileAttributeHelper.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDDeviceHelper.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDCallbackQueue.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDDiskCache.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDAsyncBlockOperation.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDAnimatedImageView.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDAssociatedObject.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDAnimatedImageView+WebCache.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDAnimatedImageRep.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDAnimatedImagePlayer.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » SDAnimatedImage.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » NSData+ImageContentType.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » NSImage+Compatibility.m
+[RUN_FASTLANE] › Executing react-native Pods/hermes-engine » [CP] Copy XCFrameworks
+[RUN_FASTLANE] › Executing react-native Pods/ReactNativeDependencies » [CP] Copy XCFrameworks
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » NSButton+WebCache.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImage » NSBezierPath+SDRoundedCorners.m
+[RUN_FASTLANE] › Creating  Pods/EXApplication-ExpoApplication_privacy » ExpoApplication_privacy.bundle
+[RUN_FASTLANE] › Packaging expo-image Pods/SDWebImage » libSDWebImage.a
+[RUN_FASTLANE] › Packaging expo-image Pods/SDWebImageSVGCoder » libSDWebImageSVGCoder.a
+[RUN_FASTLANE] › Compiling Pods/libavif » libavif-dummy.m
+[RUN_FASTLANE] › Packaging Pods/libavif » liblibavif.a
+[RUN_FASTLANE] › Packaging expo-image Pods/SDWebImageAVIFCoder » libSDWebImageAVIFCoder.a
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageWebPCoder » SDWebImageWebPCoderDefine.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageWebPCoder » SDWebImageWebPCoder-dummy.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageWebPCoder » SDImageWebPCoder.m
+[RUN_FASTLANE] › Compiling expo-image Pods/SDWebImageWebPCoder » UIImage+WebP.m
+[RUN_FASTLANE] › Compiling react-native Pods/RCTSwiftUI » RCTSwiftUI-dummy.m
+[RUN_FASTLANE] › Packaging react-native Pods/RCTSwiftUI » libRCTSwiftUI.a
+[RUN_FASTLANE] › Executing react-native Pods/RCTSwiftUI » Copy generated compatibility header
+[RUN_FASTLANE] › Packaging expo-image Pods/SDWebImageWebPCoder » libSDWebImageWebPCoder.a
+[RUN_FASTLANE] › Executing react-native Pods/React-Core-prebuilt » [CP-User] [RNDeps] Replace React Native Core for the right configuration, if needed
+[RUN_FASTLANE] › Compiling react-native Pods/RCTSwiftUIWrapper » RCTSwiftUIWrapper-dummy.m
+[RUN_FASTLANE] › Compiling react-native Pods/RCTSwiftUIWrapper » RCTSwiftUIContainerViewWrapper.m
+[RUN_FASTLANE] › Packaging react-native Pods/RCTSwiftUIWrapper » libRCTSwiftUIWrapper.a
+[RUN_FASTLANE] › Executing react-native Pods/React-Core-prebuilt » [CP] Copy XCFrameworks
+[RUN_FASTLANE] › Executing react-native Pods/React-RCTFBReactNativeSpec » [CP-User] [RN]Check FBReactNativeSpec
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » TypedArray.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » ObjectDeallocator.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » MemoryBuffer.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » MainThreadInvoker.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » JSIUtils.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXStringUtils.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXRawJavaScriptFunction.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXRawJavaScriptArrayBuffer.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXNativeArrayBuffer.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJavaScriptWeakObject.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJavaScriptValue.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJavaScriptTypedArray.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJavaScriptRuntime.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJavaScriptObjectBinding.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJavaScriptObject.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJSIUtils.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXJSIConversions.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » EXArrayBuffer.mm
+[RUN_FASTLANE] › Executing tienda Pods/ReactCodegen » [CP-User] Generate Specs
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesJSI » ExpoModulesJSI-dummy.m
+[RUN_FASTLANE] › Compiling @expo/log-box Pods/ExpoLogBox » ExpoRedBoxSwap.mm
+[RUN_FASTLANE] › Compiling @expo/log-box Pods/ExpoLogBox » ExpoLogBox-dummy.m
+[RUN_FASTLANE] › Packaging @expo/log-box Pods/ExpoLogBox » libExpoLogBox.a
+[RUN_FASTLANE] › Executing @expo/log-box Pods/ExpoLogBox » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » safeareacontext-generated.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » States.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » rnworklets-generated.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » rnsvg-generated.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » rnscreens-generated.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » rnreanimated-generated.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » rnasyncstorage-generated.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » States.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » States.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » States.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ShadowNodes.cpp
+[RUN_FASTLANE] › Packaging expo-modules-core Pods/ExpoModulesJSI » libExpoModulesJSI.a
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ShadowNodes.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ShadowNodes.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ShadowNodes.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » RNCWebViewSpec-generated.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » RCTUnstableModulesRequiringMainQueueSetupProvider.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » RCTThirdPartyComponentsProvider.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » RCTModulesConformingToProtocolsProvider.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » RCTModuleProviders.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » Props.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » Props.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » Props.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » Props.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » EventEmitters.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » EventEmitters.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » EventEmitters.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » EventEmitters.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ComponentDescriptors.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ComponentDescriptors.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ComponentDescriptors.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ComponentDescriptors.cpp
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » RNCWebViewModule.mm
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » RNCWebViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » RNCWebView.mm
+[RUN_FASTLANE] › Compiling tienda Pods/ReactCodegen » ReactCodegen-dummy.m
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » react-native-webview-dummy.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewState.cpp
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaProviderComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaContext.mm
+[RUN_FASTLANE] › Packaging tienda Pods/ReactCodegen » libReactCodegen.a
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » react-native-safe-area-context-dummy.m
+[RUN_FASTLANE] › Compiling tienda Pods/ReactAppDependencyProvider » RCTAppDependencyProvider.mm
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletsVersion.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletsModuleProxy.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletsModule.mm
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletsMessageThread.mm
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletsJSIUtils.cpp
+[RUN_FASTLANE] › Compiling tienda Pods/ReactAppDependencyProvider » ReactAppDependencyProvider-dummy.m
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletRuntimeRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletRuntimeDecorator.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletRuntime.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletHermesRuntime.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » WorkletEventHandler.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » VersionUtils.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » ValueUnpacker.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » UIScheduler.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » UIRuntimeDecorator.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » SynchronizableUnpacker.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » SynchronizableAccess.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » Synchronizable.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » SlowAnimations.mm
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » Serializable.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » RuntimeManager.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » RuntimeData.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » RNRuntimeWorkletDecorator.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » PlatformLogger.mm
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » MemoryManager.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » JSScheduler.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » JSLogger.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » JSIWorkletsModuleProxy.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » JSISerializer.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » IOSUIScheduler.mm
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » FeatureFlags.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » EventLoop.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » EventHandlerRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » CustomSerializableUnpacker.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » AsyncQueueImpl.cpp
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » AnimationFrameQueue.mm
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » AnimationFrameBatchinator.cpp
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGViewBox.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGUseManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGUse.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGTopAlignedLabel.ios.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGTextProperties.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGTextPathManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGTextPath.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGTextManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGText.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGTSpanManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGTSpan.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGSymbolManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGSymbol.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGSvgViewModule.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGSvgViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGSvgView.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGSolidColorBrush.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGShadowNodes.cpp
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRenderableModule.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRenderableManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRenderable.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRenderUtils.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRectManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRect.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRadialGradientManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGRadialGradient.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPropHelper.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPatternManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPattern.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPathParser.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPathMeasure.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPathManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPath.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPainterBrush.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGPainter.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGNodeManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGNode.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGMaskManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGMask.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGMarkerPosition.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGMarkerManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGMarker.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGLinearGradientManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGLinearGradient.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGLineManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGLine.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGLength.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGLayoutableShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGImageState.cpp
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGImageShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGImageManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGImage.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGGroupManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGGroup.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGGlyphContext.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGForeignObjectManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGForeignObject.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFontData.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFilterRegion.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFilterPrimitiveManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFilterPrimitive.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFilterManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFilter.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeOffsetManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeOffset.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeMergeManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeMerge.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeGaussianBlurManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeGaussianBlur.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeFloodManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeFlood.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeCompositeManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeComposite.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeColorMatrixManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeColorMatrix.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeBlendManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGFeBlend.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGEllipseManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGEllipse.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGDefsManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGDefs.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGCustomFilter.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGConvert.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGContextBrush.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGCompositeXor.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGClipPathManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGClipPath.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGCircleManager.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGCircle.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGBrush.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGBezierElement.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVGArithmeticFilter.mm
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RCTConvert+RNSVG.mm
+[RUN_FASTLANE] › Packaging tienda Pods/ReactAppDependencyProvider » libReactAppDependencyProvider.a
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » UIWindow+RNScreens.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » UIViewController+RNScreens.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » UIView+RNSUtility.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » UIScrollView+RNScreens.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » UINavigationBar+RNSUtility.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNScreensTurboModule.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSViewInteractionManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSViewControllerInvalidator.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSTabsScreenViewController.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSTabBarControllerDelegate.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSTabBarController.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSTabBarAppearanceCoordinator.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSStackScreenComponentViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSStackScreenComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSStackScreenComponentEventEmitter.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSStackHostComponentViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSStackHostComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewScreenShadowStateProxy.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewScreenShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewScreenComponentViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewScreenComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewScreenComponentEventEmitter.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewHostComponentViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewHostComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSplitViewHostComponentEventEmitter.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSearchBar.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScrollViewHelper.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScrollViewFinder.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScrollEdgeEffectApplicator.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenWindowTraits.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenViewEvent.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenState.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStackHeaderSubviewState.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStackHeaderSubviewShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStackHeaderSubview.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStackHeaderConfigState.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStackHeaderConfigShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStackHeaderConfig.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStackAnimator.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenStack.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenShadowNodeCommitHook.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenRemovalListener.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenNavigationContainer.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenFooter.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenContentWrapper.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreenContainer.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSScreen.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSafeAreaViewState.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSafeAreaViewShadowView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSafeAreaViewShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSafeAreaViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSafeAreaViewLocalData.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSafeAreaViewEdges.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSSafeAreaViewComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSReactBaseView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSPercentDrivenInteractiveTransition.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSModule.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSModalScreenShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSModalScreen.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSInvalidatedComponentsRegistry.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSImageLoadingHelper.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSHeaderHeightChangeEvent.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSFullWindowOverlayShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSFullWindowOverlay.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSConvert.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSConversions.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSConversions-Stack.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSConversions-SplitView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSConversions-Fabric.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSConversions-BottomTabs.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsState.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsScreenEventEmitter.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsScreenComponentViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsScreenComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsHostEventEmitter.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsHostComponentViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsHostComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsHostComponentView+RNSImageLoader.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsAccessoryShadowStateProxy.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsAccessoryShadowNode.cpp
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsAccessoryEventEmitter.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsAccessoryContentComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsAccessoryComponentViewManager.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomTabsAccessoryComponentView.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBottomAccessoryHelper.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBarButtonItem.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNSBackBarButtonItem.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RCTTouchHandler+RNSUtility.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RCTSurfaceTouchHandler+RNSUtility.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RCTImageComponentView+RNSScreenStackHeaderConfig.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RCTConvert+RNScreens.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RCTConvert+RNSBottomTabs.mm
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » NSString+RNSUtility.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » vectors.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » translate.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » steps.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » skew.cpp
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewMode.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewManager.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewLocalData.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewEdges.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaViewEdgeMode.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaView.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaUtils.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaShadowView.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaProviderManager.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCSafeAreaProvider.m
+[RUN_FASTLANE] › Compiling react-native-safe-area-context Pods/react-native-safe-area-context » RNCOnInsetsChangeEvent.m
+[RUN_FASTLANE] › Compiling react-native-screens Pods/RNScreens » RNScreens-dummy.m
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » scale.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » rotate.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » props.cpp
+[RUN_FASTLANE] › Packaging react-native-safe-area-context Pods/react-native-safe-area-context » libreact-native-safe-area-context.a
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » perspective.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » matrix.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » linear.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » interpolators.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » cubicBezier.cpp
+[RUN_FASTLANE] › Packaging react-native-screens Pods/RNScreens » libRNScreens.a
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » common.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » algorithms.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ViewStylesRepository.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ValueInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » UpdatesRegistryManager.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » UpdatesRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » UIRuntimeDecorator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransitionStyleInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransitionProgressProvider.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransformsStyleInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransformOperationInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransformOperation.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransformOp.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransformMatrix3D.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransformMatrix2D.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » TransformMatrix.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » StyleOperationInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » StyleOperation.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » StaticPropsRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » SimpleValueInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » SharedTransitions.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ShadowTreeCloner.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » SetGestureState.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » SVGStrokeDashArray.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » SVGLength.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » SVGBrush.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ResolvableValueInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » RecordPropertiesInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedVersion.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedMountHook.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedModuleProxySpec.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedModuleProxy.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedModule.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedCommitHook.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » RawProgressProvider.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » RNRuntimeDecorator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » REASlowAnimations.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » REANodesManager.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » REAKeyboardEventObserver.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » Quaternion.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » PropsDiffer.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » PropertyInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » PlatformDepMethodsHolderImpl.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » OperationsStyleInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » NativeProxy.mm
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » LayoutAnimationsUtils.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » LayoutAnimationsProxy_Legacy.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » LayoutAnimationsProxy_Experimental.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » LayoutAnimationsProxyCommon.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » LayoutAnimationsManager.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » InterpolatorRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » InterpolatorFactory.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » GroupPropertiesInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » FilterStyleInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » FilterOperationInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » FilterOperation.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » FilterOp.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » FeatureFlags.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » EasingFunctions.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » DelayedItemsManager.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSValueVariant.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSTransitionsRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSTransitionConfig.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSTransition.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSNumber.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSLength.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSKeyword.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSKeyframesRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSKeyframesConfig.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSDropShadow.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSDiscreteArray.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSColor.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSBoxShadow.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSBoolean.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSAnimationsRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSAnimationConfig.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSAnimation.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » CSSAngle.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ArrayPropertiesInterpolator.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » AnimationProgressProvider.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » AnimatedSensorModule.cpp
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » AnimatedPropsRegistry.cpp
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » RNCWebViewImpl.m
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » RNCWebViewDecisionManager.m
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » RNCWKProcessPoolManager.m
+[RUN_FASTLANE] › Compiling react-native-webview Pods/react-native-webview » RCTConvert+WKDataDetectorTypes.m
+[RUN_FASTLANE] › Packaging react-native-webview Pods/react-native-webview » libreact-native-webview.a
+[RUN_FASTLANE] › Executing react-native-screens Pods/RNScreens » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling @react-native-async-storage/async-storage Pods/RNCAsyncStorage » RNCAsyncStorage.mm
+[RUN_FASTLANE] 
+⚠️  (../../../../../../../../React_Core/React_Core-umbrella.h:289:1)
+
+<module-includes>:1:9: note: in file included from <module-includes>:1:
+^ umbrella header for module 'React' does not include header 'RCTComponentViewClassDescriptor.h'
+
+[RUN_FASTLANE] › Compiling react-native-svg Pods/RNSVG » RNSVG-dummy.m
+[RUN_FASTLANE] › Packaging react-native-svg Pods/RNSVG » libRNSVG.a
+[RUN_FASTLANE] › Compiling react-native-worklets Pods/RNWorklets » RNWorklets-dummy.m
+[RUN_FASTLANE] › Packaging react-native-worklets Pods/RNWorklets » libRNWorklets.a
+[RUN_FASTLANE] › Compiling @react-native-async-storage/async-storage Pods/RNCAsyncStorage » RNCAsyncStorage-dummy.m
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedSensor.m
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » ReanimatedSensorContainer.m
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » RCTUIView+Reanimated.m
+[RUN_FASTLANE] › Compiling react-native-reanimated Pods/RNReanimated » RNReanimated-dummy.m
+[RUN_FASTLANE] › Packaging react-native-reanimated Pods/RNReanimated » libRNReanimated.a
+[RUN_FASTLANE] › Packaging @react-native-async-storage/async-storage Pods/RNCAsyncStorage » libRNCAsyncStorage.a
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » WorkletRuntimeFactory.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » WorkletJSCallInvoker.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » WorkletExecutor.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » SwiftUIVirtualViewObjC.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » SharedRef.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » SharedObject.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » SerializableExtractor.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » NativeModule.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » LazyObject.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoViewShadowNode.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoViewProps.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoViewEventEmitter.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoViewComponentDescriptor.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoModulesHostObject.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoFabricViewObjC.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoBridgeModule.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EventEmitter.cpp
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXWorkletRuntime.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXSharedObjectUtils.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXRuntime.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXReactNativeAdapter.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXReactDelegateWrapper.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXNativeModulesProxy.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXJavaScriptSerializable.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXJSUtils.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXJSIInstaller.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXHostWrapper.mm
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » ExpoModulesCore-dummy.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXExportedModule.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXSingletonModule.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXPermissionsMethodsDelegate.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXModuleRegistryHolderReactModule.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXModuleRegistryAdapter.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXModuleRegistryProvider.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXReactNativeUserNotificationCenterProxy.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXUtilities.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXPermissionsService.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXModuleRegistry.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXImageLoader.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXAppDefines.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » EXAppContextFactoryRegistry.m
+[RUN_FASTLANE] › Compiling expo-modules-core Pods/ExpoModulesCore » CoreModuleHelper.m
+[RUN_FASTLANE] › Packaging expo-modules-core Pods/ExpoModulesCore » libExpoModulesCore.a
+[RUN_FASTLANE] › Executing expo-modules-core Pods/ExpoModulesCore » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling expo-splash-screen Pods/ExpoSplashScreen » ExpoSplashScreen-dummy.m
+[RUN_FASTLANE] › Compiling expo-linking Pods/ExpoLinking » ExpoLinking-dummy.m
+[RUN_FASTLANE] › Compiling expo-keep-awake Pods/ExpoKeepAwake » ExpoKeepAwake-dummy.m
+[RUN_FASTLANE] › Compiling expo-symbols Pods/ExpoSymbols » ExpoSymbols-dummy.m
+[RUN_FASTLANE] › Compiling expo-linear-gradient Pods/ExpoLinearGradient » ExpoLinearGradient-dummy.m
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » ExpoLocation-dummy.m
+[RUN_FASTLANE] › Packaging expo-symbols Pods/ExpoSymbols » libExpoSymbols.a
+[RUN_FASTLANE] › Packaging expo-splash-screen Pods/ExpoSplashScreen » libExpoSplashScreen.a
+[RUN_FASTLANE] › Packaging expo-linking Pods/ExpoLinking » libExpoLinking.a
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » EXLocationTaskConsumer.m
+[RUN_FASTLANE] › Packaging expo-linear-gradient Pods/ExpoLinearGradient » libExpoLinearGradient.a
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » EXLocationPermissionRequester.m
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » EXLocation.m
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » EXGeofencingTaskConsumer.m
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » EXForegroundPermissionRequester.m
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » EXBaseLocationRequester.m
+[RUN_FASTLANE] › Compiling expo-location Pods/ExpoLocation » EXBackgroundLocationPermissionRequester.m
+[RUN_FASTLANE] › Packaging expo-keep-awake Pods/ExpoKeepAwake » libExpoKeepAwake.a
+[RUN_FASTLANE] › Executing expo-symbols Pods/ExpoSymbols » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-splash-screen Pods/ExpoSplashScreen » Copy generated compatibility header
+[RUN_FASTLANE] › Packaging expo-location Pods/ExpoLocation » libExpoLocation.a
+[RUN_FASTLANE] › Executing expo-linking Pods/ExpoLinking » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-linear-gradient Pods/ExpoLinearGradient » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-keep-awake Pods/ExpoKeepAwake » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling expo-glass-effect Pods/ExpoGlassEffect » ExpoGlassEffect-dummy.m
+[RUN_FASTLANE] › Packaging expo-glass-effect Pods/ExpoGlassEffect » libExpoGlassEffect.a
+[RUN_FASTLANE] › Executing expo-location Pods/ExpoLocation » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-glass-effect Pods/ExpoGlassEffect » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling expo-font Pods/ExpoFont » ExpoFont-dummy.m
+[RUN_FASTLANE] › Packaging expo-font Pods/ExpoFont » libExpoFont.a
+[RUN_FASTLANE] › Executing expo-font Pods/ExpoFont » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling expo-image-picker Pods/ExpoImagePicker » ExpoImagePicker-dummy.m
+[RUN_FASTLANE] › Packaging expo-image-picker Pods/ExpoImagePicker » libExpoImagePicker.a
+[RUN_FASTLANE] › Executing expo-image-picker Pods/ExpoImagePicker » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-constants Pods/EXConstants » [CP-User] Generate app.config for prebuilt Constants.manifest
+[RUN_FASTLANE] › Compiling expo-notifications Pods/ExpoNotifications » ExpoNotifications-dummy.m
+[RUN_FASTLANE] › Packaging expo-notifications Pods/ExpoNotifications » libExpoNotifications.a
+[RUN_FASTLANE] › Compiling expo-router Pods/ExpoRouter » ExpoRouter-dummy.m
+[RUN_FASTLANE] › Packaging expo-router Pods/ExpoRouter » libExpoRouter.a
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » ExpoFileSystem-dummy.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXTaskHandlersManager.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » NSData+EXFileSystem.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXSessionUploadTaskDelegate.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXSessionTaskDispatcher.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXSessionTaskDelegate.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXSessionResumableDownloadTaskDelegate.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXSessionHandler.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXSessionDownloadTaskDelegate.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXSessionCancelableUploadTaskDelegate.m
+[RUN_FASTLANE] › Executing expo-router Pods/ExpoRouter » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-notifications Pods/ExpoNotifications » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling expo-blur Pods/ExpoBlur » ExpoBlur-dummy.m
+[RUN_FASTLANE] › Compiling expo-asset Pods/ExpoAsset » ExpoAsset-dummy.m
+[RUN_FASTLANE] › Packaging expo-blur Pods/ExpoBlur » libExpoBlur.a
+[RUN_FASTLANE] › Packaging expo-asset Pods/ExpoAsset » libExpoAsset.a
+[RUN_FASTLANE] › Compiling @expo/dom-webview Pods/ExpoDomWebView » ExpoDomWebView-dummy.m
+[RUN_FASTLANE] › Packaging @expo/dom-webview Pods/ExpoDomWebView » libExpoDomWebView.a
+[RUN_FASTLANE] › Executing @expo/dom-webview Pods/ExpoDomWebView » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-blur Pods/ExpoBlur » Copy generated compatibility header
+[RUN_FASTLANE] › Executing expo-asset Pods/ExpoAsset » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling expo-device Pods/ExpoDevice » ExpoDevice-dummy.m
+[RUN_FASTLANE] › Packaging expo-device Pods/ExpoDevice » libExpoDevice.a
+[RUN_FASTLANE] › Executing expo-device Pods/ExpoDevice » Copy generated compatibility header
+[RUN_FASTLANE] 
+❌  (node_modules/expo-av/ios/EXAV/EXAV.h:10:9)
+
+   8 | #import <ExpoModulesCore/EXAppLifecycleListener.h>
+   9 | #import <ExpoModulesCore/EXExportedModule.h>
+> 10 | #import <ExpoModulesCore/EXEventEmitter.h>
+     |         ^ 'ExpoModulesCore/EXEventEmitter.h' file not found
+  11 | #import <EXAV/EXAVObject.h>
+  12 |
+  13 | typedef NS_OPTIONS(NSUInteger, EXAudioInterruptionMode)
+
+[RUN_FASTLANE] › Compiling expo-clipboard Pods/ExpoClipboard » ExpoClipboard-dummy.m
+[RUN_FASTLANE] › Packaging expo-clipboard Pods/ExpoClipboard » libExpoClipboard.a
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXFileSystemLocalFileHandler.m
+[RUN_FASTLANE] › Compiling expo-file-system Pods/ExpoFileSystem » EXFileSystemAssetLibraryHandler.m
+[RUN_FASTLANE] › Compiling expo-constants Pods/EXConstants » EXConstantsService.m
+[RUN_FASTLANE] › Compiling expo-constants Pods/EXConstants » EXConstants-dummy.m
+[RUN_FASTLANE] › Compiling expo-constants Pods/EXConstants » EXConstantsInstallationIdProvider.m
+[RUN_FASTLANE] › Executing expo-clipboard Pods/ExpoClipboard » Copy generated compatibility header
+[RUN_FASTLANE] › Compiling expo Pods/Expo » ExpoReactNativeFactory.mm
+[RUN_FASTLANE] › Compiling expo Pods/Expo » EXReactRootViewFactory.mm
+[RUN_FASTLANE] › Packaging expo-constants Pods/EXConstants » libEXConstants.a
+[RUN_FASTLANE]     Run script build phase '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'hermes-engine' from project 'Pods')
+[RUN_FASTLANE] ▸ ** ARCHIVE FAILED **
+[RUN_FASTLANE] ▸ The following build commands failed:
+[RUN_FASTLANE] ▸ 	SwiftCompile normal arm64 Compiling\ ExpoVideoView.swift,\ VideoViewModule.swift /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo-av/ios/EXAV/ExpoVideoView.swift /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-local-nodejs/66b65231-0577-4901-a515-198d9a3e55d8/build/node_modules/expo-av/ios/EXAV/Video/VideoViewModule.swift (in target 'EXAV' from project 'Pods')
+[RUN_FASTLANE] ▸ 	CompileSwift normal arm64 (in target 'EXAV' from project 'Pods')
+[RUN_FASTLANE] ▸ 	Archiving workspace TiendaSaku with scheme TiendaSaku
+[RUN_FASTLANE] ▸ (3 failures)
+[RUN_FASTLANE] Exit status: 65
+[RUN_FASTLANE] 
+[RUN_FASTLANE] +---------------------------------------+
+[RUN_FASTLANE] |           Build environment           |
+[RUN_FASTLANE] +-------------+-------------------------+
+[RUN_FASTLANE] | xcode_path  | /Applications/Xcode.app |
+[RUN_FASTLANE] | gym_version | 2.232.2                 |
+[RUN_FASTLANE] | sdk         | iPhoneOS26.2.sdk        |
+[RUN_FASTLANE] +-------------+-------------------------+
+[RUN_FASTLANE] 
+[RUN_FASTLANE] 
+[RUN_FASTLANE] Looks like fastlane ran into a build/archive error with your project
+[RUN_FASTLANE] It's hard to tell what's causing the error, so we wrote some guides on how
+[RUN_FASTLANE] to troubleshoot build and signing issues: https://docs.fastlane.tools/codesigning/getting-started/
+[RUN_FASTLANE] Before submitting an issue on GitHub, please follow the guide above and make
+[RUN_FASTLANE] sure your project is set up correctly.
+[RUN_FASTLANE] fastlane uses `xcodebuild` commands to generate your binary, you can see the
+[RUN_FASTLANE] the full commands printed out in yellow in the above log.
+[RUN_FASTLANE] Make sure to inspect the output above, as usually you'll find more error information there
+[RUN_FASTLANE] [!] Error building the application - see the log above
+[RUN_FASTLANE] Error: The "Run fastlane" step failed because of an error in the Xcode build process. We automatically detected following errors in your Xcode build logs:
+- 'ExpoModulesCore/EXEventEmitter.h' file not found
+- could not build Objective-C module 'EXAV'
+Refer to "Xcode Logs" below for additional, more detailed logs.
+[CLEAN_UP_CREDENTIALS] Destroying keychain - /var/folders/_4/xf81z6h105b9z0x8j6534rg00000gn/T/eas-build-cc06f0e7-9d65-47fa-857b-328d95782861.keychain
+[CLEAN_UP_CREDENTIALS] Removing provisioning profile
+
+Build failed
+The "Run fastlane" step failed because of an error in the Xcode build process. We automatically detected following errors in your Xcode build logs:
+- 'ExpoModulesCore/EXEventEmitter.h' file not found
+- could not build Objective-C module 'EXAV'
+Refer to "Xcode Logs" below for additional, more detailed logs.
+Error: The "Run fastlane" step failed because of an error in the Xcode build process. We automatically detected following errors in your Xcode build logs:
+- 'ExpoModulesCore/EXEventEmitter.h' file not found
+- could not build Objective-C module 'EXAV'
+Refer to "Xcode Logs" below for additional, more detailed logs.
+    at resolveBuildPhaseErrorAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/buildErrors/detectError.js:70:12)
+    at async BuildContext.handleBuildPhaseErrorAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/context.js:190:28)
+    at async BuildContext.runBuildPhase (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/context.js:135:35)
+    at async buildAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/builders/ios.js:135:9)
+    at async runBuilderWithHooksAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/builders/common.js:12:13)
+    at async Object.iosBuilder (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/@expo/build-tools/dist/builders/ios.js:37:16)
+    at async buildIosAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/eas-cli-local-build-plugin/dist/ios.js:43:12)
+    at async buildAsync (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/eas-cli-local-build-plugin/dist/build.js:58:29)
+    at async main (/Users/usuario/.npm/_npx/9dcdd6ab8c3634c3/node_modules/eas-cli-local-build-plugin/dist/main.js:16:9)
+npx -y eas-cli-local-build-plugin@18.0.2 eyJqb2IiOnsidHlwZSI6Im1hbmFnZWQiLCJwbGF0Zm9ybSI6ImlvcyIsInByb2plY3RBcmNoaXZlIjp7InR5cGUiOiJQQVRIIiwicGF0aCI6Ii92YXIvZm9sZGVycy9fNC94ZjgxejZoMTA1Yjl6MHg4ajY1MzRyZzAwMDAwZ24vVC9lYXMtY2xpLW5vZGVqcy9kYTUyZmVlYi0wM2NjLTRjZTItYWY2OC03M2M1MjY2MmRhY2UudGFyLmd6In0sInByb2plY3RSb290RGlyZWN0b3J5IjoiLiIsImJ1aWxkZXJFbnZpcm9ubWVudCI6eyJlbnYiOnt9fSwiY2FjaGUiOnsiZGlzYWJsZWQiOmZhbHNlLCJwYXRocyI6W10sImNsZWFyIjpmYWxzZX0sInNlY3JldHMiOnsiYnVpbGRDcmVkZW50aWFscyI6eyJUaWVuZGFTYWt1Ijp7InByb3Zpc2lvbmluZ1Byb2ZpbGVCYXNlNjQiOiJNSUl4UUFZSktvWklodmNOQVFjQ29JSXhNVENDTVMwQ0FRRXhDekFKQmdVckRnTUNHZ1VBTUlJaFRRWUpLb1pJaHZjTkFRY0JvSUloUGdTQ0lUbzhQM2h0YkNCMlpYSnphVzl1UFNJeExqQWlJR1Z1WTI5a2FXNW5QU0pWVkVZdE9DSS9QZ284SVVSUFExUlpVRVVnY0d4cGMzUWdVRlZDVEVsRElDSXRMeTlCY0hCc1pTOHZSRlJFSUZCTVNWTlVJREV1TUM4dlJVNGlJQ0pvZEhSd09pOHZkM2QzTG1Gd2NHeGxMbU52YlM5RVZFUnpMMUJ5YjNCbGNuUjVUR2x6ZEMweExqQXVaSFJrSWo0S1BIQnNhWE4wSUhabGNuTnBiMjQ5SWpFdU1DSStDanhrYVdOMFBnb0pQR3RsZVQ1QmNIQkpSRTVoYldVOEwydGxlVDRLQ1R4emRISnBibWMrVkdsbGJtUmhJSFpsZENCd1lYSmhJRzFoYzJOdmRHRnpQQzl6ZEhKcGJtYytDZ2s4YTJWNVBrRndjR3hwWTJGMGFXOXVTV1JsYm5ScFptbGxjbEJ5WldacGVEd3ZhMlY1UGdvSlBHRnljbUY1UGdvSlBITjBjbWx1Wno0MFNEUkNTa2cxU0VwWVBDOXpkSEpwYm1jK0NnazhMMkZ5Y21GNVBnb0pQR3RsZVQ1RGNtVmhkR2x2YmtSaGRHVThMMnRsZVQ0S0NUeGtZWFJsUGpJd01qWXRNRFV0TUROVU1ESTZOREk2TURaYVBDOWtZWFJsUGdvSlBHdGxlVDVRYkdGMFptOXliVHd2YTJWNVBnb0pQR0Z5Y21GNVBnb0pDVHh6ZEhKcGJtYythVTlUUEM5emRISnBibWMrQ2drSlBITjBjbWx1Wno1NGNrOVRQQzl6ZEhKcGJtYytDZ2tKUEhOMGNtbHVaejUyYVhOcGIyNVBVend2YzNSeWFXNW5QZ29KUEM5aGNuSmhlVDRLQ1R4clpYaytTWE5ZWTI5a1pVMWhibUZuWldROEwydGxlVDRLQ1R4bVlXeHpaUzgrQ2drOGEyVjVQa1JsZG1Wc2IzQmxja05sY25ScFptbGpZWFJsY3p3dmEyVjVQZ29KUEdGeWNtRjVQZ29KQ1R4a1lYUmhQazFKU1VZMmVrTkRRazVQWjBGM1NVSkJaMGxSUkd4b1NGQmpaRVZ4Vmxwd1lXTnBUa2xhSzIxSmVrRk9RbWRyY1docmFVYzVkekJDUVZGelJrRkVRakZOVlZGM1VXZFpSRlpSVVVSRVJIUkNZMGhDYzFwVFFsaGlNMHB6V2toa2NGcEhWV2RTUjFZeVdsZDRkbU5IVm5sSlJrcHNZa2RHTUdGWE9YVmplVUpFV2xoS01HRlhXbkJaTWtZd1lWYzVkVWxGUmpGa1IyaDJZMjFzTUdWVVJVeE5RV3RIUVRGVlJVTjNkME5TZWsxNFJYcEJVa0puVGxaQ1FXOU5RMnRHZDJOSGVHeEpSV3gxV1hrMGVFTjZRVXBDWjA1V1FrRlpWRUZzVmxSTlFqUllSRlJKTWsxRVRYZE5WRWwzVFZSRmVrOVdiMWhFVkVrelRVUk5kMDFVU1hkTlZFVjZUMFp2ZDJkaldYaEhha0ZaUW1kdlNtdHBZVXByTDBseldrRkZRa1JCYnpCVFJGSkRVMnRuTVZORmNGbE5WazEzVlZGWlJGWlJVVVJFUlhCd1ZVZG9kbUp0VldkU1IyeDZaRWhLY0ZsdVZqQmhWemwxVDJsQ1YxcFlVV2RaVnpWd1lsZEdjMGxJWkd4aVIxcG9ZMjFWWjFKSGJHaGliVVZuV2tkV2Mxb3lSbXRpZVVKR1RHdHJkVlZwTlUxSlEyY3dVMFJTUTFOclp6RlRSWEJaUzFSRlZFMUNSVWRCTVZWRlEzZDNTMDVGWnpCUmEzQkpUbFZvUzFkRVJYaE5RemhIUVRGVlJVTm5kMjlXYlZZd1NVZEdkV0ZYTVdoaVEwSXpXbGQ0YlZsWVNteEpSVkp3V1ZjMWFFbEhVbXhpUjJSb1drYzRaMUpUTlVwTWJFbDFWRVJGVEUxQmEwZEJNVlZGUW1oTlExWldUWGRuWjBWcFRVRXdSME5UY1VkVFNXSXpSRkZGUWtGUlZVRkJORWxDUkhkQmQyZG5SVXRCYjBsQ1FWRkRlaTlHYlV4RmFFUldUbmRuVm5sdk9ISjNaRkZDY21aTk1rUmpiV2tyYUhaQ2FEUkhNRWg0V2xCS2VUTTNkVTFrYUZJMllWQllTRGt3WVhoSmJHVXlhSFJXVUZnemVWSXpURVZGYjBacVNGRlNSMU5VZEdsU2NFUlRRMVI1WWsxeFRrMUpOemxCZWtGUE5teHFSazR2VjBveGVtaFVUVlZZTDFkQk9Yb3hTRlpsVDA1cFowUkxZMDFPYVRkVVpEWlBSVGxKUjJkVGRtVjBVak5HU1VSM1Fra3pSMEpIT0dOeGRGTTVhbUppV21ack9TdDJSMEpPTkZJMGNGUm5ja2htYlRWNGNVMHZkVWREVEV4NE1rbDZiMFJRVDNGVlNVVkJVWGRvTlhwSmR6SmtORGhGVkRKVk9FZHpOV05xWjNoSFluUnpVME5pU21Kd1dVVnJkVWxJYW5GM01UbGhhV2g2TVhONGVXbzJORWhGTDFSSWEwUlpjRTl4YmpVM01IQlVTbnBHVVc5blYxY3ZTbTEzVjB0TWRtRnZUVnBLWjA5dFJFeHBObTlhTm5wWVUyMHpZbHAwYTFobWJHY3pOMUZuZERGcloyNUJaMDFDUVVGSGFtZG5TV3BOU1VsRFNIcEJUVUpuVGxaSVVrMUNRV1k0UlVGcVFVRk5RamhIUVRGVlpFbDNVVmxOUW1GQlJrRnVLM2RDVjFFcllUbHJRM0JKVTNWVFdXOVpkM2xZTjB0bGVVMUlRVWREUTNOSFFWRlZSa0ozUlVKQ1IxRjNXV3BCZEVKblozSkNaMFZHUWxGamQwRnZXV2hoU0ZJd1kwUnZka3d5VG14amJsSjZURzFHZDJOSGVHeE1iVTUyWWxNNU0yUXlVbmxhZWsxMVdrZFdlVTFFUlVkRFEzTkhRVkZWUmtKNlFVSm9hVlp2WkVoU2QwOXBPSFppTWs1NlkwTTFhR05JUW5OYVV6VnFZakl3ZG1JeVRucGpSRUY2VEZoa00xcElTbTVOZWtGNVRVbEpRa2huV1VSV1VqQm5Ra2xKUWtaVVEwTkJVa1YzWjJkRlRrSm5hM0ZvYTJsSE9USk9hMEpSUlhkblpqaDNaMk5OUjBORGMwZEJVVlZHUW5kSlEwMUpSekpFU1VkNlZXMVdjMkZYUm5WWk1sVm5ZakkwWjJSSGFIQmplVUpxV2xoS01HRlhXbkJaTWtZd1dsTkNhV1ZUUW1oaWJtdG5ZMGRHZVdSSWEyZFpXRTU2WkZjeGJHTjVRbWhaTWs1c1kwaFNhR0p0VG14SlJ6bHRTVWhTYjFwVFFqQmhSMVoxU1VkR2QyTkhlSEJaTWtacFlrZFZaMk16VW1oaWJWSm9ZMjFSWjJSSFZubGlXRTFuV1ZjMWEwbEhUblppYlZKd1pFZHNkbUp1VFdkaU1sbG5aRmhPYkV4RFFtcGFXRW93WVZkYWNGa3lSakJhVTBKM1lqSjRjRmt6YTJkWlZ6VnJTVWRPYkdOdVVuQmFiV3hxV1ZoU2NHSXlOR2RqU0Vwb1dUTlNjRmt5Vldkak0xSm9aRWRXZEZwWE5UQmplVFIzVG5kWlNVdDNXVUpDVVZWSVFXZEZWMHN5YURCa1NFSjZUMms0ZG1RelpETk1iVVozWTBkNGJFeHRUblppVXpscVdsaEtNR0ZYV25CWk1rWXdXbGRHTVdSSGFIWmpiV3d3WlZNNGQwWm5XVVJXVWpCc1FWRklMMEpCZDNkRFoxbEpTM2RaUWtKUlZVaEJkMDEzU0ZGWlJGWlNNRTlDUWxsRlJrRmhRVnBGUzFkVWJERlhaa2QxUzJjck1uWlBTMjR4ZVZoYU0wMUJORWRCTVZWa1JIZEZRaTkzVVVWQmQwbElaMFJCVkVKbmIzRm9hMmxIT1RKT2EwSm5SVVZCVVVndlFrRkpSa0ZFUVU1Q1oydHhhR3RwUnpsM01FSkJVWE5HUVVGUFEwRlJSVUZLWldZMmJYb3hkR0o1T0RscWRWTjFRVzFDT0hOS1pESlRNbWhOUkU1NU15OXpMelpFT0RoeE4zVTVlV05aWjFrMFFYcGlaRlpMVUZGTWJERkpVems0VjJOaGF6RlhSMGx2ZG1sa05XeGhkR3BVTUhkRGMwTmtSRGRDTDB4ak1WcDZkRUZyUWxKSVdURXpTMmM1VDNsek9GWmtUMWxtTUZaRE1XVklhMDVxWmpoaFMwVklURGg0YWxCa2JtUmlWSHBsVmtzMU0yNVdURU5RWjFsSE4wMDRZa3RYVHk5dVVrWkhWMHRZWm5kaWIycHhjREowVWpKb2JrNHZjWEZLT0daR05XWnVhVGRrZUdOU2NVTkVTMll5SzB0ak4yZzJTVVJETjIxVmJXMVlTRzlDZEdadVZYTnNORXRZVFZvNU5uUlljblZZZFRjMVZWQktWbEZzT0RWdUx6TlJPVWxrZW5CWmVraEtWakZyT1dVM2NsTmhiblJMYUVsUmEwOWhVblZuTkRabGFuQjBTRXRrV2xCcllUUk1NM3BGTDFSdFdGZHpTWHA1TDNGTmVsazJaMVE1U0hGeVVucFNkV1k1WjJ4d1lUUnRUM2M5UFR3dlpHRjBZVDRLQ1R3dllYSnlZWGsrQ2dvSlBHdGxlVDVFUlZJdFJXNWpiMlJsWkMxUWNtOW1hV3hsUEM5clpYaytDZ2s4WkdGMFlUNU5TVWxPZFZGWlNrdHZXa2xvZG1OT1FWRmpRMjlKU1U1eGFrTkRSR0ZaUTBGUlJYaEVWRUZNUW1kc1oyaHJaMEphVVUxRlFXZEZkMmRuVGpSQ1oydHhhR3RwUnpsM01FSkNkMGRuWjJkT2NFSkpTVVJhVkVkRFFUSkZkMFJCZDBoV2JWWjVZekpzZG1KblNVSkJWRUZPUkVGb1VWVkdSa1JoUjFacVlYZEZRa0ZFUVZGRVFYQlZZVmN4YkZaSE9VMWhXRnBzUVdkSlFreHFRVlJFUVRWS1l6Rm9hbUl5VW14VVYwWjFXVmRrYkZwQlJVSkJSRUZrUkVGNFJHTnRWbWhrUjJ4MlltdFNhR1JIVlZoRVZFa3lUVVJWZDAxNlFYbE9SRWwzVG14dmQwaG5kMDlXUjFab1lsVnNhMXBYTlRCaFYxcHdXbGhKZDBSQmQwdE9SV2N3VVd0d1NVNVZhRXRYUkVGbVJFRTFSbVZJUW5CamJVWXdZVmM1ZFZKSFJqQmFVbU5PVFdwamQwMTZRWGhOYWtGNFRWUk5ORmRxUVdkRVFtUlJZMjA1YldGWGVHeFNSMng2WkVoS2NGbHVWakJoVnpsMVZraHNkMXBSZDBaVk1WSlFWV3RWZDBsUmQwbFZSM2hvWkVkYWRtTnRNSGRHVVhkRVlWVTVWRVJCVWpSamF6bFVSRUZvTW1GWVRuQmlNalZRVlhwQmJFUkJiRUpqU0VKS1VrVTFhR0pYVlUxSFJsSndXbGMxYTFsVFFqSmFXRkZuWTBkR2VWbFRRblJaV0U1cVlqTlNhR042UVhKRVFuUkNZMGhDYzJGWFRtaGtSMngyWW10c2ExcFhOVEJoVjFwd1dsaEtVV050Vm0xaFdHZDNSRUYzUzA1Rlp6QlJhM0JKVGxWb1MxZEVRWE5FUVZKV1ZsVnNSVVJEVVROT2FtTjZUV3BLYlU5RE1IZGFWMHB0VEZSU2JFNTZVWFJQUkUweFRXa3dlRTlYU1RSYVJHTXlUVVJyTVU5VVdYZE9RWGRKVmtkV2FHSlZOV2hpVjFWTlMwWmFiR1JEUW1oaWJXeDBXVmQzWjJReVZuTmFiVVo1V2xOQ1JXRlhSblZaVTBKcldsZDRibGxYVW5aSlJWVjFVMU0xVTB4cmQzZFBkM2RXVWtkV01scFhlSFpqUjFaNVVUSldlV1JIYkcxaFYwNW9aRWRXZWsxRFNVVkpTWEZYVFdGc1pFTTVTM0ZyZWxKUGMzWnJjSFJ6ZURSa2JUUndjMUpKVEU5dVNYbzBWVFZ1V25oaFNrMUZUVTFDUlRWb1lsZFZUVTk1Y0dKYVdHaDNZakV3WjFreU9YUk1iRTVDVXpGV01HRlhWblZhUjBWMVdUSjNaMUZZUW5kVk0xSjJZMjFWWjAxcVFYbE9hVEIzVGxNd2QwMHhVWGROYW04d1RXcHZkMDVUTkRKUFJFSmhUVWxKUWs5bmQwMVNWelV3WVZoU2MxcFhNV3hpYmxKNlkwbEpRa3RCU1VKQllrTkRRVk5GZDA1bmQxZFpXRUozWWtkc2FsbFlVbkJpTWpSMFlWZFNiR0p1VW5CYWJXeHNZMmQzWTA1Rlp6QlJhM0JKVGxWb1MxZEROV3BpTWpCMVZUQkdURlpZVW5CYVZ6VnJXVk0xYW1KRVFXUkVRVGxvWTBoTmRGcFhOVEpoV0VwMlltMHhiR0p1VVUxRGJrSjVZakpTTVZrelVuQmlNalIzUjBGM1ZGbHRWakJaVXpGNVdsaENkbU51VW5wTVYwWnFaRWRzTWxwUlJVSXZla0Z5UkVOYWFtSXlNSFZaV0VKM1lrZFZkVnBIVmpKYVYzaDJZMGRXZVV4dFJucGpNamxxWVZkR01GcFhVWFJhUnpsMFdWZHNkV04zZDBKTGFrRjRSRU5PYW1JeU1IVlpXRUozWWtkVmRWcEhWakphVjNoMlkwZFdlVXh1VW14WlZ6QjBZVmRTYkdKdVVuQmFiV3hzWTJkM1MwNUZaekJSYTNCSlRsVm9TMWRFUVZSRVFUVnVXbGhSZEdSSFJucGhlVEZvWWtkNGRtUjNSVUpCUkVFMVJFSmFjbHBZYkdwaFIwWndZbWt4YUZreVRteGpNMDEwV2pOS2RtUllRbnBOUWpoTlJFUlNTVTVGU2t0VFJGWkpVMnhuZFV0bmQxQlpNamwwVEcxR2QyTkhlR3hNYmxKMllUSldkVzlKU1VsUVZFTkRRV3ROZDJkblNFcHZRVTFEUVZGSlEwTkRNMFl2U1dwVGVGVjFWazFCYjBkRFEzRkhVMDAwT1VKQlRVUk5SMk40UjNwQldrSm5UbFpDUVUxTlJXdEdkMk5IZUd4SlJrcDJZak5SWjFFd1JXZE1VMEpJVFhwRmJVMURVVWRCTVZWRlEzZDNaRkZZUW5kaVIxVm5VVEpXZVdSSGJHMWhWMDVvWkVkc2RtSnBRa0prV0ZKdllqTktjR1JJYTNoRmVrRlNRbWRPVmtKQmIwMURhMFozWTBkNGJFbEZiSFZaZVRSNFEzcEJTa0puVGxaQ1FWbFVRV3hXVkUxQ05GaEVWRVV3VFVSUmVrMUVSVFJOVkd0M1RteHZXRVJVVFRWTlJGRjZUVVJGTkUxVWEzZE9iRzkzV25wRllrMUNhMGRCTVZWRlFYZDNVMUZZUW5kaVIxVm5WVzA1ZG1SRFFrUlJVMEYwU1VWamVrMVRXWGRLUVZsRVZsRlJURVJDTVVKalNFSnpXbE5DUkZwWVNqQmhWMXB3V1RKR01HRlhPWFZKUlVZeFpFZG9kbU50YkRCbFZFVlVUVUpGUjBFeFZVVkRaM2RMVVZoQ2QySkhWV2RUVnpWcVRHcEZURTFCYTBkQk1WVkZRbWhOUTFaV1RYZGtha0ZSUW1kamNXaHJhazlRVVVsQ1FtZFZjbWRSVVVGSlowNXBRVUZUV1RaVE9EbFJTRXRyTjFwTmFXTnZSVlJJVGpCUmJHWklSbTh3TlhnelFsRlhNbEUzYkhCblZYRmtNbEkzV0RBME5EQTNjMk5TVEZZdk9WSXJNazF0U21SNVpXMUZWekE0ZDFSNFJtRkJVREZaVjBGNWJEbFJPSE5VVVdSSVJUTllZV3cxWlZoaWVrWmpOMU4xWkdWNVFUY3lUR3hWTWxZMlduQkVjRkpEYWtkcVVXcENRVTFDTUVkQk1WVmtSR2RSVjBKQ1V6ZHpUalpvVjBSUFNXMXhVMHR0WkRZcmRtVjFkakp6YzJ0eGVrRlFRbWRPVmtoU1RVSkJaamhGUWxSQlJFRlJTQzlOUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKUWtKcVFVdENaMmR4YUd0cVQxQlJVVVJCZDA1dlFVUkNiRUZxUlVGbksyNUNlRUphWlVkc01EQkhUbTUwTnk5U2MwUm5Ra2RUTjJwbWMydFpVbmhSTHprMWJuRk5iMkZhY25welNVUXhTbm94YXpoYU1IVkhjbVp4YVUxV1FXcENkRnB2YjFGNWRGRk9NVVV2VG1wVlRTdDBTWEJxY0ZST2RUUXlNMkZHTjJSclNEaG9WRXAyYlVsWmJsRTFRM2hrWW5reFIyOUVUMmRaUVN0bGFYTnBaM2RuWjB4dFRVbEpRMkpoUVVSQlowVkRRV2RuZWtSbE56UjJNSGh2VEdwQlMwSm5aM0ZvYTJwUFVGRlJSRUY2UW01TlVuTjNSMUZaUkZaUlVVUkVRa3BDWTBoQ2MxcFRRbE5pTWprd1NVVk9Ra2xETUdkU2VrMTRTbXBCYTBKblRsWkNRWE5OU0ZWR2QyTkhlR3hKUlU1c1kyNVNjRnB0YkdwWldGSndZakkwWjFGWVZqQmhSemw1WVZoU05VMVNUWGRGVVZsRVZsRlJTMFJCY0VKalNFSnpXbE5DU21KdFRYVk5VWE4zUTFGWlJGWlJVVWRGZDBwV1ZYcEJaVVozTUhoT2VrRjVUV3BKZVUxcVNYcE5ha3BoUm5jd2VrMXFRWGxOVkdkM1RVUkJkMDFFUW1GTlNFbDRTbXBCYTBKblRsWkNRVTFOU0ZWR2QyTkhlR3hKUms0MVl6TlNiR0pUUWtwaWJsSnNXak5LYUdSSGJIWmlhVUpFVVZOQk1FMVRXWGRLUVZsRVZsRlJURVJDTVVKalNFSnpXbE5DUkZwWVNqQmhWMXB3V1RKR01HRlhPWFZKUlVZeFpFZG9kbU50YkRCbFZFVlVUVUpGUjBFeFZVVkRaM2RMVVZoQ2QySkhWV2RUVnpWcVRHcEZURTFCYTBkQk1WVkZRbWhOUTFaV1RYZFhWRUZVUW1kamNXaHJhazlRVVVsQ1FtZG5jV2hyYWs5UVVVMUNRbmRPUTBGQlVVZGhObEpYWWpNeVprbzVTRTlPYnpaVFJ6RmlUbFpFV210VGMyMVZZVXB1Tm5sVFFpczBkbFpaUkRsNmFXRjFjMXBTZVRoMU4zcDFhMEZpVVVKRk1GSTRWMmxoZEc5S2QzQktXWEpzTldkYWRsUXplR0Z2TkVnelRVbElNRTFCT0VkQk1WVmtSWGRGUWk5M1VVWk5RVTFDUVdZNGQwaDNXVVJXVWpCcVFrSm5kMFp2UVZWMU4wUmxiMVpuZW1sS2NXdHBjRzVsZG5JemNuSTVja3hLUzNOM1VtZFpTVXQzV1VKQ1VWVklRVkZGUlU5cVFUUk5SRmxIUTBOelIwRlJWVVpDZWtGQ2FHbHdiMlJJVW5kUGFUaDJZakpPZW1ORE5XaGpTRUp6V2xNMWFtSXlNSFppTWs1NlkwUkJla3hYUm5kalIzaHNZMjA1ZG1SSFRtaGFlazEzVG5kWlJGWlNNR1pDUkVGM1RHcEJjMjlEY1dkTFNWbHRZVWhTTUdORWIzWk1NazU1WWtNMWFHTklRbk5hVXpWcVlqSXdkbGxZUW5kaVIxWjVZakk1TUZreVJtNU5lVFZxWTIxM2QwaFJXVVJXVWpCUFFrSlpSVVpJY0VoMWFtbExSbE5TU1VscllrNTJiemhoU2toek1FRjVjSEJOUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKUWtKcVFWRkNaMjl4YUd0cFJ6a3lUbXRDWjBsU1FrRkpSa0ZFUVV0Q1oyZHhhR3RxVDFCUlVVUkJkMDV1UVVSQ2EwRnFRVlpFUzIxUGVIRXJWMkZYZFc1dU9URmpNVUZPV21KTE5WTXhSMFJIYVROaVozUTRWMms0VVd3NE5FcHlhbUUzU0dwbVJFaEZTak54Ym1wdmJqbHhNMk5EVFVkRmVrbFFSWEF2TDIxSVRYRTBjSGxIVVRsa2JuUlNjRTVKUTB3ellTdFpRMHRTT0dSVk5tUmtlVEEwYzFseGJIWTNSME5rZUV0VU9WVnJPRkI2UzNOcVEwTkJkMmQzWjJkTGRHOUJUVU5CVVVsRFEwaFJUVkJxYm14cmNYQm5UVUZ2UjBORGNVZFRUVFE1UWtGTlEwMUlTWGhLYWtGclFtZE9Wa0pCVFUxSVZVWjNZMGQ0YkVsR1RqVmpNMUpzWWxOQ1NtSnVVbXhhTTBwb1pFZHNkbUpwUWtSUlUwRXdUVk5aZDBwQldVUldVVkZNUkVJeFFtTklRbk5hVTBKRVdsaEtNR0ZYV25CWk1rWXdZVmM1ZFVsRlJqRmtSMmgyWTIxc01HVlVSVlJOUWtWSFFURlZSVU5uZDB0UldFSjNZa2RWWjFOWE5XcE1ha1ZNVFVGclIwRXhWVVZDYUUxRFZsWk5kMGhvWTA1TmFsbDNUVlJKZUUxVWEzbE9la2wzVjJoalRrMTZRWGROYWtVMVRWUnJlVTU2UlRWWGFrSlBUVk52ZDB0QldVUldVVkZFUkVOR1dGWXdVbE5KUmtKNVlqTmFjR015YkhaaWJXeDFXbmxDVVdOdE9XMWhWM2hzU1VaT2NGb3lOWEJpYldONFJYcEJVa0puVGxaQ1FXOU5RMnRHZDJOSGVHeEpSV3gxV1hrMGVFTjZRVXBDWjA1V1FrRlpWRUZzVmxSTlJtdDNSWGRaU0V0dldrbDZhakJEUVZGWlNVdHZXa2w2YWpCRVFWRmpSRkZuUVVWclFYQjJhV012VkdkWlFYZFdURmMzVDNGalRIRmhPSEIwYUVoU1lqVlFkSFoyVGtveWJteDROMjF4WkcwMFprSlZaalJyT0djeE5EQkVWemRUYVVacWFtZFVVblkyWVRacWNTdGlLMDVEUlVSdU1WSlBTMDlEUVZVNGQyZG5Sa3hOUVhkSFFURlZaRVYzUlVJdmQxRkRUVUZCZDBoM1dVUldVakJxUWtKbmQwWnZRVlZsYTJVMlQwbHZWa3BGWjJsU2N6SXJhbmh2YTJWNlVVUkxiV3QzVVZGWlNVdDNXVUpDVVZWSVFWRkZSVTVVUVhwTlJFVkhRME56UjBGUlZVWkNla0ZDYUdsV2IyUklVbmRQYVRoMllqSk9lbU5ETldoalNFSnpXbE0xYW1JeU1IWmlNazU2WTBSQmVreFhSbnBoVjA1b1RrUkJlazFKUjFkQ1owNVdTRk5CUldkWk5IZG5XWE4zWjFsblIwTlRjVWRUU1dJeldUSlJSa0ZVUWpkTlNHdEhRME56UjBGUlZVWkNkMGxEVFVjd1RXRXhVbTloV0UxbldUSldlV1JIYkcxaFYwNW9aRWRWWjJGWVRXZGtSemhuV1cxVloyUllUbXhhUTBKc1pVZE9jMlJZVG5Ca2JWWnpaVk5DYldJelNXZGFibFoxV1ROU2NHSXlOWHBKUjJ4MVpFZFdlV0p0Um5OSlNGSjJTVVZHZDJOSGVHeEpSa0o1WWpKU01Wa3pVbnBKUjBaMVdrTTVkbU5wUWtKalNFSnpXbE5DZDJOdE9XcGFXRTU2V2xoTmRVMUNNRWRCTVZWa1JHZFJWMEpDVkdwclpVZEtaRUZHYlhCSlpuVXZOMDVWYVRrd2VGTTRWbVl3UkVGUFFtZE9Wa2hST0VKQlpqaEZRa0ZOUTBJMFFYZEVkMWxLUzI5YVNXaDJaR3BhUVhkVVFrRkpSa0ZFUVV0Q1oyZHhhR3RxVDFCUlVVUkJaMDVLUVVSQ1IwRnBSVUZwYVhkS0swbzFTa1ZVVVc0Mk0zSm5VV2RtYWxsVVNpODRiMVZoYWpWNFVVdDBhR1JuWkhka1RFWlZRMGxSUkdoV1dqSTRLMjQ1TW1zMGJrOTNlazluZDNjNGNFOTJWMk00U2tGMk1sWTVVR1ZGU2pRNVZFaGpNVVJIUTBGa1RYZG5aMGhRUVdkRlFrMUlOSGRqYWtWdFRVTlJSMEV4VlVWQmQzZGtVVmhDZDJKSFZXZFZNMng2WkVkV2RFbEZiSFZrUjFadVkyMUdNR0ZYT1hWSlJVNUNTVVJSZUVwcVFXdENaMDVXUWtGelRVaFZSbmRqUjNoc1NVVk9iR051VW5CYWJXeHFXVmhTY0dJeU5HZFJXRll3WVVjNWVXRllValZOVWsxM1JWRlpSRlpSVVV0RVFYQkNZMGhDYzFwVFFrcGliVTExVFZGemQwTlJXVVJXVVZGSFJYZEtWbFYzU1Vsa1FYY3JUMlZYVTNGdFFYZERkMWxLV1VsYVNVRlhWVVJDUVVsQ2IwbEliazFDWjBkRFUzRkhVMGxpTTBSUlJVcEJla1ZNUW1kcmNXaHJhVWM1ZHpCQ1FuZEZkMGhCV1VwTGIxcEphSFpqVGtGUmEwWk5VVGhZUkZSSk1rMUVWWGROZWtGNVRrUkpkMDVzYjNkTFFWbEtTMjlhU1doMlkwNUJVV3N3VFZKemQwZFVRVXhDWjJ4bmFHdG5RbHBSVFVWQlowZG9RMmRaU1V0dldrbDZhakJGUVhkSmQweDNXVXBMYjFwSmFIWmpUa0ZSYTBWTlUwbEZTVXQ0TUZSU0wxbFlRV2RuTlZvNUwwRmhWeTlYVTFVclZ6SkhVbUpJTWpaaWN6ZzJjemhVTjBZeUsycE5Sa2xIUTFOeFIxTkpZak5FVVVWS1JIcEdSazFGVFhkRFoxbEpTMjlhU1doMlkwNUJkMk4zUkdkWlNVdHZXa2xvZG1OT1FYZEpRMEZuUTBGTlFUQkhRME54UjFOSllqTkVVVTFEUVdkR1FVMUJZMGRDVTNOUFFYZEpTRTFCTUVkRFEzRkhVMGxpTTBSUlRVTkJaMFZ2VFVGdlIwTkRjVWRUVFRRNVFrRk5RMEpGWTNkU1VVbG5TM0F4TmxkdFZWTTNSR3BZZFdOME1uUmFjMFZ6VG5SV2RqaDVRamRFV21VMVN6QnBXblptY1ZaNFZVTkpVVVJKV0RsSFoyUjBhM1pET1haS2NuRkxUa3hYVGxFeWVreEhLMnhJZEcxS1FYbEhLMGRDT0dORGNUbG5QVDA4TDJSaGRHRStDZ2tKQ1FrSkNRa0pDUWtKQ1FrSkNRa0tDUWtKUEd0bGVUNVFVRkZEYUdWamF6d3ZhMlY1UGdvSlBHWmhiSE5sTHo0S0NnazhhMlY1UGtWdWRHbDBiR1Z0Wlc1MGN6d3ZhMlY1UGdvSlBHUnBZM1ErQ2drSlBHdGxlVDVpWlhSaExYSmxjRzl5ZEhNdFlXTjBhWFpsUEM5clpYaytDZ2tKUEhSeWRXVXZQZ29KQ1FrSkNna0pDUWs4YTJWNVBtRndjeTFsYm5acGNtOXViV1Z1ZER3dmEyVjVQZ29KQ1R4emRISnBibWMrY0hKdlpIVmpkR2x2Ymp3dmMzUnlhVzVuUGdvSkNRa0pDZ2tKQ1FrOGEyVjVQbU52YlM1aGNIQnNaUzVrWlhabGJHOXdaWEl1WVhOemIyTnBZWFJsWkMxa2IyMWhhVzV6UEM5clpYaytDZ2tKUEhOMGNtbHVaejRxUEM5emRISnBibWMrQ2drSkNRa0tDUWtKQ1R4clpYaytZWEJ3YkdsallYUnBiMjR0YVdSbGJuUnBabWxsY2p3dmEyVjVQZ29KQ1R4emRISnBibWMrTkVnMFFrcElOVWhLV0M1amIyMHVVMEZMVlhScFpXNWtZUzVqYkR3dmMzUnlhVzVuUGdvSkNRa0pDZ2tKQ1FrOGEyVjVQbXRsZVdOb1lXbHVMV0ZqWTJWemN5MW5jbTkxY0hNOEwydGxlVDRLQ1FrOFlYSnlZWGsrQ2drSkNRazhjM1J5YVc1blBqUklORUpLU0RWSVNsZ3VLand2YzNSeWFXNW5QZ29KQ1FrSlBITjBjbWx1Wno1amIyMHVZWEJ3YkdVdWRHOXJaVzQ4TDNOMGNtbHVaejRLQ1FrOEwyRnljbUY1UGdvSkNRa0pDZ2tKQ1FrOGEyVjVQbWRsZEMxMFlYTnJMV0ZzYkc5M1BDOXJaWGsrQ2drSlBHWmhiSE5sTHo0S0NRa0pDUW9KQ1FrSlBHdGxlVDVqYjIwdVlYQndiR1V1WkdWMlpXeHZjR1Z5TG5SbFlXMHRhV1JsYm5ScFptbGxjand2YTJWNVBnb0pDVHh6ZEhKcGJtYytORWcwUWtwSU5VaEtXRHd2YzNSeWFXNW5QZ29KQ1FvSlBDOWthV04wUGdvSlBHdGxlVDVGZUhCcGNtRjBhVzl1UkdGMFpUd3ZhMlY1UGdvSlBHUmhkR1UrTWpBeU55MHdNeTB3TVZReU1Eb3hNVG96T0ZvOEwyUmhkR1UrQ2drOGEyVjVQazVoYldVOEwydGxlVDRLQ1R4emRISnBibWMrS2x0bGVIQnZYU0JqYjIwdVUwRkxWWFJwWlc1a1lTNWpiQ0JCY0hCVGRHOXlaU0F5TURJMkxUQTFMVEF6VkRBeU9qUXlPakExTGpZNE1GbzhMM04wY21sdVp6NEtDVHhyWlhrK1ZHVmhiVWxrWlc1MGFXWnBaWEk4TDJ0bGVUNEtDVHhoY25KaGVUNEtDUWs4YzNSeWFXNW5QalJJTkVKS1NEVklTbGc4TDNOMGNtbHVaejRLQ1R3dllYSnlZWGsrQ2drOGEyVjVQbFJsWVcxT1lXMWxQQzlyWlhrK0NnazhjM1J5YVc1blBsWmxkQ0JoYm1sdFlXd2dkMlZzWm1GeVpTQkVhV0Z1WVNCa1pXeG5ZV1J2SUVVdVNTNVNMa3c4TDNOMGNtbHVaejRLQ1R4clpYaytWR2x0WlZSdlRHbDJaVHd2YTJWNVBnb0pQR2x1ZEdWblpYSStNekF5UEM5cGJuUmxaMlZ5UGdvSlBHdGxlVDVWVlVsRVBDOXJaWGsrQ2drOGMzUnlhVzVuUGpjMk56TXlNbVk0TFRCbFltWXROR1UzTkMwNE16VXlMVEU1WWpoa056WXdPVFU1Tmp3dmMzUnlhVzVuUGdvSlBHdGxlVDVXWlhKemFXOXVQQzlyWlhrK0NnazhhVzUwWldkbGNqNHhQQzlwYm5SbFoyVnlQZ284TDJScFkzUStDand2Y0d4cGMzUStvSUlOUHpDQ0JEUXdnZ01jb0FNQ0FRSUNDRVlnTGJ3RFQ0KzJNQTBHQ1NxR1NJYjNEUUVCQ3dVQU1ITXhMVEFyQmdOVkJBTU1KRUZ3Y0d4bElHbFFhRzl1WlNCRFpYSjBhV1pwWTJGMGFXOXVJRUYxZEdodmNtbDBlVEVnTUI0R0ExVUVDd3dYUTJWeWRHbG1hV05oZEdsdmJpQkJkWFJvYjNKcGRIa3hFekFSQmdOVkJBb01Da0Z3Y0d4bElFbHVZeTR4Q3pBSkJnTlZCQVlUQWxWVE1CNFhEVEkyTURFeU9ERTVOVFUxTWxvWERUTXdNVEl6TVRBd01EQXdNRm93V1RFMU1ETUdBMVVFQXd3c1FYQndiR1VnYVZCb2IyNWxJRTlUSUZCeWIzWnBjMmx2Ym1sdVp5QlFjbTltYVd4bElGTnBaMjVwYm1jeEV6QVJCZ05WQkFvTUNrRndjR3hsSUVsdVl5NHhDekFKQmdOVkJBWVRBbFZUTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF1QUhHQXFmNkxTQ3J6a2F0RlZoekx1bThOV1hsckhMWkJsZ2RHWmM2QTZLUUhlZXFRWDNyK2VRRFhtc0o0cWgwancrelFqUEZSNTNUMDRXc2l5cGlMbTBzVFk2SmVzb01VK25kcEI1dXBRSnAvSGJvQkd3NFBTM3lxak4xZ1NQTGh3bmU1dHYvZXBrU241eFNnM0V4VmZsK3JUc2xkVkpUNERLellHRk9HYXQ3QkVXOHExZHJDQStVenBVeVJBSmJpcTF5SU1DcVp6c3l6emVIVlVXams2TGlIbkQvcEcrQ0JZVEJtVDVwMW1wM0V3cFpRVFJhRVEya0xoRFpzY1pyUDJGVklBTkNvMDVCaXZrOFJkL1Zsd1MvVFNoTmZCQzVmbTBzUHJBamV0MW9scE5wSjFxT3A3bDBFWUhud1NEYi9KMmJaTW9QTGN3Tm1WUXpBeGUrZlFJREFRQUJvNEhsTUlIaU1Bd0dBMVVkRXdFQi93UUNNQUF3SHdZRFZSMGpCQmd3Rm9BVWIvR1ZHR0pjNE1qeHhlMXNHTW5nMDJSU21DQXdRQVlJS3dZQkJRVUhBUUVFTkRBeU1EQUdDQ3NHQVFVRkJ6QUJoaVJvZEhSd09pOHZiMk56Y0M1aGNIQnNaUzVqYjIwdmIyTnpjREF6TFdGcGNHTmhNRGN3THdZRFZSMGZCQ2d3SmpBa29DS2dJSVllYUhSMGNEb3ZMMk55YkM1aGNIQnNaUzVqYjIwdllXbHdZMkV1WTNKc01CMEdBMVVkRGdRV0JCUTdGR2dRVHlZdGp0b0xTVkFYYmE1a1B2K1dFVEFPQmdOVkhROEJBZjhFQkFNQ0I0QXdEd1lKS29aSWh2ZGpaQVk2QkFJRkFEQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFPa0I0cWNWc0N4eU80UEgrRW0welRyNXVEOUpXemkrK0NUYml0bW1SU2JFS28zeG9Fa05ZZXZsangrT2U2d2QrUkVhVzhIV25wSHg2SHY0OS9OOUM5cnh6akxOQXlsRTUwVUx6NGZlS2ZkYklaMm8rOHlUQTlVM0NIQ2YzT3V1Rlh1YnZPMk1iZkVnR3NqQ0l3N2NBV1dqMVFPMkZ6NWdhNGRiU1lpMU1sWnZTTGt2a0xlb2R3WUZFbm1vemdTNFdTL0pYVUkwT3pnazJtQmNnUGY0RTRMTDhuTk02WTZVaS90T0FNT01pWXcrZGQwQU9vMnppeU9ZYXQxbU5OU0hZOHA0M25UeEZUZG94aGxPckhwTHhTV0lBSmJCT0R3eGlFVERyWW5Sdy9PZ0UyWVpYb1Y0bzArTGwyb29ZZVJia2NNRjVtTGxEak0vSEJkL2VLbkdudnpDQ0JFUXdnZ01zb0FNQ0FRSUNDRnhqeXVSS04xUEpNQTBHQ1NxR1NJYjNEUUVCQ3dVQU1HSXhDekFKQmdOVkJBWVRBbFZUTVJNd0VRWURWUVFLRXdwQmNIQnNaU0JKYm1NdU1TWXdKQVlEVlFRTEV4MUJjSEJzWlNCRFpYSjBhV1pwWTJGMGFXOXVJRUYxZEdodmNtbDBlVEVXTUJRR0ExVUVBeE1OUVhCd2JHVWdVbTl2ZENCRFFUQWVGdzB4TnpBMU1UQXlNVEkzTXpCYUZ3MHpNREV5TXpFd01EQXdNREJhTUhNeExUQXJCZ05WQkFNTUpFRndjR3hsSUdsUWFHOXVaU0JEWlhKMGFXWnBZMkYwYVc5dUlFRjFkR2h2Y21sMGVURWdNQjRHQTFVRUN3d1hRMlZ5ZEdsbWFXTmhkR2x2YmlCQmRYUm9iM0pwZEhreEV6QVJCZ05WQkFvTUNrRndjR3hsSUVsdVl5NHhDekFKQmdOVkJBWVRBbFZUTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5VVZxQVE4K2d3U0d4L3kvM0Y3d0hvSHVGekJ6WXlZdTNqMTZKTTJUUGs4NVI3cDF2dlBBMHZGWm9xc2YvZ3FHUE5rdG1nZnlEbXU1S1pFYVh5SUtpL0Z5V0FXdVRFdEV4WG1uZ0R5d2lPQ01EQ2VFWFJubGh4azJ5K1BGZHJldzlFRnlVZlFGWElOTG9tMm1VYmp4SnQ5N1hxMWxETWF5bUZHTXUzMGJUTUZPeUFqSDB1MWtDN1RkRzQxUFFIMGJqMGlXa2x2ejBKaCsyYnlrR1E2WllidEJYUUhNVzNkNmZTVFEzTk5ULzhQY3haUXN0bHBOamhnak9iM1p4bEkrMGZMMEpZcWhLb2Y5MkF4R0tWSC83UmRzaVNWcmg3K0thUlNmZDUvREZiZG9zNGhGdllUbUJnSkJaQSt0S2lpNEZjbmdyS2VLdW5JRU5MSjRqUGl5aFFJREFRQUJvNEhzTUlIcE1BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0h3WURWUjBqQkJnd0ZvQVVLOUJwUjVSMkNmNzBhNDB1UUtiM1IwMS9DRjR3UkFZSUt3WUJCUVVIQVFFRU9EQTJNRFFHQ0NzR0FRVUZCekFCaGlob2RIUndPaTh2YjJOemNDNWhjSEJzWlM1amIyMHZiMk56Y0RBekxXRndjR3hsY205dmRHTmhNQzRHQTFVZEh3UW5NQ1V3STZBaG9CK0dIV2gwZEhBNkx5OWpjbXd1WVhCd2JHVXVZMjl0TDNKdmIzUXVZM0pzTUIwR0ExVWREZ1FXQkJSdjhaVVlZbHpneVBIRjdXd1l5ZURUWkZLWUlEQU9CZ05WSFE4QkFmOEVCQU1DQVFZd0VBWUtLb1pJaHZkalpBWUNFZ1FDQlFBd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFEclBySmlOdnBJZ0lRbXRsZk94WENINk5pMVhJRVIwYzJTU0NMT1dyUGR0bC9wYk5EZ256eEpHMHp3UjhBZkptWkN4MGVnUkNhWGpwV3RzWXdnL25pWDYxWm1jVE9ibHpvNnlUV2pzaTZ1am9rK0tFUlUrM0JRckhNWkV0bTlueFZ0UGxTa3RoMXcvM0lNZWQwL3QybFNuTGVjVGdjRmp4RlFMRzBzS2FpZ2lDTlEza254L1p5aGZyejAvdDZ4WkhUZzBaRnJ1TTBvWlFrUXB4TW9ZYStIQlV5MHQ5RTNDRmZZek1oaDQ4U1p2aWszcmxFeWo2UDhQc3dPTFpkcnJMdGhsVUovY240cmZNYWlFVk54U1VrSFNzaE1kTVVaSGlGOCs3c1B5akNNRWxldXNpajZDYkFhZkx1T0xRNXBpV3pRTjlKblBMTzY2Y29ZWkk2WDhqclV3Z2dTN01JSURvNkFEQWdFQ0FnRUNNQTBHQ1NxR1NJYjNEUUVCQlFVQU1HSXhDekFKQmdOVkJBWVRBbFZUTVJNd0VRWURWUVFLRXdwQmNIQnNaU0JKYm1NdU1TWXdKQVlEVlFRTEV4MUJjSEJzWlNCRFpYSjBhV1pwWTJGMGFXOXVJRUYxZEdodmNtbDBlVEVXTUJRR0ExVUVBeE1OUVhCd2JHVWdVbTl2ZENCRFFUQWVGdzB3TmpBME1qVXlNVFF3TXpaYUZ3MHpOVEF5TURreU1UUXdNelphTUdJeEN6QUpCZ05WQkFZVEFsVlRNUk13RVFZRFZRUUtFd3BCY0hCc1pTQkpibU11TVNZd0pBWURWUVFMRXgxQmNIQnNaU0JEWlhKMGFXWnBZMkYwYVc5dUlFRjFkR2h2Y21sMGVURVdNQlFHQTFVRUF4TU5RWEJ3YkdVZ1VtOXZkQ0JEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT1NScVFrZmtkc2VSMURyQmUxZWVZUXQ2emFpVjB4VjdJc1ppZDc1UzJ6MUI2c2lNQUxvR0Q3NFVBblRmMEdvbVBuUnltYWNKR3NSMEtPNzVCc3F3eCtWbm5vTXBFZUxXOVFXTnpQTHhBOU56aFJwMGNrWmN2VmREdFYvWDV2eUpRTzZWWTlOWFEzeFpEVWpGVXNWV1IyemxQZjJuSjdQVUxyQldGQm5qd2kwSVBmTHJDd2diM0MyUHdFd2pMZER6dytkUGZNclNTZ2F5UDdPdGJrTzJWNGMxc3M5dFRxdDlBOE9BSklMc1NFV0xuVFZQQTNiWWhhcm8zR1NSMU5Wd2E4dlFiUDQrK053emVhalRFVitIMHhyVUpaQmljUjBZZ3NRZzBHSE00cUJzVEJZN0ZvRU1veG9zNDhkM21Wei8yZGVaYnhKMkhhZk14UmxvWGVVeVMwQ0F3RUFBYU9DQVhvd2dnRjJNQTRHQTFVZER3RUIvd1FFQXdJQkJqQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01CMEdBMVVkRGdRV0JCUXIwR2xIbEhZSi92UnJqUzVBcHZkSFRYOElYakFmQmdOVkhTTUVHREFXZ0JRcjBHbEhsSFlKL3ZScmpTNUFwdmRIVFg4SVhqQ0NBUkVHQTFVZElBU0NBUWd3Z2dFRU1JSUJBQVlKS29aSWh2ZGpaQVVCTUlIeU1Db0dDQ3NHQVFVRkJ3SUJGaDVvZEhSd2N6b3ZMM2QzZHk1aGNIQnNaUzVqYjIwdllYQndiR1ZqWVM4d2djTUdDQ3NHQVFVRkJ3SUNNSUcyR29HelVtVnNhV0Z1WTJVZ2IyNGdkR2hwY3lCalpYSjBhV1pwWTJGMFpTQmllU0JoYm5rZ2NHRnlkSGtnWVhOemRXMWxjeUJoWTJObGNIUmhibU5sSUc5bUlIUm9aU0IwYUdWdUlHRndjR3hwWTJGaWJHVWdjM1JoYm1SaGNtUWdkR1Z5YlhNZ1lXNWtJR052Ym1ScGRHbHZibk1nYjJZZ2RYTmxMQ0JqWlhKMGFXWnBZMkYwWlNCd2IyeHBZM2tnWVc1a0lHTmxjblJwWm1sallYUnBiMjRnY0hKaFkzUnBZMlVnYzNSaGRHVnRaVzUwY3k0d0RRWUpLb1pJaHZjTkFRRUZCUUFEZ2dFQkFGdzJtVXd0ZUxmdGpKdmM4M2ViOG5iU2R6QlB3UitGZzRVYm1UMUhOL0twbTBDT0xOU3hrQkxZdnZSem0rN1NaQS9MZVU4MDJLSSsrWGovYThnSDdIMDVnNHRUSU5NNHhMRy9tazhLYS84ci9GbW5CUWw4RjBCV0VSNTAwN2VMSXp0SG85VnZKT0xyMGJkdzN3OUY0U2ZLOFcxNDdlZTFGeGVvM0g0aU5jb2wxZGtQMW12VW9pUWpFZmVockk5emdXREdHMXNKTDVLeStFUkk4R0E0bmhYMVBTWm5JSW96YXZjTmdzL2U2Nk12K1ZOcVcyVEFZek4zOXpvSExGYnIyZzhoRHRxNmN4bFB0ZGsyZjhHSFZkbW5tYmt5UXZ2WTFYR2VmcUZTdHh1OWswSWtFaXJIRHgyMlRaeGVZOGhMZ0JkUXFvclYydVQ4MEFrSE43QjFkU0V4Z2dLRk1JSUNnUUlCQVRCL01ITXhMVEFyQmdOVkJBTU1KRUZ3Y0d4bElHbFFhRzl1WlNCRFpYSjBhV1pwWTJGMGFXOXVJRUYxZEdodmNtbDBlVEVnTUI0R0ExVUVDd3dYUTJWeWRHbG1hV05oZEdsdmJpQkJkWFJvYjNKcGRIa3hFekFSQmdOVkJBb01Da0Z3Y0d4bElFbHVZeTR4Q3pBSkJnTlZCQVlUQWxWVEFnaEdJQzI4QTArUHRqQUpCZ1VyRGdNQ0dnVUFvSUhjTUJnR0NTcUdTSWIzRFFFSkF6RUxCZ2txaGtpRzl3MEJCd0V3SEFZSktvWklodmNOQVFrRk1ROFhEVEkyTURVd016QXlOREl3Tmxvd0l3WUpLb1pJaHZjTkFRa0VNUllFRkhvRmhnaVdyd3RxcWVKTUxRY3RkZXJQTTRYek1Da0dDU3FHU0liM0RRRUpOREVjTUJvd0NRWUZLdzREQWhvRkFLRU5CZ2txaGtpRzl3MEJBUUVGQURCU0Jna3Foa2lHOXcwQkNROHhSVEJETUFvR0NDcUdTSWIzRFFNSE1BNEdDQ3FHU0liM0RRTUNBZ0lBZ0RBTkJnZ3Foa2lHOXcwREFnSUJRREFIQmdVckRnTUNCekFOQmdncWhraUc5dzBEQWdJQktEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0FRQTF1RTZnT0hyMytpWlV6b0tVdjVVWU13VVVKZGorckRlRUtpUVEvOXhEVEpmREI4OGt5aHZHZ3FBMUhYS0kybCtPNHAyRHNaR3lyYjQ4VW8vcmNjd2hzOEFJRkNSZ09qbktTdlVDN2lZVWJIczRLdmo5M2NHN0NnR015QVllMVUrblAzb1FIVEV2U1FOeUNwNndGVVl5YmZQZ1B2aSsyakRkRGVwZTI3R2ZDQlhXYm9TVnkrcXpXMVdxQ010U3ZHdFVwZzlLeC9vZ0FlcHFBdnRyNGtUaGNrT0h4OVRIZ1FJcVRPbHE4aUIxUk90M3hZOUtDckpKOHVwWHI4Mk12UUpTQVRpMUwrNk9yR2JpU05UT3pnUjVQLzFpQWE1Zi9YM1BLN2pJZ0FqdXFCejZQUXlCNVZwcmNuZ0VlNTFJdTR0cEFhTkhoN3V4cVcwejBFWks3U0N6IiwiZGlzdHJpYnV0aW9uQ2VydGlmaWNhdGUiOnsiZGF0YUJhc2U2NCI6Ik1JSU1JZ0lCQXpDQ0MrZ0dDU3FHU0liM0RRRUhBYUNDQzlrRWdndlZNSUlMMFRDQ0JuRUdDU3FHU0liM0RRRUhBYUNDQm1JRWdnWmVNSUlHV2pDQ0JsWUdDeXFHU0liM0RRRU1DZ0VEb0lJR0J6Q0NCZ01HQ2lxR1NJYjNEUUVKRmdHZ2dnWHpCSUlGN3pDQ0Jlc3dnZ1RUb0FNQ0FRSUNFQTVZUnozSFJLbFdhV25JalNHZnBpTXdEUVlKS29aSWh2Y05BUUVMQlFBd2RURkVNRUlHQTFVRUF3dzdRWEJ3YkdVZ1YyOXliR1IzYVdSbElFUmxkbVZzYjNCbGNpQlNaV3hoZEdsdmJuTWdRMlZ5ZEdsbWFXTmhkR2x2YmlCQmRYUm9iM0pwZEhreEN6QUpCZ05WQkFzTUFrY3pNUk13RVFZRFZRUUtEQXBCY0hCc1pTQkpibU11TVFzd0NRWURWUVFHRXdKVlV6QWVGdzB5TmpBek1ERXlNREV4TXpsYUZ3MHlOekF6TURFeU1ERXhNemhhTUlIR01Sb3dHQVlLQ1pJbWlaUHlMR1FCQVF3S05FZzBRa3BJTlVoS1dERlRNRkVHQTFVRUF3eEthVkJvYjI1bElFUnBjM1J5YVdKMWRHbHZiam9nVm1WMElHRnVhVzFoYkNCM1pXeG1ZWEpsSUVScFlXNWhJR1JsYkdkaFpHOGdSUzVKTGxJdVRDQW9ORWcwUWtwSU5VaEtXQ2t4RXpBUkJnTlZCQXNNQ2pSSU5FSktTRFZJU2xneE1UQXZCZ05WQkFvTUtGWmxkQ0JoYm1sdFlXd2dkMlZzWm1GeVpTQkVhV0Z1WVNCa1pXeG5ZV1J2SUVVdVNTNVNMa3d4Q3pBSkJnTlZCQVlUQWxWVE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBcy94Wml4SVExVGNJRmNxUEs4SFVBYTN6TmczSm92b2J3WWVCdEI4V1R5Y3QrN2pIWVVlbWoxeC9kR3NTSlh0b2JWVDE5OGtkeXhCS0JZeDBFUmtrN1lrYVEwZ2s4bXpLalRDTy9RTXdEdXBZeFRmMWlkYzRVekZGLzFnUGM5UjFYampZb0F5bkREWXUwM2VqaFBTQm9FcjNyVWR4U0E4QVNOeGdSdkhLclV2WTIyMlg1UGZyeGdUZUVlS1U0S3gzNXVjYWpQN2hnaXk4ZGlNNkF6enFsQ0JBRU1JZWN5TU5uZVBCRTlsUEJyT1hJNE1SbTdiRWdteVc2V0JKTGlCNDZzTmZXb29jOWJNY28rdUJ4UDB4NUEyS1RxcCtlOUtVeWN4VUtJRmx2eVpzRmlpNzJxREdTWURwZ3k0dXFHZXMxMHB0MjJiWkYzNVlOKzBJTGRaSUp3SURBUUFCbzRJQ0l6Q0NBaDh3REFZRFZSMFRBUUgvQkFJd0FEQWZCZ05WSFNNRUdEQVdnQlFKL3NBVmtQbXZaQXFTRXJrbUtHTU1sK3luc2pCd0JnZ3JCZ0VGQlFjQkFRUmtNR0l3TFFZSUt3WUJCUVVITUFLR0lXaDBkSEE2THk5alpYSjBjeTVoY0hCc1pTNWpiMjB2ZDNka2NtY3pMbVJsY2pBeEJnZ3JCZ0VGQlFjd0FZWWxhSFIwY0RvdkwyOWpjM0F1WVhCd2JHVXVZMjl0TDI5amMzQXdNeTEzZDJSeVp6TXdNakNDQVI0R0ExVWRJQVNDQVJVd2dnRVJNSUlCRFFZSktvWklodmRqWkFVQk1JSC9NSUhEQmdnckJnRUZCUWNDQWpDQnRneUJzMUpsYkdsaGJtTmxJRzl1SUhSb2FYTWdZMlZ5ZEdsbWFXTmhkR1VnWW5rZ1lXNTVJSEJoY25SNUlHRnpjM1Z0WlhNZ1lXTmpaWEIwWVc1alpTQnZaaUIwYUdVZ2RHaGxiaUJoY0hCc2FXTmhZbXhsSUhOMFlXNWtZWEprSUhSbGNtMXpJR0Z1WkNCamIyNWthWFJwYjI1eklHOW1JSFZ6WlN3Z1kyVnlkR2xtYVdOaGRHVWdjRzlzYVdONUlHRnVaQ0JqWlhKMGFXWnBZMkYwYVc5dUlIQnlZV04wYVdObElITjBZWFJsYldWdWRITXVNRGNHQ0NzR0FRVUZCd0lCRml0b2RIUndjem92TDNkM2R5NWhjSEJzWlM1amIyMHZZMlZ5ZEdsbWFXTmhkR1ZoZFhSb2IzSnBkSGt2TUJZR0ExVWRKUUVCL3dRTU1Bb0dDQ3NHQVFVRkJ3TURNQjBHQTFVZERnUVdCQlFHZ0dSQ2xrNWRWbnhyaW9QdHJ6aXA5Y2wyZHpBT0JnTlZIUThCQWY4RUJBTUNCNEF3RXdZS0tvWklodmRqWkFZQkJBRUIvd1FDQlFBd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFDWG4rcHM5Ylc4dlBZN2tyZ0pnZkxDWGRrdG9UQXpjdC83UCtnL1BLdTd2Y25HSUdPQU0yM1ZTajBDNWRTRXZmRm5HcE5WaGlLTDRuZVpXclkwOU1BckFuUSt3ZnkzTldjN1FKQVVSMk5keW9QVHNyUEZYVG1IOUZRdFhoNURZMy9HaWhCeS9NWXozWjNXMDgzbFN1ZDUxU3dqNEdCdXpQR3lsanY1MFJSbGlsMzhHNkk2cWRyVWRvWnpmNnFpZkh4ZVg1NHUzY1hFYWdneW45dmluTzRlaUF3dTVsSnBseDZBYlg1MUxKZUNsekdmZXJWNjdsN3UrVkR5VlVKZk9aLzkwUFNIYzZXTXh5VmRaUFh1NjBtcDdTb1NFSkRta2JvT09ubzZiUnluV1Q1R3VDOTh4UDA1bDFyQ004djZqTTJPb0UvUjZxMGMwYm4vWUphV3VKanN4UERBakJna3Foa2lHOXcwQkNSVXhGZ1FVWXRMdkxaNDJLaDd3U1RJR1JxbGFSSUNYekkwd0ZRWUpLb1pJaHZjTkFRa1VNUWdlQmdCckFHVUFlVENDQlZnR0NTcUdTSWIzRFFFSEFhQ0NCVWtFZ2dWRk1JSUZRVENDQlQwR0N5cUdTSWIzRFFFTUNnRUNvSUlFN2pDQ0JPb3dIQVlLS29aSWh2Y05BUXdCQXpBT0JBaGs3aUhubDhYUDJBSUNDQUFFZ2dUSTRoVHVDeDZXdzFCdXNuMTg2L25DQTJ6QlRzU2NsT3FKNUVJSkRsRWROZWMzUXNSWGRwYmxybU11NkowOGp2endrU1UxcXFOZmVqQk8rOVJNd2hheHJxaFp6b0QxVFBRclJNQ3lMWGNRNTVYRkNBMnJnSHY0bTZuMVI4eGkwUCtzQ0tHUUVIVURaNFpYN0xoS240azlXTk80YU16YzFFdWNMOE4vL0hlVjlJU1BoN2xzekh3NnBROGlleDhkVU02emZ3SnRxQ3J1LzNsZWduZ0pHMjMzQWdrQkxGVlFYdG5qSHR2UENlQ3RXQkF3VTdQcFlIUmdZUEs1bnp6cVQxNS9OU0xTbStmYU1yQ2JDVWFLTHphc01idWl4UzE5LzRYNE5ydlEraXhXN3NwY09nOEtQaDBiTXU0aHFraGVQZHVQUGpPMUZVeG5qTVNxa3lzcmRZbXQySTFSMndSL1VhenNwcjVaZkljSXVMQWIrejE5aUk4NFBtalpLOUJhV050anlNZ1NqUnhoTWtCWEJNaU15bFZXN1RLMlZYSmtjM2tMeUVPdnhSR08wdVpYaFdDS3djbHlrVTdJK29VSEhGVDcyS3p3UkxHRnBPZEdBR0gwZjA0djU0TWljcVd4MDRSZjNZWTNqMFBvek9QV2lkcGlsUCswSmQvc3pRSHk3UnJ3aElxaTIrb0NZbzNidXc5MW01MzlqTVcrZHo1S0hJdGwzYTFYQU56MFRKbnhYTVZwckl6Y09XM0FOa20weDdmZFRpSFVjek00RDQwTXJHQ3Y5ZStVcU1nM2ZTM1hwOTNjNTVzdmRHakYyU0FpckY4Sy8reDMzMlc5WFJRY1lRcFluZWZYeGZVS1k4a240dWI4MGIwbEhTTXQwRGV0RU92MllHNmxGTklzSFFic3ptZTVXb2lPaDhOSm43aElSck9Rc2lPVjFXNWRuSXZCcEtVaUVaTDh2bE9xK2phZnQreFRDUlg4UVA2SUlHRjNvSkZmTzUvelh5dU56Z1NaNmVWN01kaExnWDNHZmtTZFpaMHRYUWYvVFkyUitNZm5wZTRHREJKRDF4REVtb1pZZC9LRDZCQWJjTWdWbk12STBuM1M0cnRkNlA3R1NKL25WVmNmcUsvdUl0YUx5UlZGTS80SlVNSnNFd2VOcE9keThySllzOFhYTHlOLzQzL0plOUJMdnhjTUhnT3JMKzk0LzlXbm1ITE1DQUFyMUlOdTRIZGZlL3hlNEZNZEZYV1N1MUtLcldLamRSSU5OUG1oZW91d0EzZGUvL0RBT3cxVUdwZm1lREtldnhMc3VyWU01bXJNVTNyamwwa2tRcnpuNzJzWW1lRHk4U0VOcjduaENMRFdyclZ1UEY5RFJnbDJ0STIxcUFZQ3ZVT0k3TjdZVG1naHFMOEMzUWo1YlhIZ0tQVXpzRW1TRVp0VC9Raml6SHhYQWhKOFVONGFrRVZGeVJEYVlVdXVqUHRTZTdBaGNRbWdXNE55R0lYWWEydCtrSkd6QTVaRzNJUm9LSGhyRHNCQzMyTFRqTkFQendLOHdlUUk3OTJLVFVIdUJ1T3gyaVYwcUV0NktsbDRHeXBkcXBNdHRMZFM1SUc0MDhMaW44VndTNVpPSU1Ba1JOblNza2ZaZ29kbW5qTXFPS1htMXB1THRhWEhLemxRZSt6QmxuNzRNN3ErSTFBM01MVUYxQ0Q0YW5WMkhUMks2U2JYTHRPdXhMV29CZmNRYjhpTGFhc0phOXJKdzB1SUtJNk0xUW45QUtXK3hJWnZtdFV3a3hPUXFDa0Q0WDYra1FGUjVhK2dUOG1jNUpVTzQxV0V6bTBTUnAzMFBlMElXWkg3RUdBVms4N2tla3F0aXAxNWphbUF0UXhzRTIwNE1kUitKbVlVNUw3ODVKdmFLWG5aZlRLa3lRZlYzYUFoeW1CdWJnV0d2dkk2TFBhQ2FSekVXVXhvMkFGNXFQV2xRM3h1REF6U3kxWVo1UlBvT0loMXdWeWc5SkgrUUQ0ei9za25UUzBNMnFJcG15UjNIcHk4RFhsZWl0QVQydTY0TkZBcFU2RU1YeVZPOEcySjcyc3hLQzhTaXdPU3JBMm9lU1g0ejJXNlF1cU1OcnFISFBUTnJ3cHN0SkVSMENlSVk2dUtYNVBBMGZHYnJUREhCSUFLRWNLaU1Ud3dJd1lKS29aSWh2Y05BUWtWTVJZRUZHTFM3eTJlTmlvZThFa3lCa2FwV2tTQWw4eU5NQlVHQ1NxR1NJYjNEUUVKRkRFSUhnWUFhd0JsQUhrd01UQWhNQWtHQlNzT0F3SWFCUUFFRktHUWRpQmJxUTdxMkRTY1oyQnlJSk5QVDI5eUJBanUxVVBGSzROTm53SUNDQUE9IiwicGFzc3dvcmQiOiJiOVRUNjlnZk1sSFNoenlHc25sVDRRPT0ifX19fSwidXBkYXRlcyI6e30sInNjaGVtZSI6IlRpZW5kYVNha3UiLCJ1c2VybmFtZSI6Imx1c3ZpbjUwMmd0IiwiZXhwZXJpbWVudGFsIjp7fSwibW9kZSI6ImJ1aWxkIiwidHJpZ2dlcmVkQnkiOiJFQVNfQ0xJIiwiYXBwSWQiOiJhNTc2ODRlOS1jYmZhLTQ1ZGMtODk5MS03NDE5M2IxYjYyYTciLCJpbml0aWF0aW5nVXNlcklkIjoiYWY1ZGI0MWEtOWFhOC00OTc4LWFhN2MtNDZkNWVlMTc3YTI2In0sIm1ldGFkYXRhIjp7InRyYWNraW5nQ29udGV4dCI6eyJ0cmFja2luZ19pZCI6ImEyZGFlZmY4LWZjZjQtNDY0ZS1hODUwLTYzZTVhNmIxYTM3ZCIsInBsYXRmb3JtIjoiaW9zIiwic2RrX3ZlcnNpb24iOiI1NS4wLjAiLCJhY2NvdW50X2lkIjoiNmU4NzkzZjQtMTFmOC00MWNlLTliOTctZmNhY2U0MzJkNTk1IiwicHJvamVjdF9pZCI6ImE1NzY4NGU5LWNiZmEtNDVkYy04OTkxLTc0MTkzYjFiNjJhNyIsInByb2plY3RfdHlwZSI6Im1hbmFnZWQiLCJkZXZfY2xpZW50IjpmYWxzZSwibm9fd2FpdCI6ZmFsc2UsInJ1bl9mcm9tX2NpIjpmYWxzZSwibG9jYWwiOnRydWV9LCJhcHBCdWlsZFZlcnNpb24iOiI1MCIsImFwcFZlcnNpb24iOiIxMC45MC4xNSIsImNsaVZlcnNpb24iOiIxOC4wLjYiLCJ3b3JrZmxvdyI6Im1hbmFnZWQiLCJjcmVkZW50aWFsc1NvdXJjZSI6InJlbW90ZSIsInNka1ZlcnNpb24iOiI1NS4wLjAiLCJmaW5nZXJwcmludEhhc2giOiI1YTI4MWY1NDllODM0NzBjNTAxZWVkOTVhNzRhYzhjMGY1NTUzZWYxIiwicmVhY3ROYXRpdmVWZXJzaW9uIjoiMC44My40IiwiZGlzdHJpYnV0aW9uIjoic3RvcmUiLCJhcHBOYW1lIjoiVGllbmRhIFNha3UiLCJhcHBJZGVudGlmaWVyIjoiY29tLlNBS1V0aWVuZGEuY2wiLCJidWlsZFByb2ZpbGUiOiJwcm9kdWN0aW9uIiwiZ2l0Q29tbWl0SGFzaCI6IjBkYmFiYTZiOGJkY2U0NjQ0ZWJiMGQwYWYwMDIxYzAyMWRhN2M2ZjMiLCJnaXRDb21taXRNZXNzYWdlIjoiQnVpbGQgNDEiLCJpc0dpdFdvcmtpbmdUcmVlRGlydHkiOnRydWUsInVzZXJuYW1lIjoibHVzdmluNTAyZ3QiLCJydW5XaXRoTm9XYWl0RmxhZyI6ZmFsc2UsInJ1bkZyb21DSSI6ZmFsc2UsImRldmVsb3BtZW50Q2xpZW50IjpmYWxzZSwicmVxdWlyZWRQYWNrYWdlTWFuYWdlciI6Im5wbSIsInNpbXVsYXRvciI6ZmFsc2V9fQ== exited with non-zero code: 1
+    Error: build command failed.

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HeartOff, ArrowLeft, Heart, ShoppingCart, Clock, CreditCard, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -39,7 +40,13 @@ const FavoriteCard = React.memo(({ item, isDesktop, toggleFavorite, addToCart, s
         ) : null}
 
         <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: 14, overflow: 'hidden', marginBottom: 10 }}>
-          <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+          <Image 
+            source={{ uri: item.image }} 
+            style={{ width: '100%', height: '100%' }} 
+            contentFit="contain"
+            cachePolicy="memory-disk"
+            transition={200}
+          />
           <TouchableOpacity
             onPress={() => toggleFavorite(item)}
             style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 }}
@@ -116,7 +123,13 @@ const FavoriteServiceCard = ({ item, isDesktop, toggleFavorite, router }: any) =
     >
       <View>
         <View style={{ width: '100%', height: isDesktop ? 180 : 140, borderRadius: 20, overflow: 'hidden', marginBottom: 15 }}>
-          <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          <Image 
+            source={{ uri: item.image }} 
+            style={{ width: '100%', height: '100%' }} 
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+          />
           <TouchableOpacity
             onPress={(e) => { e.stopPropagation(); toggleFavorite(item); }}
             style={{ position: 'absolute', top: 12, right: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 }}
@@ -164,7 +177,7 @@ const FavoritesScreen = React.memo(function FavoritesScreen() {
   const { favorites, toggleFavorite } = useFavorites();
   const { addToCart, cart } = useCart();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
 
   const [isReady, setIsReady] = useState(false);
   React.useEffect(() => {

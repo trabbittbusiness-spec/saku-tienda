@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, useWindowDimensions, ActivityIndicator, Modal, FlatList } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, useWindowDimensions, ActivityIndicator, Modal, FlatList, Platform } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { Image } from 'expo-image';
 import { Search, Heart, ShoppingBag, ShoppingCart, ArrowUpDown, Check, X, ChevronDown, ChevronUp, Filter, ChevronLeft, ArrowUp } from 'lucide-react-native';
 import Header from '../../components/Header';
 import AuthModal from '../../components/AuthModal';
@@ -75,7 +77,7 @@ const SearchProductCardBody = React.memo(({ prod, isDesktop, isFavorite, toggleF
     : prod.price;
 
   return (
-    <>
+    <Animated.View entering={FadeIn.duration(400)} style={{ flex: 1 }}>
       {prod.promo && (
         <View style={{ 
           position: 'absolute', top: 0, left: 0, backgroundColor: '#22C55E', 
@@ -92,7 +94,13 @@ const SearchProductCardBody = React.memo(({ prod, isDesktop, isFavorite, toggleF
       </View>
 
       <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#F9FAFB', borderRadius: isDesktop ? 20 : 16, overflow: 'hidden', marginBottom: isDesktop ? 20 : 12 }}>
-        <Image source={{ uri: prod.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+        <Image 
+          source={{ uri: prod.image }} 
+          style={{ width: '100%', height: '100%' }} 
+          contentFit="contain" 
+          transition={200}
+          cachePolicy="memory-disk"
+        />
       </View>
 
       <Text style={{ fontSize: isDesktop ? 11 : 10, fontWeight: '800', color: '#9CA3AF', marginBottom: isDesktop ? 6 : 4, textTransform: 'uppercase', letterSpacing: isDesktop ? 1 : 0 }}>{prod.category}</Text>
@@ -180,7 +188,7 @@ const SearchProductCardBody = React.memo(({ prod, isDesktop, isFavorite, toggleF
           </>
         )}
       </View>
-    </>
+    </Animated.View>
   );
 });
 
@@ -228,6 +236,7 @@ const SearchInput = React.memo(({ value, onChange, isFocused, onFocus, onBlur }:
   );
 });
 
+import Skeleton from '../../components/Skeleton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SearchScreen = React.memo(function SearchScreen() {
@@ -239,7 +248,7 @@ const SearchScreen = React.memo(function SearchScreen() {
   const { cart, addToCart } = useCart();
   const scrollRef = useRef<ScrollView>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
   
   // Cálculos dinámicos para una grilla perfecta sin espacios
   const mobileGridWidth = width - 30; // paddingHorizontal: 15x2
@@ -357,10 +366,19 @@ const SearchScreen = React.memo(function SearchScreen() {
   };
 
   useEffect(() => {
+    // Resetear TODOS los filtros primero para que no se acumulen entre navegaciones
+    setSelectedPromo('Todos');
+    setSelectedAnimals([]);
+    setSelectedCategorias([]);
+    setSelectedTipos([]);
+    setSelectedMarcas([]);
+    setExpandedSections({ animal: true, marca: false, categoria: false, tipo: false, promo: false });
+
+    // Luego aplicar solo el filtro que corresponde a esta navegación
     if (filter === 'promo') {
       setSelectedPromo('Sí');
+      setExpandedSections(prev => ({ ...prev, promo: true }));
     }
-    
     if (animal) {
       setSelectedAnimals([animal as string]);
     }
@@ -447,11 +465,19 @@ const SearchScreen = React.memo(function SearchScreen() {
               <Text style={{ marginLeft: 10, fontSize: 15, fontWeight: '600', color: '#9CA3AF' }}>Buscar productos, marcas...</Text>
             </View>
           </View>
-          {/* Loading indicator */}
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#63348C" />
-            <Text style={{ marginTop: 12, fontSize: 14, fontWeight: '600', color: '#9CA3AF' }}>Cargando productos...</Text>
-          </View>
+          {/* Skeleton list */}
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 15, paddingTop: 20 }}>
+             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 15 }}>
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                   <View key={i} style={{ width: '47.5%', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: '#F0F0F0', marginBottom: 15 }}>
+                      <Skeleton width="100%" height={150} borderRadius={16} style={{ marginBottom: 15 }} />
+                      <Skeleton width="40%" height={10} style={{ marginBottom: 8 }} />
+                      <Skeleton width="90%" height={15} style={{ marginBottom: 10 }} />
+                      <Skeleton width="60%" height={20} />
+                   </View>
+                ))}
+             </View>
+          </ScrollView>
         </View>
       );
     }
@@ -530,13 +556,13 @@ const SearchScreen = React.memo(function SearchScreen() {
                     onPress={() => setIsFilterModalOpen(true)}
                     style={{ 
                       flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                      backgroundColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? '#10B981' : '#F9FAFB', 
-                      borderRadius: 14, height: 48, gap: 8, borderWidth: 1, borderColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? '#10B981' : '#F3F4F6'
+                      backgroundColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length + (selectedPromo !== 'Todos' ? 1 : 0)) > 0 ? '#10B981' : '#F9FAFB', 
+                      borderRadius: 14, height: 48, gap: 8, borderWidth: 1, borderColor: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length + (selectedPromo !== 'Todos' ? 1 : 0)) > 0 ? '#10B981' : '#F3F4F6'
                     }}
                   >
-                    <Filter size={18} color={(selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? 'white' : '#111827'} strokeWidth={2.5} />
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? 'white' : '#111827' }}>
-                      Filtros {(selectedAnimals.length + selectedMarcas.length + selectedCategorias.length) > 0 ? `(${selectedAnimals.length + selectedMarcas.length + selectedCategorias.length})` : ''}
+                    <Filter size={18} color={(selectedAnimals.length + selectedMarcas.length + selectedCategorias.length + (selectedPromo !== 'Todos' ? 1 : 0)) > 0 ? 'white' : '#111827'} strokeWidth={2.5} />
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: (selectedAnimals.length + selectedMarcas.length + selectedCategorias.length + (selectedPromo !== 'Todos' ? 1 : 0)) > 0 ? 'white' : '#111827' }}>
+                      Filtros {(selectedAnimals.length + selectedMarcas.length + selectedCategorias.length + (selectedPromo !== 'Todos' ? 1 : 0)) > 0 ? `(${selectedAnimals.length + selectedMarcas.length + selectedCategorias.length + (selectedPromo !== 'Todos' ? 1 : 0)})` : ''}
                     </Text>
                   </TouchableOpacity>
 
@@ -652,8 +678,17 @@ const SearchScreen = React.memo(function SearchScreen() {
           }
           ListEmptyComponent={
             loading ? (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-                <ActivityIndicator size="large" color="#63348C" />
+              <View style={{ paddingHorizontal: 15, paddingTop: 20 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 15 }}>
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <View key={i} style={{ width: mobileCardWidth, height: 280, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: '#F0F0F0' }}>
+                      <Skeleton width="100%" height={140} borderRadius={12} style={{ marginBottom: 15 }} />
+                      <Skeleton width="40%" height={10} style={{ marginBottom: 8 }} />
+                      <Skeleton width="90%" height={15} style={{ marginBottom: 10 }} />
+                      <Skeleton width="60%" height={20} />
+                    </View>
+                  ))}
+                </View>
               </View>
             ) : (
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100, paddingHorizontal: 40 }}>

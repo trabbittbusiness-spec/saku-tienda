@@ -122,7 +122,7 @@ export default function Login() {
       router.replace('/');
 
     } catch (error: any) {
-      console.error("Registration finalization error:", error);
+      console.log("Registration finalization error:", error);
       showError('Hubo un problema al guardar tu perfil.');
     } finally {
       setLoading(false);
@@ -148,7 +148,7 @@ export default function Login() {
   const handleLogin = async () => {
 
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor ingresa tu correo y contraseña');
+      showError('Por favor ingresa tu correo y contraseña');
       return;
     }
     setLoading(true);
@@ -166,8 +166,12 @@ export default function Login() {
       router.replace('/');
 
     } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert('Error', 'Credenciales incorrectas o problema de red. Inténtalo de nuevo.');
+      console.log("Login error:", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        showError('Credenciales incorrectas. Revisa tu correo y contraseña.');
+      } else {
+        showError('Problema de conexión. Inténtalo de nuevo.');
+      }
     } finally {
       setLoading(false);
     }

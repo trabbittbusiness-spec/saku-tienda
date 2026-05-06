@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable, Alert, Linking, Platform } from 'react-native';
 import { mpService } from '../lib/mercadopago';
 
-import { ArrowLeft, Lock, MapPin, Plus, CreditCard, Banknote, ShieldCheck, ChevronRight, CheckCircle2, Store, Clock, RefreshCcw, Wifi, AlertCircle, Ticket, CalendarX, X } from 'lucide-react-native';
+import { ArrowLeft, Lock, MapPin, Plus, CreditCard, Banknote, ShieldCheck, ChevronRight, CheckCircle2, Store, Clock, RefreshCcw, Wifi, AlertCircle, Ticket, CalendarX, X, User } from 'lucide-react-native';
 
 import { router, useLocalSearchParams } from 'expo-router';
 
@@ -15,7 +15,7 @@ export default function CheckoutScreen() {
   const { width } = useWindowDimensions();
   const { cart, cartTotal, clearCart } = useCart();
   const params = useLocalSearchParams();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
   
   // 1. ALL STATES AT THE TOP
   const [deliveryType, setDeliveryType] = useState('home'); 
@@ -48,6 +48,7 @@ export default function CheckoutScreen() {
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [isMapModalVisible, setIsMapModalVisible] = useState(false);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  const [clientInfo, setClientInfo] = useState({ name: '', phone: '' });
   
   // Shipping Settings States
   const [shippingConfig, setShippingConfig] = useState<any>(null);
@@ -61,21 +62,37 @@ export default function CheckoutScreen() {
   const showError = (title: string, message: string) => {
     setIsLoading(false);
     setIsProcessingPayment(false);
+    
+    // On native platforms, use Alert for better visibility
+    if (Platform.OS !== 'web') {
+      Alert.alert(title, message);
+    }
+    
+    // Always set state for consistency (and for Web view)
     setErrorModal({ visible: true, title, message });
   };
 
   const calculateDistance = async (lat1: number, lon1: number, lat2: number, lon2: number) => {
     try {
       const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat1},${lon1}&destinations=${lat2},${lon2}&key=AIzaSyCQH4lTH-ORvtHo2gnBEn9lkndlG2j1yjg`;
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
+      
+      // Use direct URL on native platforms to be super fast. 
+      // Only use proxy on Web to bypass CORS.
+      let res;
+      if (Platform.OS === 'web') {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        res = await fetch(proxyUrl);
+      } else {
+        res = await fetch(url);
+      }
+      
       const data = await res.json();
       
       if (data.rows?.[0]?.elements?.[0]?.distance) {
         return data.rows[0].elements[0].distance.value / 1000;
       }
       
-      // Fallback with road correction factor (1.4x)
+      // Fallback with road correction factor (1.45x)
       const R = 6371; 
       const dLat = (lat2 - lat1) * (Math.PI / 180);
       const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -84,10 +101,19 @@ export default function CheckoutScreen() {
         Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
         Math.sin(dLon/2) * Math.sin(dLon/2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return (R * c) * 1.45; // 1.45 is a typical road vs air distance factor
+      return (R * c) * 1.45;
     } catch (e) {
       console.log("Distance API Error:", e);
-      return 0;
+      // Fallback with road correction factor (1.45x) if API fails
+      const R = 6371; 
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return (R * c) * 1.45;
     }
   };
 
@@ -145,10 +171,19 @@ export default function CheckoutScreen() {
     if (auth.currentUser) {
       fetchSavedCards();
       getDoc(doc(db, 'users', auth.currentUser.uid)).then(userDoc => {
-        if (userDoc.exists() && userDoc.data().rut) {
-          setCardDetails(prev => ({ ...prev, rut: userDoc.data().rut }));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.rut) setCardDetails(prev => ({ ...prev, rut: data.rut }));
+          
+          // Load name and phone
+          const fName = data.display_name || auth.currentUser?.displayName || '';
+          const lName = data.apellido || '';
+          setClientInfo({
+            name: [fName, lName].filter(Boolean).join(' '),
+            phone: data.telefono || data.phone || ''
+          });
         }
-      }).catch(e => console.log('Error loading user RUT:', e));
+      }).catch(e => console.log('Error loading user data:', e));
     }
     
     // Fetch Store Hours for Today
@@ -213,7 +248,10 @@ export default function CheckoutScreen() {
         return;
       }
 
-      if (!shippingConfig || !clinicOrigin || !selectedLocation) {
+      // Try to get origin from either clinicOrigin or shippingConfig
+      const origin = clinicOrigin || (shippingConfig?.originLat ? { lat: shippingConfig.originLat, lng: shippingConfig.originLng } : null);
+
+      if (!shippingConfig || !origin || !selectedLocation) {
         setCalculatedShipping(0);
         setIsCalculatingShipping(false);
         return;
@@ -228,15 +266,18 @@ export default function CheckoutScreen() {
         return;
       }
 
+      // PRECISE CALCULATION (Google API)
       const dist = await calculateDistance(
-        clinicOrigin.lat, 
-        clinicOrigin.lng, 
+        origin.lat, 
+        origin.lng, 
         selectedLocation.lat, 
         selectedLocation.lng
       );
 
-      const cost = (shippingConfig.baseCost || 0) + (dist * (shippingConfig.costPerKm || 0));
-      setCalculatedShipping(Math.round(cost));
+      // ALWAYS calculate cost based on distance, no matter how far.
+      const finalCost = (shippingConfig.baseCost || 0) + (dist * (shippingConfig.costPerKm || 0));
+      setCalculatedShipping(Math.round(finalCost));
+      
       setIsCalculatingShipping(false);
     };
 
@@ -286,7 +327,7 @@ export default function CheckoutScreen() {
         ? (displaySubtotal * (appliedCoupon.value / 100)) 
         : appliedCoupon.value)
     : 0;
-  const displayTotal = displaySubtotal + shipping - discount;
+  const displayTotal = displaySubtotal + (shipping > 0 ? shipping : 0) - discount;
   const total = displayTotal;
 
 
@@ -305,6 +346,7 @@ export default function CheckoutScreen() {
         );
         const usedSnapshot = await getDocs(usedQuery);
         if (!usedSnapshot.empty) {
+          if (Platform.OS !== 'web') Alert.alert('Cupón ya utilizado', 'Ya has aprovechado este descuento en una compra anterior.');
           setCouponModal({
             visible: true,
             title: 'Cupón ya utilizado',
@@ -322,6 +364,7 @@ export default function CheckoutScreen() {
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
+        if (Platform.OS !== 'web') Alert.alert('Código no válido', 'El cupón que ingresaste no existe o ya no se encuentra activo.');
         setCouponModal({
           visible: true,
           title: 'Código no válido',
@@ -341,6 +384,7 @@ export default function CheckoutScreen() {
           if (isNaN(expiry.getTime())) {
             console.warn('Invalid expiry date format:', coupon.expiryDate);
           } else if (today > expiry) {
+            if (Platform.OS !== 'web') Alert.alert('Cupón expirado', 'Lamentablemente este descuento ya ha vencido.');
             setCouponModal({
               visible: true,
               title: 'Cupón expirado',
@@ -354,6 +398,7 @@ export default function CheckoutScreen() {
         }
         
         if (cartTotal < coupon.minAmount) {
+          if (Platform.OS !== 'web') Alert.alert('Monto insuficiente', `Este cupón requiere una compra mínima de $${coupon.minAmount.toLocaleString("de-DE")}`);
           setCouponModal({
             visible: true,
             title: 'Monto insuficiente',
@@ -573,6 +618,20 @@ export default function CheckoutScreen() {
           setIsProcessingPayment(false);
           return;
         }
+        // 3.5 Update User Profile if changed
+        if (auth.currentUser?.uid) {
+          try {
+            const updates: any = {};
+            if (clientInfo.name) {
+              updates.display_name = clientInfo.name;
+              updates.apellido = ''; // Simplified to one field
+            }
+            if (clientInfo.phone) updates.telefono = clientInfo.phone;
+            if (Object.keys(updates).length > 0) {
+              await updateDoc(doc(db, 'users', auth.currentUser.uid), updates);
+            }
+          } catch (e) { console.log('Error updating profile:', e); }
+        }
       }
 
       // 4. Create Order in Firestore
@@ -581,8 +640,10 @@ export default function CheckoutScreen() {
       const userName = [uData.display_name, uData.apellido].filter(Boolean).join(' ') || auth.currentUser?.displayName || 'Usuario';
 
       const orderData = {
-        nombreCliente: userName,
+        nombre: clientInfo.name || userName,
+        nombreCliente: clientInfo.name || userName,
         emailCliente: auth.currentUser?.email || '',
+        telefono: clientInfo.phone || uData.telefono || '',
         items: displayItems.map((item: any) => ({
           id: item.ID_productos || '',
           nombre: item.nombre || '',
@@ -791,6 +852,44 @@ export default function CheckoutScreen() {
                 </TouchableOpacity>
               </View>
             )}
+          </View>
+
+          {/* User Details Section */}
+          <View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 }}>
+              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#F0F9FF', justifyContent: 'center', alignItems: 'center' }}>
+                <User size={18} color="#0284C7" />
+              </View>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Mis Datos</Text>
+            </View>
+
+            <View style={{ gap: 12, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 24, borderWidth: 1, borderColor: '#E2E8F0' }}>
+              <View>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: '#64748B', marginBottom: 6, marginLeft: 4 }}>Nombre Completo</Text>
+                <TextInput 
+                  value={clientInfo.name}
+                  onChangeText={(t) => setClientInfo(prev => ({ ...prev, name: t }))}
+                  placeholder="Ej: Juan Pérez"
+                  style={{ 
+                    height: 50, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+                    paddingHorizontal: 16, fontSize: 14, fontWeight: '600', color: '#111827'
+                  }}
+                />
+              </View>
+              <View>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: '#64748B', marginBottom: 6, marginLeft: 4 }}>Teléfono de Contacto</Text>
+                <TextInput 
+                  value={clientInfo.phone}
+                  onChangeText={(t) => setClientInfo(prev => ({ ...prev, phone: t }))}
+                  placeholder="Ej: +56 9 1234 5678"
+                  keyboardType="phone-pad"
+                  style={{ 
+                    height: 50, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+                    paddingHorizontal: 16, fontSize: 14, fontWeight: '600', color: '#111827'
+                  }}
+                />
+              </View>
+            </View>
           </View>
 
           {/* Payment Method Section */}
@@ -1063,13 +1162,13 @@ export default function CheckoutScreen() {
 
                       <TouchableOpacity 
                         onPress={handlePayment}
-                        disabled={isProcessingPayment || (deliveryType === 'home' && !selectedLocation)}
+                        disabled={isProcessingPayment || isCalculatingShipping || shipping === -1 || (deliveryType === 'home' && !selectedLocation)}
                         style={{ 
                           backgroundColor: '#63348C', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8,
-                          opacity: isProcessingPayment || (deliveryType === 'home' && !selectedLocation) ? 0.6 : 1
+                          opacity: isProcessingPayment || isCalculatingShipping || shipping === -1 || (deliveryType === 'home' && !selectedLocation) ? 0.6 : 1
                         }}
                       >
-                        {isProcessingPayment ? (
+                        {isProcessingPayment || isCalculatingShipping ? (
                           <ActivityIndicator color="white" />
                         ) : (
                           <>
@@ -1142,8 +1241,8 @@ export default function CheckoutScreen() {
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '700' }}>Envío</Text>
-                <Text style={{ fontSize: 14, fontWeight: '900', color: shipping === 0 ? '#10B981' : '#111827' }}>
-                  {isCalculatingShipping ? 'Calculando...' : (shipping === 0 ? 'Gratis' : `$${shipping.toLocaleString("de-DE")}`)}
+                <Text style={{ fontSize: 14, fontWeight: '900', color: shipping === 0 ? '#10B981' : (shipping === -1 ? '#EF4444' : '#111827') }}>
+                  {isCalculatingShipping ? 'Calculando...' : (shipping === -1 ? 'Fuera de rango' : (shipping === 0 ? 'Gratis' : `$${shipping.toLocaleString("de-DE")}`))}
                 </Text>
 
 
@@ -1162,9 +1261,9 @@ export default function CheckoutScreen() {
 
                <TouchableOpacity 
                 onPress={handlePayment}
-                disabled={isLoading || isCalculatingShipping || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)}
+                disabled={isLoading || isCalculatingShipping || shipping === -1 || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)}
                 style={{ 
-                  backgroundColor: (isLoading || isCalculatingShipping || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)) ? '#9CA3AF' : '#10B981', borderRadius: 24, height: 60, justifyContent: 'center', alignItems: 'center',
+                  backgroundColor: (isLoading || isCalculatingShipping || shipping === -1 || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)) ? '#9CA3AF' : '#10B981', borderRadius: 24, height: 60, justifyContent: 'center', alignItems: 'center',
                   marginTop: 25, shadowColor: '#10B981', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
                 }}
               >
@@ -1181,6 +1280,85 @@ export default function CheckoutScreen() {
           </View>
         </ScrollView>
         {/* MAP MODAL */}
+
+        {/* COUPON ERROR/WARNING MODAL */}
+        <Modal
+          visible={couponModal.visible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setCouponModal({ ...couponModal, visible: false })}
+        >
+          <Pressable 
+            style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 }}
+            onPress={() => setCouponModal({ ...couponModal, visible: false })}
+          >
+            <View 
+              style={{ 
+                backgroundColor: '#fff', borderRadius: 32, width: '100%', maxWidth: 400, padding: 32, alignItems: 'center',
+                shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.15, shadowRadius: 40, elevation: 10
+              }}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={{ 
+                width: 72, height: 72, borderRadius: 36, 
+                backgroundColor: couponModal.type === 'error' ? '#FEF2F2' : '#FFF7ED', 
+                justifyContent: 'center', alignItems: 'center', marginBottom: 20
+              }}>
+                {couponModal.type === 'error' ? (
+                  <CalendarX size={32} color="#EF4444" />
+                ) : (
+                  <AlertCircle size={32} color="#63348C" />
+                )}
+              </View>
+
+              <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>{couponModal.title}</Text>
+              <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '500', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>{couponModal.message}</Text>
+
+              <TouchableOpacity 
+                onPress={() => setCouponModal({ ...couponModal, visible: false })}
+                style={{ 
+                  width: '100%', backgroundColor: '#111827', borderRadius: 16, height: 54, 
+                  justifyContent: 'center', alignItems: 'center'
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 15, fontWeight: '800' }}>Entendido</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+
+        {/* PAYMENT ERROR MODAL */}
+        <Modal
+          visible={errorModal.visible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setErrorModal({ ...errorModal, visible: false })}
+        >
+          <Pressable 
+            style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}
+            onPress={() => setErrorModal({ ...errorModal, visible: false })}
+          >
+            <View 
+              style={{ 
+                backgroundColor: '#fff', borderRadius: 32, width: '100%', maxWidth: 400, padding: 32, alignItems: 'center',
+                shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.15, shadowRadius: 40, elevation: 10
+              }}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+                <AlertCircle size={36} color="#EF4444" />
+              </View>
+              <Text style={{ fontSize: 22, fontWeight: '900', color: '#111827', marginBottom: 12, textAlign: 'center' }}>{errorModal.title}</Text>
+              <Text style={{ fontSize: 15, color: '#6B7280', fontWeight: '500', textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>{errorModal.message}</Text>
+              <TouchableOpacity 
+                onPress={() => setErrorModal({ ...errorModal, visible: false })}
+                style={{ width: '100%', backgroundColor: '#EF4444', borderRadius: 16, height: 54, justifyContent: 'center', alignItems: 'center' }}
+              >
+                <Text style={{ color: 'white', fontSize: 15, fontWeight: '800' }}>Entendido</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
 
         <LocationMapModal
           isOpen={isMapModalOpen}
@@ -1615,7 +1793,7 @@ export default function CheckoutScreen() {
                         
                          <TouchableOpacity 
                           onPress={handlePayment}
-                          disabled={isProcessingPayment || isCalculatingShipping || (deliveryType === 'home' && !selectedLocation)}
+                          disabled={isProcessingPayment || isCalculatingShipping || shipping === -1 || (deliveryType === 'home' && !selectedLocation)}
                           style={{ 
                             backgroundColor: '#22C55E', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8,
                             opacity: isProcessingPayment || isCalculatingShipping || (deliveryType === 'home' && !selectedLocation) ? 0.6 : 1
@@ -1788,8 +1966,8 @@ export default function CheckoutScreen() {
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                    <Text style={{ fontSize: 14, color: '#9CA3AF', fontWeight: '600' }}>Envío</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '900', color: shipping === 0 ? '#10B981' : '#111827' }}>
-                    {isCalculatingShipping ? 'Calculando...' : (shipping === 0 ? 'Gratis' : `$${shipping.toLocaleString("de-DE")}`)}
+                  <Text style={{ fontSize: 15, fontWeight: '900', color: shipping === 0 ? '#10B981' : (shipping === -1 ? '#EF4444' : '#111827') }}>
+                    {isCalculatingShipping ? 'Calculando...' : (shipping === -1 ? 'Fuera de rango' : (shipping === 0 ? 'Gratis' : `$${shipping.toLocaleString("de-DE")}`)) }
                   </Text>
 
 
@@ -1816,13 +1994,13 @@ export default function CheckoutScreen() {
 
               <TouchableOpacity 
                 onPress={handlePayment}
-                disabled={isLoading || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)}
+                disabled={isLoading || isCalculatingShipping || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)}
                 style={{ 
-                  backgroundColor: (isLoading || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)) ? '#9CA3AF' : '#10B981', borderRadius: 24, height: 64, justifyContent: 'center', alignItems: 'center',
+                  backgroundColor: (isLoading || isCalculatingShipping || cart.length === 0 || (deliveryType === 'home' && !selectedLocation)) ? '#9CA3AF' : '#10B981', borderRadius: 24, height: 64, justifyContent: 'center', alignItems: 'center',
                   shadowColor: '#10B981', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
                 }}
               >
-                {isLoading ? (
+                {isLoading || isCalculatingShipping ? (
                   <ActivityIndicator color="white" />
                 ) : (
                   <Text style={{ color: 'white', fontSize: 17, fontWeight: '900', letterSpacing: 0.5 }}>

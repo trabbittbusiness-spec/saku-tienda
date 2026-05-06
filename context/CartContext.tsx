@@ -35,18 +35,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        const q = query(collection(db, 'productosseleccionados'), where('creator', '==', userRef));
-        
-        const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
-          const items: CartItem[] = snapshot.docs.map(doc => ({
-            ...(doc.data() as any),
-            firebaseId: doc.id
-          }));
-          setCart(items);
-        });
+        // Defer cart sync to prioritize UI responsiveness
+        const timer = setTimeout(() => {
+          const userRef = doc(db, 'users', user.uid);
+          const q = query(collection(db, 'productosseleccionados'), where('creator', '==', userRef));
+          
+          const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+            const items: CartItem[] = snapshot.docs.map(doc => ({
+              ...(doc.data() as any),
+              firebaseId: doc.id
+            }));
+            setCart(items);
+          });
 
-        return () => unsubscribeSnapshot();
+          (window as any)._cartUnsub = unsubscribeSnapshot;
+        }, 1200); // 1.2s delay for native smoothness
+
+        return () => {
+          clearTimeout(timer);
+          if ((window as any)._cartUnsub) (window as any)._cartUnsub();
+        };
       } else {
         setCart([]);
       }

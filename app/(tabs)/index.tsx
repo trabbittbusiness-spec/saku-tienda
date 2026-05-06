@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  Image,
   TouchableOpacity,
   useWindowDimensions,
   FlatList,
@@ -16,10 +15,12 @@ import {
   Platform,
   Linking
 } from 'react-native';
+import { Image } from 'expo-image';
 
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAudioPlayer } from 'expo-audio';
 import { FontAwesome } from '@expo/vector-icons';
-import Animated, { ZoomIn, useSharedValue, withRepeat, withTiming, withDelay, useAnimatedStyle, Easing } from 'react-native-reanimated';
+import Animated, { ZoomIn, useSharedValue, withRepeat, withTiming, withDelay, useAnimatedStyle, Easing, FadeIn } from 'react-native-reanimated';
 import { 
   Heart, 
   Star, 
@@ -74,6 +75,7 @@ import Header from '../../components/Header';
 import AuthModal from '../../components/AuthModal';
 import LoadingScreen from '../../components/LoadingScreen';
 import CategoryBar from '../../components/CategoryBar';
+import Skeleton from '../../components/Skeleton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -102,7 +104,7 @@ export interface ProductItem {
   variants?: Variant[];
 }
 
-const BREAKPOINT = 1024; // Aumentar breakpoint para desktop real
+const BREAKPOINT = 768; // Aumentar breakpoint para desktop real
 
 // ── SHARED DATA ───────────────────────────────────────────────────────────────
 const mobileHeroSlides = [
@@ -228,9 +230,11 @@ function MobileHeroCarousel({ screenWidth, slides = [], onPress }: { screenWidth
             style={{ width: CARD_W, height: 260 }}
           >
             <Image 
-              source={typeof item.image === 'string' ? { uri: item.image, cache: 'force-cache' } : (item.imageUrl ? { uri: item.imageUrl, cache: 'force-cache' } : item.image)} 
+              source={typeof item.image === 'string' ? { uri: item.image } : (item.imageUrl ? { uri: item.imageUrl } : item.image)} 
               style={{ width: '100%', height: '100%' }} 
-              resizeMode="cover" 
+              contentFit="cover"
+              transition={300}
+              cachePolicy="memory-disk"
             />
             {!!item.badge && (
               <View style={{ position: 'absolute', top: 14, left: 14, backgroundColor: item.badgeColor, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5 }}>
@@ -298,7 +302,12 @@ const DesktopProductCard = React.memo(({ item, liked, quantities, setQuantities,
       </View>
 
       <View style={{ height: 220, justifyContent: 'center', alignItems: 'center', marginVertical: 15 }}>
-        <Image source={{ uri: item.image }} style={{ width: '90%', height: '100%' }} resizeMode="contain" />
+        <Image 
+          source={{ uri: item.image }} 
+          style={{ width: '90%', height: '100%' }} 
+          contentFit="contain" 
+          cachePolicy="memory-disk"
+        />
       </View>
 
       <View style={{ alignItems: 'flex-start', width: '100%' }}>
@@ -400,6 +409,8 @@ const DesktopProductCard = React.memo(({ item, liked, quantities, setQuantities,
   );
 });
 
+
+
 const MobileProductCard = React.memo(({ item, onAuthRequired }: { item: ProductItem, onAuthRequired: () => void }) => {
   const { toggleFavorite, isFavorite } = useFavorites();
   const { cart, addToCart } = useCart();
@@ -413,115 +424,123 @@ const MobileProductCard = React.memo(({ item, onAuthRequired }: { item: ProductI
     : item.price;
 
   return (
-    <TouchableOpacity 
-      onPress={() => router.push(`/product/${item.id}`)}
-      style={{ 
-        width: 170, 
-        backgroundColor: '#FFFFFF', 
-        borderRadius: 20, 
-        marginRight: 16, 
-        overflow: 'visible',
-        shadowColor: '#000', 
-        shadowOffset: { width: 0, height: 8 }, 
-        shadowOpacity: 0.08, 
-        shadowRadius: 16, 
-        elevation: 5, 
-        borderWidth: 1, 
-        borderColor: '#F0F0F0', 
-        padding: 12,
-      }}
-    >
-      {item.promo && (
-        <View style={{ 
-          position: 'absolute', top: 0, left: 0, backgroundColor: '#22C55E', 
-          paddingHorizontal: 12, paddingVertical: 6, borderBottomRightRadius: 12, zIndex: 20,
-        }}>
-          <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, letterSpacing: 0.5 }}>OFERTA</Text>
-        </View>
-      )}
+    <Animated.View entering={FadeIn.duration(400)}>
       <TouchableOpacity 
-        onPress={(e) => {
-          e.stopPropagation();
-          toggleFavorite({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            category: item.category,
-            rating: item.rating,
-            type: 'product'
-          });
-        }} 
-        style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
+        onPress={() => router.push(`/product/${item.id}`)}
+        style={{ 
+          width: 170, 
+          backgroundColor: '#FFFFFF', 
+          borderRadius: 20, 
+          marginRight: 16, 
+          overflow: 'visible',
+          shadowColor: '#000', 
+          shadowOffset: { width: 0, height: 8 }, 
+          shadowOpacity: 0.08, 
+          shadowRadius: 16, 
+          elevation: 5, 
+          borderWidth: 1, 
+          borderColor: '#F0F0F0', 
+          padding: 12,
+        }}
       >
-        <Heart size={20} color={liked ? '#EF4444' : '#E5E7EB'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
-      </TouchableOpacity>
-
-      <View style={{ width: '100%', height: 130, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-        <Image source={{ uri: item.image }} style={{ width: '90%', height: '90%' }} resizeMode="contain" />
-      </View>
-
-      <Text style={{ fontSize: 9, color: '#9CA3AF', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>{item.category}</Text>
-      
-      <Text 
-        style={{ fontSize: 13, fontWeight: '700', color: '#1A1A2E', lineHeight: 16, marginBottom: 10, minHeight: 32, textTransform: 'uppercase' }} 
-        numberOfLines={2}
-      >
-        {item.name}
-      </Text>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-        {item.variants && item.variants.length > 0 ? (
-          item.variants.map((v, i) => (
-            <TouchableOpacity 
-              key={i}
-              onPress={(e) => { e.stopPropagation(); setSelectedVarIndex(i); }}
-              style={{
-                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-                backgroundColor: '#FFFFFF',
-                borderWidth: selectedVarIndex === i ? 2 : 1,
-                borderColor: selectedVarIndex === i ? '#63348C' : '#D1D5DB'
-              }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '800', color: selectedVarIndex === i ? '#63348C' : '#9CA3AF', textTransform: 'uppercase' }}>{v.label}</Text>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#63348C' }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', color: '#63348C', textTransform: 'uppercase' }}>UNIDAD</Text>
+        {item.promo && (
+          <View style={{ 
+            position: 'absolute', top: 0, left: 0, backgroundColor: '#22C55E', 
+            paddingHorizontal: 12, paddingVertical: 6, borderBottomRightRadius: 12, zIndex: 20,
+          }}>
+            <Text style={{ color: 'white', fontWeight: '900', fontSize: 10, letterSpacing: 0.5 }}>OFERTA</Text>
           </View>
         )}
-      </View>
+        <TouchableOpacity 
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleFavorite({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              image: item.image,
+              category: item.category,
+              rating: item.rating,
+              type: 'product'
+            });
+          }} 
+          style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
+        >
+          <Heart size={20} color={liked ? '#EF4444' : '#E5E7EB'} fill={liked ? '#EF4444' : 'transparent'} strokeWidth={2} />
+        </TouchableOpacity>
 
-      <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827', marginBottom: 14 }}>{displayPrice}</Text>
+        <View style={{ width: '100%', height: 130, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <Image 
+            source={{ uri: item.image }} 
+            style={{ width: '90%', height: '90%' }} 
+            contentFit="contain"
+            transition={200}
+            cachePolicy="memory-disk"
+          />
+        </View>
 
-      <TouchableOpacity
-        onPress={(e) => {
-          e.stopPropagation();
-          if (!auth.currentUser) {
-            onAuthRequired();
-            return;
-          }
-          const finalPrice = currentVariant ? currentVariant.price : (item.numericPrice || 0);
-          addToCart({ id: item.id, name: item.name + (currentVariant ? ` (${currentVariant.label})` : ''), price: finalPrice, image: item.image, quantity: 1 });
-        }}
-        style={{
-          backgroundColor: '#63348C', borderRadius: 12, paddingVertical: 12,
-          alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8,
-          shadowColor: '#63348C', shadowOpacity: 0.25, shadowRadius: 8
-        }}
-      >
-        <ShoppingCart size={15} color="#FFFFFF" strokeWidth={2.5} />
-        <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>
-          {(() => {
-            const cartQty = cart
-              .filter((c: any) => String(c.ID_productos) === String(item.id))
-              .reduce((acc: number, c: any) => acc + (c.cantidad || 0), 0);
-            return cartQty > 0 ? `Agregar (${cartQty})` : 'Agregar';
-          })()}
+        <Text style={{ fontSize: 9, color: '#9CA3AF', fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>{item.category}</Text>
+        
+        <Text 
+          style={{ fontSize: 13, fontWeight: '700', color: '#1A1A2E', lineHeight: 16, marginBottom: 10, minHeight: 32, textTransform: 'uppercase' }} 
+          numberOfLines={2}
+        >
+          {item.name}
         </Text>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          {item.variants && item.variants.length > 0 ? (
+            item.variants.map((v, i) => (
+              <TouchableOpacity 
+                key={i}
+                onPress={(e) => { e.stopPropagation(); setSelectedVarIndex(i); }}
+                style={{
+                  paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+                  backgroundColor: '#FFFFFF',
+                  borderWidth: selectedVarIndex === i ? 2 : 1,
+                  borderColor: selectedVarIndex === i ? '#63348C' : '#D1D5DB'
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '800', color: selectedVarIndex === i ? '#63348C' : '#9CA3AF', textTransform: 'uppercase' }}>{v.label}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#63348C' }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: '#63348C', textTransform: 'uppercase' }}>UNIDAD</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827', marginBottom: 14 }}>{displayPrice}</Text>
+
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+            if (!auth.currentUser) {
+              onAuthRequired();
+              return;
+            }
+            const finalPrice = currentVariant ? currentVariant.price : (item.numericPrice || 0);
+            addToCart({ id: item.id, name: item.name + (currentVariant ? ` (${currentVariant.label})` : ''), price: finalPrice, image: item.image, quantity: 1 });
+          }}
+          style={{
+            backgroundColor: '#63348C', borderRadius: 12, paddingVertical: 12,
+            alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8,
+            shadowColor: '#63348C', shadowOpacity: 0.25, shadowRadius: 8
+          }}
+        >
+          <ShoppingCart size={15} color="#FFFFFF" strokeWidth={2.5} />
+          <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>
+            {(() => {
+              const cartQty = cart
+                .filter((c: any) => String(c.ID_productos) === String(item.id))
+                .reduce((acc: number, c: any) => acc + (c.cantidad || 0), 0);
+              return cartQty > 0 ? `Agregar (${cartQty})` : 'Agregar';
+            })()}
+          </Text>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </Animated.View>
   );
 });
 
@@ -939,6 +958,7 @@ function DesktopHeroSlider({ slides = [], onPress }: { slides?: any[], onPress?:
 }
 
 const HomeScreen = React.memo(function HomeScreen() {
+  const purchaseSound = useAudioPlayer(require('../../assets/audio/sonido-de-compra.mp3'));
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = screenWidth >= BREAKPOINT;
@@ -1049,22 +1069,28 @@ const HomeScreen = React.memo(function HomeScreen() {
     
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        const q = query(
-          collection(db, 'Orden'),
-          where('creador', '==', userRef)
-        );
-        
-        unsubscribeOrders = onSnapshot(q, (snapshot) => {
-          const activeOnes = snapshot.docs.filter(doc => {
-            const estado = (doc.data().estado || '').toLowerCase();
-            return ['pendiente', 'procesando', 'enviado', 'pago aceptado'].includes(estado);
+        // Defer order tracking to prioritize initial render
+        setTimeout(() => {
+          const ordersRef = collection(db, 'Orden');
+          const q = query(
+            ordersRef,
+            where('creadorId', '==', user.uid),
+            orderBy('timestamp', 'desc')
+          );
+
+          unsubscribeOrders = onSnapshot(q, (snapshot) => {
+            const active = snapshot.docs.filter(d => {
+              const data = d.data();
+              const estado = data.estado || data.status || '';
+              return estado !== 'Entregado' && estado !== 'Cancelado' && estado !== 'entregado' && estado !== 'cancelado';
+            });
+            setActiveOrdersCount(active.length);
+            setHasActiveOrders(active.length > 0);
           });
-          setActiveOrdersCount(activeOnes.length);
-          setHasActiveOrders(activeOnes.length > 0);
-        });
+        }, 2000); // 2s delay
       } else {
         setHasActiveOrders(false);
+        setActiveOrdersCount(0);
       }
     });
 
@@ -1077,11 +1103,19 @@ const HomeScreen = React.memo(function HomeScreen() {
   const [showNewsletterSuccess, setShowNewsletterSuccess] = useState(false);
 
   useEffect(() => {
+    async function playSuccessSound() {
+      try {
+        purchaseSound.play();
+      } catch (error) {
+        console.log('Error playing success sound:', error);
+      }
+    }
+
     if (params.success === '1') {
       const checkScheduleAndShow = async () => {
         let extraMsg = '';
         try {
-          const { doc, getDoc } = await import('firebase/firestore');
+          const { doc, getDoc, query, collection, where, orderBy, limit, getDocs } = await import('firebase/firestore');
           const docSnap = await getDoc(doc(db, 'Configuracion', 'tienda_horarios'));
           
           if (docSnap.exists()) {
@@ -1090,7 +1124,6 @@ const HomeScreen = React.memo(function HomeScreen() {
             const daysMap = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
             const currentDayId = daysMap[now.getDay()];
             
-            // Format current date as YYYY-MM-DD for holiday checking
             const yyyy = now.getFullYear();
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const dd = String(now.getDate()).padStart(2, '0');
@@ -1121,12 +1154,31 @@ const HomeScreen = React.memo(function HomeScreen() {
               }
             }
           }
+
+          // Also check if paying with cash for extra reminder
+          if (auth.currentUser) {
+            const qOrder = query(
+              collection(db, 'Orden'),
+              where('creadorId', '==', auth.currentUser.uid),
+              orderBy('timestamp', 'desc'),
+              limit(1)
+            );
+            const snapOrder = await getDocs(qOrder);
+            if (!snapOrder.empty) {
+              const oData = snapOrder.docs[0].data();
+              if (oData.metodoPago === 'cash') {
+                extraMsg = extraMsg ? extraMsg + '\n\n' : '';
+                extraMsg += 'Recuerda tener el efectivo listo al momento de la entrega o retiro.';
+              }
+            }
+          }
         } catch (error) {
-          console.log("Error fetching shop schedule:", error);
+          console.log("Error fetching shop schedule/order info:", error);
         }
         
         setSuccessMessageDetails(extraMsg);
         setShowSuccessModal(true);
+        playSuccessSound();
         router.setParams({ success: undefined });
       };
       
@@ -1172,9 +1224,11 @@ const HomeScreen = React.memo(function HomeScreen() {
   };
 
   useEffect(() => {
-    if (globalProducts.length > 0) setProducts(globalProducts);
-    setMobileBanners(globalMobileBanners.length > 0 ? globalMobileBanners : []);
-    setDesktopBannersList(globalDesktopBanners.length > 0 ? globalDesktopBanners : []);
+    if (globalProducts && globalProducts.length > 0) {
+      setProducts(globalProducts);
+    }
+    setMobileBanners(globalMobileBanners && globalMobileBanners.length > 0 ? globalMobileBanners : []);
+    setDesktopBannersList(globalDesktopBanners && globalDesktopBanners.length > 0 ? globalDesktopBanners : []);
   }, [globalProducts, globalMobileBanners, globalDesktopBanners]);
 
 
@@ -1581,9 +1635,9 @@ const HomeScreen = React.memo(function HomeScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => item.id.toString()}
-                  initialNumToRender={5}
-                  maxToRenderPerBatch={5}
-                  windowSize={3}
+                  initialNumToRender={2}
+                  maxToRenderPerBatch={2}
+                  windowSize={2}
                   removeClippedSubviews={true}
                   contentContainerStyle={{ gap: 24, paddingVertical: 10, paddingRight: 50 }}
                   renderItem={({ item }) => <DesktopProductCard item={item} liked={isFavorite(item.id)} quantities={quantities} setQuantities={setQuantities} toggleFavorite={toggleFavorite} addToCart={addToCart} setShowAuthModal={setShowAuthModal} />}
@@ -1985,7 +2039,13 @@ const HomeScreen = React.memo(function HomeScreen() {
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
         <Header />
-        <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} onPress={handleBannerNavigation} />
+        {loadingProducts ? (
+          <View style={{ paddingHorizontal: 15, marginTop: 20 }}>
+            <Skeleton width="100%" height={220} borderRadius={24} />
+          </View>
+        ) : (
+          <MobileHeroCarousel screenWidth={screenWidth} slides={mobileBanners} onPress={handleBannerNavigation} />
+        )}
         
         {/* Section: Categories */}
         <View style={{ marginTop: 32 }}>
@@ -1993,57 +2053,70 @@ const HomeScreen = React.memo(function HomeScreen() {
             <Text style={{ fontSize: 20, fontWeight: '900', color: '#1A1A2E', letterSpacing: -0.5 }}>Explora categorías</Text>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 15, paddingTop: 30, paddingBottom: 10 }}>
-            {[
-              { id: 1, name: 'Perros',   img: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=400', route: '/search?animal=Perro' },
-              { id: 2, name: 'Gatos',    img: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=400', route: '/search?animal=Gato' },
-              { id: 3, name: 'Exóticos', img: 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?q=80&w=400', route: '/search?animal=Exoticos&tipo=Exoticos' },
-              { id: 4, name: 'Servicios',img: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?q=80&w=400', route: '/servicios' }
-            ].map((cat) => (
-              <TouchableOpacity 
-                key={cat.id} 
-                activeOpacity={0.8}
-                onPress={() => cat.route && router.push(cat.route as any)}
-                style={{ 
-                  width: '23.5%', 
-                  height: 65, 
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 16,
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  paddingBottom: 10,
-                  borderWidth: 1,
-                  borderColor: '#F3F4F6',
-                  shadowColor: '#63348C',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 8,
-                  elevation: 3
-                }}
-              >
-                {/* Floating Avatar */}
-                <View style={{ 
-                  position: 'absolute', 
-                  top: -28, 
-                  width: 56, 
-                  height: 56, 
-                  borderRadius: 28, 
-                  backgroundColor: '#FFFFFF',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 6,
-                  elevation: 5
-                }}>
-                  <Image 
-                    source={{ uri: cat.img }} 
-                    style={{ width: '100%', height: '100%', borderRadius: 28, borderWidth: 2, borderColor: '#FFFFFF' }} 
-                    resizeMode="cover" 
-                  />
+            {loadingProducts ? (
+              [1, 2, 3, 4].map(i => (
+                <View key={i} style={{ width: '23.5%', height: 65, alignItems: 'center' }}>
+                   <View style={{ position: 'absolute', top: -28, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 }}>
+                      <Skeleton width={56} height={56} borderRadius={28} />
+                   </View>
+                   <View style={{ marginTop: 35 }}>
+                      <Skeleton width={45} height={10} borderRadius={5} />
+                   </View>
                 </View>
-                
-                <Text style={{ fontSize: 11, fontWeight: '900', color: '#1A1A2E', letterSpacing: -0.2 }}>{cat.name}</Text>
-              </TouchableOpacity>
-            ))}
+              ))
+            ) : (
+              [
+                { id: 1, name: 'Perros',   img: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=400', route: '/search?animal=Perro' },
+                { id: 2, name: 'Gatos',    img: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=400', route: '/search?animal=Gato' },
+                { id: 3, name: 'Exóticos', img: 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?q=80&w=400', route: '/search?animal=Exoticos&tipo=Exoticos' },
+                { id: 4, name: 'Servicios',img: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?q=80&w=400', route: '/servicios' }
+              ].map((cat) => (
+                <TouchableOpacity 
+                  key={cat.id} 
+                  activeOpacity={0.8}
+                  onPress={() => cat.route && router.push(cat.route as any)}
+                  style={{ 
+                    width: '23.5%', 
+                    height: 65, 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 16,
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    paddingBottom: 10,
+                    borderWidth: 1,
+                    borderColor: '#F3F4F6',
+                    shadowColor: '#63348C',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.08,
+                    shadowRadius: 8,
+                    elevation: 3
+                  }}
+                >
+                  {/* Floating Avatar */}
+                  <View style={{ 
+                    position: 'absolute', 
+                    top: -28, 
+                    width: 56, 
+                    height: 56, 
+                    borderRadius: 28, 
+                    backgroundColor: '#FFFFFF',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 6,
+                    elevation: 5
+                  }}>
+                    <Image 
+                      source={{ uri: cat.img }} 
+                      style={{ width: '100%', height: '100%', borderRadius: 28, borderWidth: 2, borderColor: '#FFFFFF' }} 
+                      resizeMode="cover" 
+                    />
+                  </View>
+                  
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: '#1A1A2E', letterSpacing: -0.2 }}>{cat.name}</Text>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </View>
 
@@ -2055,27 +2128,51 @@ const HomeScreen = React.memo(function HomeScreen() {
             <View style={{ marginTop: 32 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, marginBottom: 20 }}>
             <Text style={{ fontSize: 22, fontWeight: '900', color: '#1A1A2E', letterSpacing: -0.5 }}>Últimas promociones</Text>
-            <TouchableOpacity style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}
+              onPress={() => router.push('/search?filter=promo')}
+            >
               <Text style={{ fontSize: 11, fontWeight: '900', color: '#D97706' }}>VER TODO</Text>
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={products.slice(0, 6)}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
-            initialNumToRender={4}
-            maxToRenderPerBatch={4}
-            windowSize={3}
-            removeClippedSubviews={true}
-            contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 24 }}
-            renderItem={({ item }) => (
-              <MobileProductCard 
-                item={item} 
-                onAuthRequired={() => setShowAuthModal(true)} 
-              />
-            )}
-          />
+          {loadingProducts ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 24 }}>
+              {[1, 2, 3].map((_, i) => (
+                <View key={i} style={{ width: 180, marginRight: 15, backgroundColor: '#F9FAFB', borderRadius: 24, padding: 12 }}>
+                   <Skeleton width="100%" height={150} borderRadius={20} />
+                   <View style={{ marginTop: 12, gap: 6 }}>
+                     <Skeleton width="80%" height={14} />
+                     <Skeleton width="50%" height={12} />
+                   </View>
+                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                     <Skeleton width="40%" height={16} />
+                     <Skeleton width={28} height={28} borderRadius={8} />
+                   </View>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <FlatList
+              data={(() => {
+                const promoProducts = products.filter(p => p.promo);
+                return promoProducts.length > 0 ? promoProducts.slice(0, 8) : products.slice(0, 8);
+              })()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              initialNumToRender={4}
+              maxToRenderPerBatch={4}
+              windowSize={3}
+              removeClippedSubviews={true}
+              contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: 24 }}
+              renderItem={({ item }) => (
+                <MobileProductCard 
+                  item={item} 
+                  onAuthRequired={() => setShowAuthModal(true)} 
+                />
+              )}
+            />
+          )}
 
         </View>
 
@@ -2106,106 +2203,121 @@ const HomeScreen = React.memo(function HomeScreen() {
 
         {/* MOBILE DYNAMIC BANNERS (2x2 GRID) */}
         <View style={{ marginHorizontal: 15, marginBottom: 40, gap: 12 }}>
-          {/* Fila 1 */}
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            {/* Mobile Banner 1: Cat */}
-            <View style={{ flex: 1, height: 200, backgroundColor: '#0A0A2E', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.15)' }}>
-              {(() => {
-                const item = portadasData.find(p => Number(p.index) === 1);
-                const bgColor = item?.backgroundColor || '#0A0A2E';
-                return (
-                  <View style={{ flex: 1, backgroundColor: bgColor }}>
-                    <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=800' }} style={{ position: 'absolute', right: 0, top: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.9 }} resizeMode="cover" />
-                    <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
-                    <View style={{ flex: 1, padding: 14, justifyContent: 'center', zIndex: 10 }}>
-                       <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 1, borderColor: '#10B981', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, marginBottom: 6 }}>
-                          <Text style={{ color: '#10B981', fontWeight: '900', fontSize: 8, letterSpacing: 0.5 }}>{item?.badge || 'CAT EXCLUSIVE'}</Text>
-                       </View>
-                       <Text style={{ fontSize: 20, fontWeight: '900', color: 'white', lineHeight: 22 }}>{item?.title || 'Ahorra\ny Limpia'}</Text>
-                       <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '700', marginTop: 4 }}>{item?.subtitle || '20% OFF Arena Premium'}</Text>
-                       <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}>
-                          <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>{item?.buttonText || 'DESCUBRIR'}</Text>
-                       </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })()}
+          {loadingProducts ? (
+            <View style={{ gap: 12 }}>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Skeleton width="50%" height={200} borderRadius={20} />
+                <Skeleton width="50%" height={200} borderRadius={20} />
+              </View>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Skeleton width="50%" height={200} borderRadius={20} />
+                <Skeleton width="50%" height={200} borderRadius={20} />
+              </View>
             </View>
+          ) : (
+            <>
+              {/* Fila 1 */}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {/* Mobile Banner 1: Cat */}
+                <View style={{ flex: 1, height: 200, backgroundColor: '#0A0A2E', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.15)' }}>
+                  {(() => {
+                    const item = portadasData.find(p => Number(p.index) === 1);
+                    const bgColor = item?.backgroundColor || '#0A0A2E';
+                    return (
+                      <View style={{ flex: 1, backgroundColor: bgColor }}>
+                        <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=800' }} style={{ position: 'absolute', right: 0, top: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.9 }} resizeMode="cover" />
+                        <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
+                        <View style={{ flex: 1, padding: 14, justifyContent: 'center', zIndex: 10 }}>
+                          <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 1, borderColor: '#10B981', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, marginBottom: 6 }}>
+                              <Text style={{ color: '#10B981', fontWeight: '900', fontSize: 8, letterSpacing: 0.5 }}>{item?.badge || 'CAT EXCLUSIVE'}</Text>
+                          </View>
+                          <Text style={{ fontSize: 20, fontWeight: '900', color: 'white', lineHeight: 22 }}>{item?.title || 'Ahorra\ny Limpia'}</Text>
+                          <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '700', marginTop: 4 }}>{item?.subtitle || '20% OFF Arena Premium'}</Text>
+                          <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}>
+                              <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>{item?.buttonText || 'DESCUBRIR'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })()}
+                </View>
 
-            {/* Mobile Banner 2: Dog */}
-            <View style={{ flex: 1, height: 200, backgroundColor: '#000000', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)' }}>
-              {(() => {
-                const item = portadasData.find(p => Number(p.index) === 2);
-                const bgColor = item?.backgroundColor || '#000000';
-                return (
-                  <View style={{ flex: 1, backgroundColor: bgColor }}>
-                    <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=800' }} style={{ position: 'absolute', right: 0, top: 0, width: '100%', height: '100%', opacity: 0.8 }} resizeMode="cover" />
-                    <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
-                    <View style={{ flex: 1, padding: 14, justifyContent: 'center', zIndex: 10 }}>
-                       <Text style={{ fontSize: 50, fontWeight: '900', color: 'rgba(34, 197, 94, 0.06)', position: 'absolute', top: -5, left: -5 }}>30</Text>
-                       <View style={{ backgroundColor: '#10B981', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, marginBottom: 6 }}>
-                          <Text style={{ color: 'white', fontWeight: '900', fontSize: 8, letterSpacing: 0.5 }}>{item?.badge || 'DOG SPECIAL'}</Text>
-                       </View>
-                       <Text style={{ fontSize: 20, fontWeight: '900', color: 'white', lineHeight: 22 }}>{item?.title || 'Snacks\nGourmet'}</Text>
-                       <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: '700', marginTop: 4 }}>{item?.subtitle || '30% Off para el Rey'}</Text>
-                       <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}>
-                          <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>{item?.buttonText || 'DESCUBRIR'}</Text>
-                       </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })()}
-            </View>
-          </View>
+                {/* Mobile Banner 2: Dog */}
+                <View style={{ flex: 1, height: 200, backgroundColor: '#000000', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)' }}>
+                  {(() => {
+                    const item = portadasData.find(p => Number(p.index) === 2);
+                    const bgColor = item?.backgroundColor || '#000000';
+                    return (
+                      <View style={{ flex: 1, backgroundColor: bgColor }}>
+                        <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=800' }} style={{ position: 'absolute', right: 0, top: 0, width: '100%', height: '100%', opacity: 0.8 }} resizeMode="cover" />
+                        <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
+                        <View style={{ flex: 1, padding: 14, justifyContent: 'center', zIndex: 10 }}>
+                          <Text style={{ fontSize: 50, fontWeight: '900', color: 'rgba(34, 197, 94, 0.06)', position: 'absolute', top: -5, left: -5 }}>30</Text>
+                          <View style={{ backgroundColor: '#10B981', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, marginBottom: 6 }}>
+                              <Text style={{ color: 'white', fontWeight: '900', fontSize: 8, letterSpacing: 0.5 }}>{item?.badge || 'DOG SPECIAL'}</Text>
+                          </View>
+                          <Text style={{ fontSize: 20, fontWeight: '900', color: 'white', lineHeight: 22 }}>{item?.title || 'Snacks\nGourmet'}</Text>
+                          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: '700', marginTop: 4 }}>{item?.subtitle || '30% Off para el Rey'}</Text>
+                          <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}>
+                              <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>{item?.buttonText || 'DESCUBRIR'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })()}
+                </View>
+              </View>
 
-          {/* Fila 2 */}
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            {/* Mobile Banner 3: Pharmacy */}
-            <View style={{ flex: 1, height: 200, backgroundColor: '#1A0A0A', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(255, 77, 23, 0.15)' }}>
-              {(() => {
-                const item = portadasData.find(p => Number(p.index) === 3);
-                const bgColor = item?.backgroundColor || '#1A0A0A';
-                return (
-                  <View style={{ flex: 1, backgroundColor: bgColor }}>
-                    <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?q=80&w=800' }} style={{ position: 'absolute', right: 0, bottom: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.8 }} resizeMode="cover" />
-                    <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0.3, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
-                    <View style={{ flex: 1, padding: 14, zIndex: 10, justifyContent: 'center' }}>
-                       <Text style={{ fontSize: 8, fontWeight: '900', color: '#10B981', letterSpacing: 1, marginBottom: 6 }}>{item?.badge || 'CARE UNIT'}</Text>
-                       <Text style={{ fontSize: 22, fontWeight: '900', color: 'white', lineHeight: 24 }}>{item?.title || 'Salud\nal 100%'}</Text>
-                       <View style={{ backgroundColor: '#10B981', marginTop: 8, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start' }}>
-                          <Text style={{ color: 'white', fontWeight: '900', fontSize: 11 }}>{item?.subtitle || '-15% DCTO'}</Text>
-                       </View>
-                       <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, borderBottomWidth: 1.5, borderBottomColor: '#10B981', alignSelf: 'flex-start' }}>
-                          <Text style={{ fontSize: 11, fontWeight: '900', color: '#10B981' }}>{item?.buttonText || 'Comprar Farmacia'}</Text>
-                       </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })()}
-            </View>
+              {/* Fila 2 */}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {/* Mobile Banner 3: Pharmacy */}
+                <View style={{ flex: 1, height: 200, backgroundColor: '#1A0A0A', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(255, 77, 23, 0.15)' }}>
+                  {(() => {
+                    const item = portadasData.find(p => Number(p.index) === 3);
+                    const bgColor = item?.backgroundColor || '#1A0A0A';
+                    return (
+                      <View style={{ flex: 1, backgroundColor: bgColor }}>
+                        <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?q=80&w=800' }} style={{ position: 'absolute', right: 0, bottom: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.8 }} resizeMode="cover" />
+                        <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0.3, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
+                        <View style={{ flex: 1, padding: 14, zIndex: 10, justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 8, fontWeight: '900', color: '#10B981', letterSpacing: 1, marginBottom: 6 }}>{item?.badge || 'CARE UNIT'}</Text>
+                          <Text style={{ fontSize: 22, fontWeight: '900', color: 'white', lineHeight: 24 }}>{item?.title || 'Salud\nal 100%'}</Text>
+                          <View style={{ backgroundColor: '#10B981', marginTop: 8, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start' }}>
+                              <Text style={{ color: 'white', fontWeight: '900', fontSize: 11 }}>{item?.subtitle || '-15% DCTO'}</Text>
+                          </View>
+                          <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, borderBottomWidth: 1.5, borderBottomColor: '#10B981', alignSelf: 'flex-start' }}>
+                              <Text style={{ fontSize: 11, fontWeight: '900', color: '#10B981' }}>{item?.buttonText || 'Comprar Farmacia'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })()}
+                </View>
 
-            {/* Mobile Banner 4: Accessories */}
-            <View style={{ flex: 1, height: 200, backgroundColor: '#0A0A1A', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.1)' }}>
-              {(() => {
-                const item = portadasData.find(p => Number(p.index) === 4);
-                const bgColor = item?.backgroundColor || '#0A0A1A';
-                return (
-                  <View style={{ flex: 1, backgroundColor: bgColor }}>
-                    <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=800' }} style={{ position: 'absolute', right: 0, top: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.8 }} resizeMode="cover" />
-                    <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0.3, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
-                    <View style={{ flex: 1, padding: 14, zIndex: 10, justifyContent: 'center' }}>
-                       <Text style={{ fontSize: 24, fontWeight: '900', color: 'white' }}>{item?.title ? item.title.split('.')[0] : 'Juega.'}</Text>
-                       <Text style={{ fontSize: 24, fontWeight: '300', color: 'rgba(255,255,255,0.6)', marginTop: -6 }}>{item?.title?.includes('.') ? item.title.split('.')[1] : 'Vive.'}</Text>
-                       <Text style={{ fontSize: 10, color: '#10B981', fontWeight: '900', marginTop: 8 }}>{item?.subtitle || '25% Off en Accesorios'}</Text>
-                       <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}>
-                          <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>{item?.buttonText || 'VER CATÁLOGO'}</Text>
-                       </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })()}
-            </View>
-          </View>
+                {/* Mobile Banner 4: Accessories */}
+                <View style={{ flex: 1, height: 200, backgroundColor: '#0A0A1A', borderRadius: 20, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.1)' }}>
+                  {(() => {
+                    const item = portadasData.find(p => Number(p.index) === 4);
+                    const bgColor = item?.backgroundColor || '#0A0A1A';
+                    return (
+                      <View style={{ flex: 1, backgroundColor: bgColor }}>
+                        <Image source={{ uri: item?.imageUrl || 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=800' }} style={{ position: 'absolute', right: 0, top: 0, width: item?.imageUrl ? '100%' : '60%', height: '100%', opacity: 0.8 }} resizeMode="cover" />
+                        <LinearGradient colors={[bgColor, 'transparent']} start={{ x: 0.3, y: 0 }} end={{ x: 0.8, y: 0 }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '100%', zIndex: 5 }} />
+                        <View style={{ flex: 1, padding: 14, zIndex: 10, justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 24, fontWeight: '900', color: 'white' }}>{item?.title ? item.title.split('.')[0] : 'Juega.'}</Text>
+                          <Text style={{ fontSize: 24, fontWeight: '300', color: 'rgba(255,255,255,0.6)', marginTop: -6 }}>{item?.title?.includes('.') ? item.title.split('.')[1] : 'Vive.'}</Text>
+                          <Text style={{ fontSize: 10, color: '#10B981', fontWeight: '900', marginTop: 8 }}>{item?.subtitle || '25% Off en Accesorios'}</Text>
+                          <TouchableOpacity onPress={() => handleBannerNavigation(item)} style={{ marginTop: 12, backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}>
+                              <Text style={{ color: 'white', fontWeight: '900', fontSize: 10 }}>{item?.buttonText || 'VER CATÁLOGO'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })()}
+                </View>
+              </View>
+            </>
+          )}
         </View>
 
         {/* MOBILE NEWSLETTER BANNER */}
@@ -2366,15 +2478,28 @@ const HomeScreen = React.memo(function HomeScreen() {
               </View>
             ) : null}
 
-            <TouchableOpacity 
-              onPress={() => setShowSuccessModal(false)}
-              style={{ 
-                width: '100%', backgroundColor: '#63348C', borderRadius: 20, height: 64, 
-                justifyContent: 'center', alignItems: 'center', shadowColor: '#63348C', shadowOpacity: 0.25, shadowRadius: 15, shadowOffset: { width: 0, height: 8 }
-              }}
+            <Animated.View 
+              entering={ZoomIn.delay(300).duration(600)}
+              style={{ width: '100%' }}
             >
-              <Text style={{ color: 'white', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>Volver al Inicio</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => setShowSuccessModal(false)}
+                activeOpacity={0.8}
+                style={{ 
+                  width: '100%', backgroundColor: '#63348C', borderRadius: 20, height: 64, 
+                  justifyContent: 'center', alignItems: 'center', shadowColor: '#63348C', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 8 },
+                  overflow: 'hidden'
+                }}
+              >
+                <LinearGradient
+                  colors={['#63348C', '#8A56B3']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                />
+                <Text style={{ color: 'white', fontSize: 17, fontWeight: '900', letterSpacing: 1 }}>Volver al Inicio</Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </View>
       </Modal>

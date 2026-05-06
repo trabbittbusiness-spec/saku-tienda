@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, serverTimestamp, doc, query, where, onSnapshot, Timestamp, getDoc, getDocs, updateDoc } from 'firebase/firestore';
-import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, StyleSheet, Alert, Platform, Modal, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable, Alert, Linking, StyleSheet, StatusBar } from 'react-native';
+import { useAudioPlayer } from 'expo-audio';
 import { ArrowLeft, Lock, Plus, CreditCard, ShieldCheck, Calendar as CalendarIcon, Clock, ChevronRight, ChevronLeft, Check, X, ChevronDown, ChevronUp, Banknote, Wifi, AlertCircle, RefreshCcw, Star, Shield, Info, ShoppingBag } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { auth, db } from '../lib/firebase';
 import { mpService } from '../lib/mercadopago';
 import Header from '../components/Header';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Skeleton from '../components/Skeleton';
 export default function CheckoutServicioScreen() {
+  const insets = useSafeAreaInsets();
+  const purchaseSound = useAudioPlayer(require('../assets/audio/sonido-de-compra.mp3'));
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
 
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -455,7 +460,9 @@ export default function CheckoutServicioScreen() {
           servicioId: service.id,
           servicioNombre: service.nombre,
           usuarioId: auth.currentUser.uid,
-          clienteNombre: userName,
+          clienteNombre: clientInfo.name || userName,
+          nombre: clientInfo.name || userName,
+          nombreCliente: clientInfo.name || userName,
           clienteTelefono: clientInfo.phone,
           mascotaNombre: petEntry.name || `Mascota ${i + 1}`,
           clienteUbicacion: userAddress,
@@ -552,8 +559,17 @@ export default function CheckoutServicioScreen() {
         console.error('Error queuing emails:', emailErr);
       }
 
+      async function playSuccessSound() {
+        try {
+          purchaseSound.play();
+        } catch (error) {
+          console.log('Error playing success sound:', error);
+        }
+      }
+
       setLastOrderData({ orderId: externalRef, total: totalAmount });
       setShowSuccessModal(true);
+      playSuccessSound();
     } catch (e: any) {
       showError("Error", e.message || "Ocurrió un error inesperado.");
     } finally {
@@ -1128,7 +1144,7 @@ export default function CheckoutServicioScreen() {
           </View>
         ) : (
           <View style={styles.mobileWrapper}>
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top, height: 70 + insets.top }]}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><ArrowLeft size={22} color="#1E293B" /></TouchableOpacity>
               <Text style={styles.headerTitle}>Confirmar Reserva</Text>
               <View style={styles.secureBadge}><Lock size={14} color="#63348C" /><Text style={styles.secureTxt}>SEGURO</Text></View>

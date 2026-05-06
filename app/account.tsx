@@ -12,7 +12,7 @@ import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 export default function AccountScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
   
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);

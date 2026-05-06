@@ -10,9 +10,18 @@
         "buildType": "apk"
       }
     },
-    "production": {}
+    "production": {
+      "android": {
+        "credentialsSource": "local"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "sakudeveloperchile@gmail.com",
+        "ascAppId": "6472793617"
+      }
+    }
   }
 }

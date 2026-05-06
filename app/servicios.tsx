@@ -7,7 +7,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useProducts } from '../context/ProductsContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Skeleton from '../components/Skeleton';
 
 const CATEGORY_ICONS: any = {
   'default': { icon: Stethoscope, color: '#63348C', bg: '#EEF2FF' },
@@ -29,7 +31,7 @@ export default function VeterinaryServicesScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
 
   const { category: urlCategory } = useLocalSearchParams();
   const [services, setServices] = useState<any[]>([]);
@@ -128,7 +130,7 @@ export default function VeterinaryServicesScreen() {
           <View style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
             justifyContent: 'center', paddingHorizontal: isDesktop ? '4%' : 20,
-            paddingTop: isDesktop ? 0 : insets.top
+            paddingTop: isDesktop ? 0 : (insets.top > 0 ? insets.top : 20)
           }}>
             <View style={{ maxWidth: 800 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 15 }}>
@@ -312,7 +314,20 @@ export default function VeterinaryServicesScreen() {
         <View style={{ paddingHorizontal: isDesktop ? '4%' : 15, marginTop: 30, paddingBottom: 120 }}>
 
           {loading ? (
-            <ActivityIndicator size="large" color="#63348C" style={{ marginTop: 50 }} />
+            <View style={{ flexDirection: isDesktop ? 'row' : 'column', flexWrap: 'wrap', gap: 20 }}>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <View key={i} style={[styles.serviceCard, { width: isDesktop ? '31.5%' : '100%' }]}>
+                  <Skeleton width="100%" height={isDesktop ? 220 : 180} borderRadius={0} />
+                  <View style={{ padding: 15 }}>
+                    <Skeleton width="60%" height={24} style={{ marginBottom: 10 }} />
+                    <Skeleton width="40%" height={15} style={{ marginBottom: 15 }} />
+                    <Skeleton width="100%" height={15} style={{ marginBottom: 8 }} />
+                    <Skeleton width="100%" height={15} style={{ marginBottom: 20 }} />
+                    <Skeleton width="100%" height={50} borderRadius={16} />
+                  </View>
+                </View>
+              ))}
+            </View>
           ) : (
             <>
               {/* Results Header */}

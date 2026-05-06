@@ -11,7 +11,7 @@ export default function AddressesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [addresses, setAddresses] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);

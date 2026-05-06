@@ -22,7 +22,7 @@ const PremiumNavbar = ({ currentPath }: { currentPath: string }) => {
     { 
       name: auth.currentUser ? 'Perfil' : 'Entrar',    
       icon: auth.currentUser ? User : LogIn,        
-      path: auth.currentUser ? '/profile' : '/login', 
+      path: auth.currentUser ? '/cuenta' : '/login', 
       badge: 0 
     },
   ];
@@ -38,7 +38,6 @@ const PremiumNavbar = ({ currentPath }: { currentPath: string }) => {
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
-        overflow: 'hidden',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-around',
@@ -46,10 +45,10 @@ const PremiumNavbar = ({ currentPath }: { currentPath: string }) => {
         paddingBottom: insets.bottom > 0 ? insets.bottom + 10 : 36,
         paddingHorizontal: 6,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -10 },
-        shadowOpacity: 0.12,
-        shadowRadius: 20,
-        elevation: 30,
+        shadowOffset: { width: 0, height: -8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 15,
+        elevation: 20,
         zIndex: 999,
       }}
     >
@@ -60,8 +59,8 @@ const PremiumNavbar = ({ currentPath }: { currentPath: string }) => {
             key={index}
             onPress={() => {
               if (isActive) return;
-              // Navigate usa el historial existente si la pantalla ya está en el Stack, previniendo desmontaje.
-              router.navigate(item.path as any);
+              // Use push to ensure the route is matched correctly
+              router.push(item.path as any);
             }}
             style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}
             activeOpacity={0.7}

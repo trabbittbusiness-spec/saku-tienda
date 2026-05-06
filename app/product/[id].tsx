@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, useWindowDimensions, TextInput, Animated, Alert, Share, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, TextInput, Animated, Alert, Share, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { ArrowLeft, Star, Heart, ShoppingCart, Truck, Store, Plus, Minus, ChevronRight, ShoppingBag, Share2 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
 import AuthModal from '../../components/AuthModal';
 import LoadingScreen from '../../components/LoadingScreen';
@@ -16,7 +18,8 @@ export default function ProductDetailsScreen() {
   const { addToCart, cart, cartCount } = useCart();
   const { id } = useLocalSearchParams();
   const { width, height } = useWindowDimensions();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
+  const insets = useSafeAreaInsets();
   
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
@@ -262,7 +265,7 @@ export default function ProductDetailsScreen() {
   if (!isDesktop) {
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
           {/* Header Image Area */}
           <View style={{ width: '100%', height: 420, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
             {!loading && product?.promo && (
@@ -278,19 +281,38 @@ export default function ProductDetailsScreen() {
             {loading ? (
               <View style={{ width: '85%', height: '85%', backgroundColor: '#F3F4F6', borderRadius: 20 }} />
             ) : (
-              <Image source={{ uri: product.images[0] }} style={{ width: '85%', height: '85%' }} resizeMode="contain" />
+              <Image 
+                source={{ uri: product.images[0] }} 
+                style={{ width: '85%', height: '85%' }} 
+                contentFit="contain" 
+                transition={200}
+                cachePolicy="memory-disk"
+                priority="high"
+              />
             )}
             
             {/* Action Buttons */}
             <TouchableOpacity 
               onPress={() => router.back()}
-              style={{ position: 'absolute', top: 20, left: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 }}
+              style={{ 
+                position: 'absolute', 
+                top: Platform.OS === 'ios' ? insets.top : insets.top + 10, 
+                left: 20, 
+                width: 44, height: 44, borderRadius: 22, 
+                backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', 
+                shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 
+              }}
             >
               <ArrowLeft size={20} color="#111827" />
             </TouchableOpacity>
 
             {!loading && (
-              <View style={{ position: 'absolute', top: 20, right: 20, flexDirection: 'row', gap: 10 }}>
+              <View style={{ 
+                position: 'absolute', 
+                top: Platform.OS === 'ios' ? insets.top : insets.top + 10, 
+                right: 20, 
+                flexDirection: 'row', gap: 10 
+              }}>
                 <TouchableOpacity 
                   onPress={handleShare}
                   style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10 }}
@@ -307,7 +329,12 @@ export default function ProductDetailsScreen() {
             )}
 
             {/* Badge */}
-            <View style={{ position: 'absolute', top: 60, right: 20, backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+            <View style={{ 
+              position: 'absolute', 
+              top: Platform.OS === 'ios' ? insets.top + 45 : insets.top + 55, 
+              right: 20, 
+              backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 
+            }}>
               <Text style={{ color: 'white', fontSize: 11, fontWeight: '900' }}>En Stock</Text>
             </View>
           </View>
@@ -457,7 +484,13 @@ export default function ProductDetailsScreen() {
                       onPress={() => router.push(`/product/${item.id}`)}
                       style={{ width: '100%', height: 110, justifyContent: 'center', alignItems: 'center' }}
                     >
-                      <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                      <Image 
+                        source={{ uri: item.image }} 
+                        style={{ width: '100%', height: '100%' }} 
+                        contentFit="contain" 
+                        transition={200}
+                        cachePolicy="memory-disk"
+                      />
                     </TouchableOpacity>
 
                     {/* Info */}
@@ -488,9 +521,13 @@ export default function ProductDetailsScreen() {
 
         {/* Bottom Action Bar */}
         <View style={{ 
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, backgroundColor: '#FFFFFF', 
+          position: 'absolute', bottom: 0, left: 0, right: 0, 
+          paddingBottom: Platform.OS === 'ios' ? insets.bottom : insets.bottom + 15, 
+          paddingTop: 15,
+          backgroundColor: '#FFFFFF', 
           borderTopWidth: 1, borderTopColor: '#F3F4F6', flexDirection: 'row', alignItems: 'center', 
-          paddingHorizontal: 20, paddingBottom: 20, gap: 12
+          paddingHorizontal: 20, gap: 12,
+          shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 20
         }}>
           <View style={{ 
             flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', 
@@ -539,7 +576,12 @@ export default function ProductDetailsScreen() {
               opacity: bubbleOpacity,
               pointerEvents: 'none'
             }}>
-              <Image source={{ uri: product.images[0] }} style={{ width: 60, height: 60 }} resizeMode="contain" />
+              <Image 
+                source={{ uri: product.images[0] }} 
+                style={{ width: 60, height: 60 }} 
+                contentFit="contain" 
+                cachePolicy="memory-disk"
+              />
             </Animated.View>
 
             {/* Clickable Cart Indicator Modal */}
@@ -638,7 +680,14 @@ export default function ProductDetailsScreen() {
               {loading ? (
                 <View style={{ width: '100%', height: '100%', backgroundColor: '#F3F4F6' }} />
               ) : (
-                <Image source={{ uri: product.images[selectedImage] }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                <Image 
+                  source={{ uri: product.images[selectedImage] }} 
+                  style={{ width: '100%', height: '100%' }} 
+                  contentFit="contain" 
+                  transition={200}
+                  cachePolicy="memory-disk"
+                  priority="high"
+                />
               )}
               {!loading && (
                 <View style={{ position: 'absolute', top: 24, right: 24, flexDirection: 'row', gap: 12 }}>
@@ -687,7 +736,12 @@ export default function ProductDetailsScreen() {
                       padding: 4, backgroundColor: '#FFFFFF'
                     }}
                   >
-                    <Image source={{ uri: img }} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="contain" />
+                    <Image 
+                      source={{ uri: img }} 
+                      style={{ width: '100%', height: '100%', borderRadius: 8 }} 
+                      contentFit="contain" 
+                      cachePolicy="memory-disk"
+                    />
                   </TouchableOpacity>
                 ))
               )}

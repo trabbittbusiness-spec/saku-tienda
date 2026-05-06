@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ChevronRight, Store, Clock, Package, CheckCircle2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, doc, getDocs, getDoc, onSnapshot } from 'firebase/firestore';
+import Skeleton from '../../components/Skeleton';
 
 let cachedOrders: any[] | null = null;
 
@@ -13,7 +15,7 @@ export default function OrdersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 1024;
+  const isDesktop = width >= 768;
   const [filter, setFilter] = useState('Todas');
   const [orders, setOrders] = useState<any[]>(cachedOrders || []);
   const [loading, setLoading] = useState(!cachedOrders);
@@ -192,8 +194,23 @@ export default function OrdersScreen() {
 
         {/* Orders List */}
         {loading ? (
-          <View style={{ alignItems: 'center', marginTop: 60 }}>
-            <ActivityIndicator size="large" color="#111827" />
+          <View style={{ gap: 20 }}>
+            {[1, 2, 3].map(i => (
+              <View key={i} style={{ backgroundColor: '#FFFFFF', borderRadius: 32, padding: 32, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Skeleton width="40%" height={24} />
+                  <Skeleton width="20%" height={24} borderRadius={12} />
+                </View>
+                <View style={{ height: 1, backgroundColor: '#F9FAFB', marginVertical: 25 }} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <Skeleton width={48} height={48} borderRadius={12} />
+                    <Skeleton width={48} height={48} borderRadius={12} />
+                  </View>
+                  <Skeleton width="30%" height={40} borderRadius={16} />
+                </View>
+              </View>
+            ))}
           </View>
         ) : paginatedOrders.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 60 }}>
@@ -245,7 +262,12 @@ export default function OrdersScreen() {
                         width: 48, height: 48, borderRadius: 12, backgroundColor: '#F9FAFB', borderWidth: 2, borderColor: '#FFFFFF',
                         marginLeft: idx === 0 ? 0 : -15, overflow: 'hidden'
                       }}>
-                        <Image source={{ uri: item.image }} style={{ width: '100%', height: '100%' }} />
+                        <Image 
+                          source={{ uri: item.image }} 
+                          style={{ width: '100%', height: '100%' }} 
+                          contentFit="cover"
+                          cachePolicy="memory-disk"
+                        />
                       </View>
                     ))}
                   </View>

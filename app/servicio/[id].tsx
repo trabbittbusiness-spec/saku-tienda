@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, ActivityIndicator, useWindowDimensions, StatusBar, Modal, Linking, Share, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, useWindowDimensions, StatusBar, Modal, Linking, Share, Platform, Alert, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -8,11 +9,13 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../../components/Header';
 import { useFavorites } from '../../context/FavoritesContext';
+import Skeleton from '../../components/Skeleton';
 export default function ServicioDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { width, height } = useWindowDimensions();
-  const isDesktop = width >= 1024;
+  const insets = useSafeAreaInsets();
+  const isDesktop = width >= 768;
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -148,7 +151,13 @@ export default function ServicioDetailScreen() {
         showsVerticalScrollIndicator={true}
         contentContainerStyle={isDesktop ? styles.desktopScrollContent : { paddingBottom: 120 }}
       >
-        {isDesktop ? (
+        {loading ? (
+          isDesktop ? (
+            <SkeletonDetailWeb />
+          ) : (
+            <SkeletonDetailMobile insets={insets} />
+          )
+        ) : isDesktop ? (
           <View style={styles.webRoot}>
             <View style={styles.webBgShape1} />
             <View style={styles.webBgShape2} />
@@ -336,7 +345,7 @@ export default function ServicioDetailScreen() {
                 colors={['rgba(0,0,0,0.6)', 'transparent', 'rgba(0,0,0,0.4)']}
                 style={StyleSheet.absoluteFill}
               />
-              <View style={styles.topActions}>
+              <View style={[styles.topActions, { top: insets.top > 0 ? insets.top + 5 : 20 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
                   <ChevronLeft size={24} color="#fff" strokeWidth={3} />
                 </TouchableOpacity>
@@ -457,7 +466,7 @@ export default function ServicioDetailScreen() {
         </View>
       </Modal>
       {!isDesktop && (
-        <View style={styles.floatingBar}>
+        <View style={[styles.floatingBar, { paddingBottom: Platform.OS === 'ios' ? insets.bottom : insets.bottom + 15 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
             <ShieldCheck size={28} color="#63348C" />
             <View>
@@ -485,7 +494,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   mediaContainer: { width: '100%', height: 350, position: 'relative' },
   media: { width: '100%', height: '100%' },
-  topActions: { position: 'absolute', top: 50, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
+  topActions: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', zIndex: 100 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
   playVideoBtn: { position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -70 }, { translateY: -35 }], flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 40, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 },
   playIconContainer: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
@@ -514,7 +523,7 @@ const styles = StyleSheet.create({
   closeFullBtnText: { color: '#63348C', fontWeight: '900', fontSize: 15 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   benefitText: { fontSize: 15, color: '#334155', fontWeight: '500' },
-  floatingBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', padding: 20, paddingBottom: 35, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 15 },
+  floatingBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', padding: 20, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 15 },
   reserveBtn: { backgroundColor: '#10B981', paddingHorizontal: 30, paddingVertical: 16, borderRadius: 16, shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
   reserveBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
   desktopScrollContent: { paddingBottom: 60, backgroundColor: '#FFFFFF' },
@@ -580,3 +589,58 @@ const styles = StyleSheet.create({
   webSupportLink: { alignSelf: 'flex-start' },
   webSupportLinkText: { fontSize: 14, color: '#63348C', fontWeight: '800', textDecorationLine: 'underline' }
 });
+
+function SkeletonDetailMobile({ insets }: any) {
+  return (
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <View style={{ width: '100%', height: 350 }}>
+        <Skeleton width="100%" height="100%" borderRadius={0} />
+      </View>
+      <View style={{ padding: 24, marginTop: -30, backgroundColor: '#FFFFFF', borderTopLeftRadius: 30, borderTopRightRadius: 30 }}>
+        <Skeleton width="70%" height={30} style={{ marginBottom: 15 }} />
+        <Skeleton width="40%" height={20} style={{ marginBottom: 20 }} />
+        <Skeleton width="100%" height={60} borderRadius={12} style={{ marginBottom: 30 }} />
+        <Skeleton width="50%" height={25} style={{ marginBottom: 15 }} />
+        <Skeleton width="100%" height={15} style={{ marginBottom: 8 }} />
+        <Skeleton width="100%" height={15} style={{ marginBottom: 8 }} />
+        <Skeleton width="90%" height={15} style={{ marginBottom: 24 }} />
+        <Skeleton width="60%" height={25} style={{ marginBottom: 15 }} />
+        <View style={{ gap: 16 }}>
+          {[1, 2, 3].map(i => (
+            <View key={i} style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
+              <Skeleton width={40} height={40} borderRadius={20} />
+              <View style={{ flex: 1 }}>
+                <Skeleton width="40%" height={15} style={{ marginBottom: 6 }} />
+                <Skeleton width="80%" height={12} />
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function SkeletonDetailWeb() {
+  return (
+    <View style={{ maxWidth: 1200, alignSelf: 'center', width: '100%', paddingHorizontal: 40, paddingTop: 40 }}>
+      <View style={{ flexDirection: 'row', gap: 60 }}>
+        <View style={{ flex: 1.6 }}>
+          <Skeleton width="100%" height={400} borderRadius={32} />
+          <View style={{ marginTop: 40 }}>
+            <Skeleton width="60%" height={40} style={{ marginBottom: 15 }} />
+            <Skeleton width="80%" height={20} />
+          </View>
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ padding: 40, borderRadius: 32, borderWidth: 1, borderColor: '#F1F5F9' }}>
+            <Skeleton width="30%" height={25} style={{ marginBottom: 20 }} />
+            <Skeleton width="100%" height={35} style={{ marginBottom: 15 }} />
+            <Skeleton width="100%" height={20} style={{ marginBottom: 30 }} />
+            <Skeleton width="100%" height={60} borderRadius={20} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
