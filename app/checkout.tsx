@@ -813,6 +813,7 @@ export default function CheckoutScreen() {
                       <Text style={{ fontSize: 15, fontWeight: '900', color: '#111827' }} numberOfLines={1}>{addr.category || 'Dirección'}</Text>
                       <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500', lineHeight: 18 }} numberOfLines={3}>
                         {addr.fullAddress || (addr.sub ? `${addr.main}, ${addr.sub}` : addr.main)}
+                        {addr.instructions ? `\nInstrucciones: ${addr.instructions}` : ''}
                       </Text>
 
 
@@ -1496,11 +1497,10 @@ export default function CheckoutScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 14, fontWeight: '800', color: '#111827' }} numberOfLines={1}>{addr.category || 'Dirección'}</Text>
-                        <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '500', marginTop: 2, lineHeight: 16 }} numberOfLines={3}>
+                        <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500' }}>
                           {addr.fullAddress || (addr.sub ? `${addr.main}, ${addr.sub}` : addr.main)}
+                          {addr.instructions ? `\nInstrucciones: ${addr.instructions}` : ''}
                         </Text>
-
-
                       </View>
                       {isSelected && (
                         <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#63348C', justifyContent: 'center', alignItems: 'center' }}>

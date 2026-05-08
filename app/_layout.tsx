@@ -11,12 +11,13 @@ import { StatusBar } from 'expo-status-bar';
 import { FavoritesProvider } from '../context/FavoritesContext';
 import { CartProvider } from '../context/CartContext';
 import { ProductsProvider } from '../context/ProductsContext';
-import { auth } from '../lib/firebase';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Vibration, AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import * as Audio from 'expo-audio';
 
 // Unified dynamic import helper to avoid crashes in Expo Go Android
 const getNotificationsModule = () => {
@@ -48,8 +49,7 @@ if (Notifications) {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const alarmSound = useAudioPlayer(require('../assets/audio/saku_compra.mp3'));
-  alarmSound.loop = true;
+  const [alarmSound, setAlarmSound] = useState<any>(null);
   const pathname = usePathname();
   const [loaded, error] = useFonts({
     'Ionicons': require('../assets/fonts/Ionicons.ttf'),
@@ -63,9 +63,24 @@ export default function RootLayout() {
 
   useEffect(() => {
     // 1. Auth & Push Registration
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        // Verificar si el usuario está baneado/eliminado
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists() && userDoc.data()?.banned === true) {
+            const { Alert: RNAlert } = require('react-native');
+            RNAlert.alert("Acceso Denegado", "Tu cuenta ha sido desactivada.");
+            await signOut(auth);
+            setUser(null);
+            router.replace('/login');
+            return;
+          }
+        } catch (e) {
+          console.log("Error verificando baneo:", e);
+        }
+
+        setUser(currentUser);
         // Defer push registration to avoid blocking the UI thread
         setTimeout(() => {
           const { registerForPushNotificationsAsync } = require('../lib/notifications');
@@ -73,6 +88,8 @@ export default function RootLayout() {
             console.log('Error registering push notifications:', err);
           });
         }, 2000); // 2 seconds delay
+      } else {
+        setUser(null);
       }
     });
 
@@ -80,6 +97,7 @@ export default function RootLayout() {
     const { InteractionManager } = require('react-native');
     InteractionManager.runAfterInteractions(() => {
       setupHeavyModules();
+      loadSound();
     });
 
     // 3. Clear Notification Badge on Open (iOS)
@@ -103,13 +121,28 @@ export default function RootLayout() {
     return () => {
       unsubscribe();
       appStateSubscription.remove();
+      if (alarmSound) {
+        alarmSound.unloadAsync().catch(() => {});
+      }
     };
-  }, []);
+  }, [alarmSound]);
+
+  const loadSound = async () => {
+    try {
+      const { sound } = await (Audio as any).Sound.createAsync(
+        require('../assets/audio/saku_compra.mp3'),
+        { isLooping: true, shouldPlay: false }
+      );
+      setAlarmSound(sound);
+    } catch (e) {
+      console.log('Error loading sound:', e);
+    }
+  };
 
   const setupHeavyModules = async () => {
     // Setup Audio Mode (permite sonido en modo silencioso en iOS)
     try {
-      await setAudioModeAsync({
+      await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
         playsInSilentModeIOS: true,
@@ -141,18 +174,19 @@ export default function RootLayout() {
   };
 
   const startAlarm = async () => {
-    if (isAlarmActive) return;
+    if (isAlarmActive || !alarmSound) return;
     setIsAlarmActive(true);
     try {
-      alarmSound.play();
+      await alarmSound.playAsync();
       Vibration.vibrate([1000, 500, 1000, 500], true);
     } catch (err) { console.error("Alarm error:", err); }
   };
 
   const stopAlarm = async () => {
     setIsAlarmActive(false);
+    if (!alarmSound) return;
     try {
-      alarmSound.pause();
+      await alarmSound.pauseAsync();
       Vibration.cancel();
     } catch (err) { console.error("Stop alarm error:", err); }
   };

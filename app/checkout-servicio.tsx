@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc, serverTimestamp, doc, query, where, onSnapshot, Timestamp, getDoc, getDocs, updateDoc } from 'firebase/firestore';
 import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable, Alert, Linking, StyleSheet, StatusBar } from 'react-native';
-import { useAudioPlayer } from 'expo-audio';
+import * as Audio from 'expo-audio';
 import { ArrowLeft, Lock, Plus, CreditCard, ShieldCheck, Calendar as CalendarIcon, Clock, ChevronRight, ChevronLeft, Check, X, ChevronDown, ChevronUp, Banknote, Wifi, AlertCircle, RefreshCcw, Star, Shield, Info, ShoppingBag } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { auth, db } from '../lib/firebase';
@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Skeleton from '../components/Skeleton';
 export default function CheckoutServicioScreen() {
   const insets = useSafeAreaInsets();
-  const purchaseSound = useAudioPlayer(require('../assets/audio/sonido-de-compra.mp3'));
+  const [purchaseSound, setPurchaseSound] = useState<any>(null);
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams();
   const isDesktop = width >= 768;
@@ -94,6 +94,24 @@ export default function CheckoutServicioScreen() {
       setIsLoadingCards(false);
     }
   };
+  useEffect(() => {
+    const loadSound = async () => {
+      try {
+        const { sound } = await (Audio as any).Sound.createAsync(
+          require('../assets/audio/sonido-de-compra.mp3')
+        );
+        setPurchaseSound(sound);
+      } catch (e) {
+        console.log('Error loading purchase sound:', e);
+      }
+    };
+    loadSound();
+    return () => {
+      if (purchaseSound) {
+        purchaseSound.unloadAsync().catch(() => {});
+      }
+    };
+  }, []);
   useEffect(() => {
     fetchSavedCards();
     if (auth.currentUser) {
@@ -561,7 +579,7 @@ export default function CheckoutServicioScreen() {
 
       async function playSuccessSound() {
         try {
-          purchaseSound.play();
+          if (purchaseSound) purchaseSound.replayAsync().catch(() => {});
         } catch (error) {
           console.log('Error playing success sound:', error);
         }

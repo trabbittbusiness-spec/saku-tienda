@@ -26,6 +26,7 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
     lat: -33.4425,
     lng: -70.6400
   });
+  const [instructions, setInstructions] = useState('');
   const [mapCenter, setMapCenter] = useState({ lat: -33.4425, lng: -70.6400 });
 
   const handleMessage = async (e: any) => {
@@ -523,7 +524,7 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
               </View>
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 15 }}>
               {[ { label: 'CASA', icon: Home }, { label: 'TRABAJO', icon: Briefcase }, { label: 'VET', icon: DogIcon } ].map((cat) => (
                 <Pressable key={cat.label} onPress={() => setSelectedCategory(cat.label)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 12, borderRadius: 16, backgroundColor: selectedCategory === cat.label ? '#FFF7ED' : '#F9FAFB', borderWidth: 1.5, borderColor: selectedCategory === cat.label ? '#63348C' : '#F3F4F6' }}>
                   <cat.icon size={18} color={selectedCategory === cat.label ? '#63348C' : '#9CA3AF'} strokeWidth={2.5} />
@@ -531,12 +532,37 @@ export default function LocationMapModal({ isOpen, onClose, onSave }: LocationMa
                 </Pressable>
               ))}
             </View>
+
+            <View style={{ 
+              backgroundColor: '#F9FAFB', 
+              borderRadius: 16, 
+              borderWidth: 1, 
+              borderColor: '#E5E7EB',
+              paddingHorizontal: 16,
+              paddingVertical: Platform.OS === 'ios' ? 14 : 4,
+            }}>
+              <TextInput
+                placeholder="Instrucciones (ej. Depto 12, Condominio, etc.)"
+                placeholderTextColor="#9CA3AF"
+                value={instructions}
+                onChangeText={setInstructions}
+                style={{ fontSize: 14, fontWeight: '500', color: '#111827', minHeight: 40 }}
+              />
+            </View>
           </View>
 
-          <TouchableOpacity onPress={() => { if (onSave) onSave({ ...selectedLocation, category: selectedCategory }); onClose(); }} style={{ backgroundColor: '#63348C', borderRadius: 20, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: '#63348C', shadowOpacity: 0.3, shadowRadius: 15, elevation: 10 }}>
-            <MapPin size={20} color="#FFFFFF" strokeWidth={3} />
-            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 1 }}>CONFIRMAR UBICACIÓN</Text>
-          </TouchableOpacity>
+          {(() => {
+            const canConfirm = !!selectedLocation.main && instructions.trim().length > 0;
+            return (
+              <TouchableOpacity
+                onPress={() => { if (!canConfirm) return; if (onSave) onSave({ ...selectedLocation, category: selectedCategory, instructions }); onClose(); }}
+                disabled={!canConfirm}
+                style={{ backgroundColor: canConfirm ? '#63348C' : '#D1D5DB', borderRadius: 20, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: '#63348C', shadowOpacity: canConfirm ? 0.3 : 0, shadowRadius: 15, elevation: canConfirm ? 10 : 0 }}>
+                <MapPin size={20} color="#FFFFFF" strokeWidth={3} />
+                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 1 }}>CONFIRMAR UBICACIÓN</Text>
+              </TouchableOpacity>
+            );
+          })()}
         </View>
       </View>
     </View>

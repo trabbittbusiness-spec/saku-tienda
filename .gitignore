@@ -56,5 +56,6 @@ users.json
 # Builds and sensitive files
 *.apk
 *.aab
+*.ipa
 /saku-cg45pm-keystore/
 /android/app/saku-prod.keystore

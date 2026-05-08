@@ -18,7 +18,7 @@ import {
 import { Image } from 'expo-image';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAudioPlayer } from 'expo-audio';
+import * as Audio from 'expo-audio';
 import { FontAwesome } from '@expo/vector-icons';
 import Animated, { ZoomIn, useSharedValue, withRepeat, withTiming, withDelay, useAnimatedStyle, Easing, FadeIn } from 'react-native-reanimated';
 import { 
@@ -958,7 +958,7 @@ function DesktopHeroSlider({ slides = [], onPress }: { slides?: any[], onPress?:
 }
 
 const HomeScreen = React.memo(function HomeScreen() {
-  const purchaseSound = useAudioPlayer(require('../../assets/audio/sonido-de-compra.mp3'));
+  const [purchaseSound, setPurchaseSound] = useState<any>(null);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const isDesktop = screenWidth >= BREAKPOINT;
@@ -995,6 +995,25 @@ const HomeScreen = React.memo(function HomeScreen() {
       setUser(u);
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const loadSound = async () => {
+      try {
+        const { sound } = await (Audio as any).Sound.createAsync(
+          require('../../assets/audio/sonido-de-compra.mp3')
+        );
+        setPurchaseSound(sound);
+      } catch (e) {
+        console.log('Error loading purchase sound:', e);
+      }
+    };
+    loadSound();
+    return () => {
+      if (purchaseSound) {
+        purchaseSound.unloadAsync().catch(() => {});
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -1105,7 +1124,7 @@ const HomeScreen = React.memo(function HomeScreen() {
   useEffect(() => {
     async function playSuccessSound() {
       try {
-        purchaseSound.play();
+        if (purchaseSound) purchaseSound.replayAsync().catch(() => {});
       } catch (error) {
         console.log('Error playing success sound:', error);
       }
