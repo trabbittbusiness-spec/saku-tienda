@@ -219,7 +219,7 @@ const CartScreen = React.memo(function CartScreen() {
               {/* Image Container */}
               <View style={{ width: 85, height: 85, backgroundColor: '#FFF9F5', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
                 <Image 
-                  source={{ uri: item.foto }} 
+                  source={{ uri: (item.foto || item.image || 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku') }}
                   style={{ width: '80%', height: '80%' }} 
                   contentFit="contain"
                   cachePolicy="memory-disk"

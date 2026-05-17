@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ChevronRight, Store, CreditCard, Banknote, HelpCircle, CheckCircle2, MapPin, Copy, Check, Wifi, RefreshCcw, Truck, Home } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -17,6 +17,20 @@ export default function OrderDetailsScreen() {
   const [copied, setCopied] = React.useState(false);
   const [order, setOrder] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [originCoords, setOriginCoords] = React.useState<{lat: number, lng: number, address: string} | null>(null);
+
+  React.useEffect(() => {
+    // Fetch store origin from Admin config
+    const originRef = doc(db, 'ClinicOrigin', 'origin');
+    getDoc(originRef).then(snap => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.lat && data.lng) {
+          setOriginCoords({ lat: data.lat, lng: data.lng, address: data.address || '' });
+        }
+      }
+    }).catch(console.error);
+  }, []);
 
   React.useEffect(() => {
     if (!id) return;
@@ -52,19 +66,22 @@ export default function OrderDetailsScreen() {
           })(),
           items: (data.items || []).map((item: any) => ({
             name: item.nombre || item.name || 'Producto',
-            image: item.foto || item.image || 'https://via.placeholder.com/150',
+            image: (item.foto || item.image || 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku'),
             qty: item.cantidad || 1,
             price: item.precio || 0
           })),
           branch: {
-            name: data.tipoEntrega === 'home' ? 'Entrega Personal' : 'Saku Vet Central',
-            address: data.tipoEntrega === 'home' ? (data.direccion?.texto || `${data.direccion?.main}, ${data.direccion?.sub}`) : 'Av. Providencia 1234, Local 5'
+            name: data.tipoEntrega === 'home' ? 'Entrega Personal' : 'Vet Animal Welfare Chicureo',
+            address: data.tipoEntrega === 'home'
+              ? (data.direccion?.texto || `${data.direccion?.main || ''}, ${data.direccion?.sub || ''}`.trim().replace(/^,\s*/, ''))
+              : '' // will be filled from originCoords.address
           },
           payment: data.metodoPago === 'cash' ? 'Efectivo / Transfer' : 'Tarjeta Bancaria',
           subtotal: data.subtotal || data.total || 0,
           shipping: data.envio === 0 ? 'Gratis' : `$${data.envio}`,
           total: data.total || 0,
-          codigoRetiro: data.codigoRetiro || orderSnap.id
+          codigoRetiro: data.codigoRetiro || orderSnap.id,
+          coords: data.direccion?.lat && data.direccion?.lng ? { lat: data.direccion.lat, lng: data.direccion.lng } : null
         });
       } else {
         setOrder(null);
@@ -306,7 +323,20 @@ export default function OrderDetailsScreen() {
                        </View>
                        <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827' }}>{order.branch.name}</Text>
-                          <Text style={{ fontSize: 11, color: '#6B7280', fontWeight: '600', marginTop: 1 }} numberOfLines={1}>{order.branch.address}</Text>
+                          <Text style={{ fontSize: 11, color: '#6B7280', fontWeight: '600', marginTop: 1 }} numberOfLines={1}>{order.type.includes('Retiro') ? (originCoords?.address || order.branch.address) : order.branch.address}</Text>
+                          
+                          {originCoords && (
+                            <TouchableOpacity 
+                              onPress={() => {
+                                const url = `https://www.google.com/maps/dir/?api=1&destination=${originCoords.lat},${originCoords.lng}&travelmode=driving`;
+                                Linking.openURL(url);
+                              }}
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, backgroundColor: '#EFF6FF', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
+                            >
+                              <MapPin size={12} color="#3B82F6" />
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: '#3B82F6' }}>Abrir Ruta en Maps</Text>
+                            </TouchableOpacity>
+                          )}
                        </View>
                     </View>
                 </View>

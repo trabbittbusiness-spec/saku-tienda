@@ -53,7 +53,7 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #eee;">
-          <img src="${item.foto}" width="50" height="50" style="border-radius: 8px; object-fit: cover;" />
+          <img src="${item.foto || item.image || ''}" width="50" height="50" style="border-radius: 8px; object-fit: cover;" />
         </td>
         <td style="padding: 10px; border-bottom: 1px solid #eee;">
           <div style="font-weight: bold; color: #111827;">${item.nombre}</div>
@@ -214,8 +214,8 @@ exports.onOrderCreated = onDocumentCreated("Orden/{orderId}", async (event) => {
             notification: {
               title: title,
               body: body,
-              imageUrl: (order.items && order.items[0] && order.items[0].foto) 
-                         ? order.items[0].foto 
+              imageUrl: (order.items && order.items[0] && (order.items[0].foto || order.items[0].image)) 
+                         ? (order.items[0].foto || order.items[0].image) 
                          : 'https://firebasestorage.googleapis.com/v0/b/sakuchile.appspot.com/o/logo_saku.png?alt=media'
             },
             android: {
@@ -304,24 +304,38 @@ exports.processPayment = onCall({ cors: true }, async (request) => {
     throw new HttpsError('unauthenticated', 'Debes estar autenticado para realizar un pago.');
   }
 
-  console.log("Processing payment for:", auth.token.email, "Amount:", data.transaction_amount);
-
+  console.log("Processing payment for:", auth.token.email);
   try {
+    const items = [...(data.items || [])];
+    const itemsTotal = items.reduce((acc, item) => acc + (Number(item.unit_price || 0) * Number(item.quantity || 1)), 0);
+    const shipping = Number(data.transaction_amount) - itemsTotal;
+    
+    if (shipping > 0) {
+      items.push({
+        id: 'shipping',
+        title: 'Costo de Envío',
+        quantity: 1,
+        unit_price: shipping,
+        category_id: 'shipping'
+      });
+    }
+
     const paymentBody = {
       body: {
-        transaction_amount: data.transaction_amount,
+        transaction_amount: Number(data.transaction_amount),
         token: data.token,
-        description: data.description,
-        installments: data.installments || 1,
+        description: data.description || 'Compra en Saku',
+        installments: Number(data.installments || 1),
         payment_method_id: data.payment_method_id,
         issuer_id: data.issuer_id,
-        payer: {
+        payer: data.payer.id ? {
+          id: data.payer.id,
+        } : {
           email: data.payer.email,
           identification: data.payer.identification,
-          id: data.payer.id // Mercado Pago Customer ID if available
         },
         additional_info: {
-          items: data.items || [],
+          items: items,
           payer: {
             first_name: data.payer.first_name || 'Cliente',
             last_name: data.payer.last_name || 'Saku',
@@ -332,9 +346,9 @@ exports.processPayment = onCall({ cors: true }, async (request) => {
       }
     };
 
-    console.log("Payment request body:", JSON.stringify(paymentBody.body, null, 2));
+    console.log("Payment request body (sanitized):", JSON.stringify({ ...paymentBody.body, token: '***' }));
     const response = await payment.create(paymentBody);
-    console.log("Payment response status:", response.status);
+    console.log("Payment response received. ID:", response.id, "Status:", response.status, "Detail:", response.status_detail);
     
     return {
       status: response.status,
@@ -342,8 +356,17 @@ exports.processPayment = onCall({ cors: true }, async (request) => {
       id: response.id
     };
   } catch (error) {
-    console.error("Mercado Pago Payment Error:", error);
-    throw new HttpsError('internal', error.message);
+    console.error("Mercado Pago Payment Error:", error.message || error);
+    if (error.cause) {
+      console.error("Error cause:", JSON.stringify(error.cause));
+    }
+    
+    let errorMessage = error.message || 'Error desconocido en Mercado Pago';
+    if (error.cause && Array.isArray(error.cause)) {
+      errorMessage = error.cause.map(c => c.description || c.code).join(', ');
+    }
+    
+    throw new HttpsError('internal', errorMessage);
   }
 });
 

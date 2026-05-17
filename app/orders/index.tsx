@@ -58,7 +58,7 @@ export default function OrdersScreen() {
                 for (const item of data.items) {
                   items.push({
                     name: item.nombre || item.name || 'Producto',
-                    image: item.foto || item.image || 'https://via.placeholder.com/150'
+                    image: (item.foto || item.image || 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku')
                   });
                 }
               } else if (data.ID_productos && Array.isArray(data.ID_productos)) {
@@ -70,7 +70,7 @@ export default function OrdersScreen() {
                       const prodData = prodSnap.data();
                       items.push({ 
                         name: prodData.nombre || prodData.name || 'Producto', 
-                        image: prodData.foto1 || prodData.image || 'https://via.placeholder.com/150' 
+                        image: (prodData.foto1 || prodData.image || 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku')
                       });
                     }
                   } catch(e) {
@@ -87,7 +87,7 @@ export default function OrdersScreen() {
                 status: normalizedStatus,
                 total: data.total || data.amount || 0,
                 date: dateStr,
-                items: items.length > 0 ? items : [{ name: 'Sin productos', image: 'https://via.placeholder.com/150' }],
+                items: items.length > 0 ? items : [{ name: 'Sin productos', image: 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku' }],
                 type: (data.tipoEntrega || data.tipodeentrega) === 'store' ? 'Retiro' : 'Delivery',
                 rawDate: data.fechaCreacion && data.fechaCreacion.toDate ? data.fechaCreacion.toDate().getTime() : 0
               });

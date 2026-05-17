@@ -71,7 +71,7 @@ export default function ProductDetailsScreen() {
           if (data.foto3) images.push(data.foto3);
           
           if (images.length === 0) {
-            images.push('https://via.placeholder.com/500');
+            images.push('https://placehold.co/500x500/F3F4F6/9CA3AF.png?text=Saku');
           }
 
           const sizesArray = Array.isArray(data.sizes) && data.sizes.length > 0 ? data.sizes : (data.medida ? [data.medida] : ['Único']);
@@ -108,7 +108,7 @@ export default function ProductDetailsScreen() {
                 name: doc.data().nombre,
                 price: doc.data().precio,
                 brand: doc.data().marca || doc.data().Tipo || '',
-                image: doc.data().foto1 || doc.data().foto || 'https://via.placeholder.com/200',
+                image: (doc.data().foto1 || doc.data().foto || 'https://placehold.co/200x200/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/200x200/F3F4F6/9CA3AF.png?text=Saku'),
                 promo: doc.data().estadoPromocion === true
               }))
               .filter(p => p.id !== finalId) // Exclude current product

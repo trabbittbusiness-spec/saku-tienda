@@ -51,7 +51,7 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       const unsubProducts = onSnapshot(collection(db, 'Products'), (snapshot) => {
         const productsList = snapshot.docs.map(doc => {
           const data = doc.data();
-          const imageUrl = data.foto1 || 'https://via.placeholder.com/500';
+          const imageUrl = (data.foto1 || 'https://placehold.co/500x500/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/500x500/F3F4F6/9CA3AF.png?text=Saku');
           
           if (Platform.OS === 'web') {
             Image.prefetch(imageUrl);

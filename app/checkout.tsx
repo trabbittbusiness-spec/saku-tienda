@@ -49,6 +49,7 @@ export default function CheckoutScreen() {
   const [isMapModalVisible, setIsMapModalVisible] = useState(false);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [clientInfo, setClientInfo] = useState({ name: '', phone: '' });
+  const [mounted, setMounted] = useState(false);
   
   // Shipping Settings States
   const [shippingConfig, setShippingConfig] = useState<any>(null);
@@ -80,8 +81,26 @@ export default function CheckoutScreen() {
       // Only use proxy on Web to bypass CORS.
       let res;
       if (Platform.OS === 'web') {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        res = await fetch(proxyUrl);
+        // Try allorigins with a different path or fallback to another proxy
+        const proxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+          `https://corsproxy.io/?${encodeURIComponent(url)}`
+        ];
+        
+        let success = false;
+        for (const proxy of proxies) {
+          try {
+            res = await fetch(proxy);
+            if (res.ok) {
+              success = true;
+              break;
+            }
+          } catch (e) {
+            console.log(`Proxy ${proxy} failed, trying next...`);
+          }
+        }
+        
+        if (!success) throw new Error("All proxies failed");
       } else {
         res = await fetch(url);
       }
@@ -92,16 +111,7 @@ export default function CheckoutScreen() {
         return data.rows[0].elements[0].distance.value / 1000;
       }
       
-      // Fallback with road correction factor (1.45x)
-      const R = 6371; 
-      const dLat = (lat2 - lat1) * (Math.PI / 180);
-      const dLon = (lon2 - lon1) * (Math.PI / 180);
-      const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return (R * c) * 1.45;
+      throw new Error("No distance data in response");
     } catch (e) {
       console.log("Distance API Error:", e);
       // Fallback with road correction factor (1.45x) if API fails
@@ -216,6 +226,8 @@ export default function CheckoutScreen() {
     const unsubOrigin = onSnapshot(doc(db, 'ClinicOrigin', 'origin'), (snapshot) => {
       if (snapshot.exists()) setClinicOrigin(snapshot.data());
     });
+
+    setMounted(true);
 
     return () => {
       unsubShipping();
@@ -564,6 +576,7 @@ export default function CheckoutScreen() {
         let payerId: string | undefined = undefined;
         if (!showNewCardForm && selectedCardId) {
           const selectedCard = savedCards.find(c => c.id === selectedCardId);
+          console.log('Selected card for payment:', JSON.stringify(selectedCard, null, 2));
           if (selectedCard) {
             payerId = selectedCard.customerId;
           }
@@ -581,7 +594,7 @@ export default function CheckoutScreen() {
             title: item.nombre || 'Producto Saku',
             quantity: item.cantidad || 1,
             unit_price: item.precio || 0,
-            picture_url: item.foto || ''
+            picture_url: item.foto || item.image || ''
           })),
           payer: {
             email: auth.currentUser?.email || 'anon@saku.com',
@@ -651,7 +664,7 @@ export default function CheckoutScreen() {
           cantidad: item.cantidad || 0,
           medida: item.medida || '',
           subtotal: item.subtotal || 0,
-          foto: item.foto || ''
+          foto: item.foto || item.image || ''
         })),
         total: displayTotal,
         subtotal: displaySubtotal,
@@ -721,6 +734,12 @@ export default function CheckoutScreen() {
     }
   };
 
+  if (!mounted) return (
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator size="large" color="#63348C" />
+    </View>
+  );
+
   if (!isDesktop) {
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -750,24 +769,28 @@ export default function CheckoutScreen() {
             <TouchableOpacity 
               onPress={() => setDeliveryType('home')}
               style={{ 
-                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                paddingVertical: 14, borderRadius: 18, backgroundColor: deliveryType === 'home' ? '#FFFFFF' : 'transparent',
+                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                paddingVertical: 12, borderRadius: 16, backgroundColor: deliveryType === 'home' ? '#FFFFFF' : 'transparent',
                 shadowColor: '#000', shadowOpacity: deliveryType === 'home' ? 0.05 : 0, shadowRadius: 10
               }}
             >
-              <Store size={18} color={deliveryType === 'home' ? '#111827' : '#9CA3AF'} />
-              <Text style={{ fontSize: 14, fontWeight: '800', color: deliveryType === 'home' ? '#111827' : '#9CA3AF' }}>Entrega</Text>
+              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                  <MapPin size={12} color="#6B7280" />
+              </View>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: deliveryType === 'home' ? '#111827' : '#9CA3AF', letterSpacing: 0.5 }}>ENTREGA A DOMICILIO</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={() => setDeliveryType('store')}
               style={{ 
-                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                paddingVertical: 14, borderRadius: 18, backgroundColor: deliveryType === 'store' ? '#FFFFFF' : 'transparent',
+                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                paddingVertical: 12, borderRadius: 16, backgroundColor: deliveryType === 'store' ? '#FFFFFF' : 'transparent',
                 shadowColor: '#000', shadowOpacity: deliveryType === 'store' ? 0.05 : 0, shadowRadius: 10
               }}
             >
-              <Store size={18} color={deliveryType === 'store' ? '#111827' : '#9CA3AF'} />
-              <Text style={{ fontSize: 14, fontWeight: '800', color: deliveryType === 'store' ? '#111827' : '#9CA3AF' }}>Recolección</Text>
+              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                  <CheckCircle2 size={12} color="#6B7280" />
+              </View>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: deliveryType === 'store' ? '#111827' : '#9CA3AF', letterSpacing: 0.5 }}>RETIRO EN SUCURSAL</Text>
             </TouchableOpacity>
           </View>
 
@@ -776,7 +799,7 @@ export default function CheckoutScreen() {
             {deliveryType === 'home' ? (
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 }}>
-                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#F5F3FF', justifyContent: 'center', alignItems: 'center' }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#FFF7ED', justifyContent: 'center', alignItems: 'center' }}>
                     <MapPin size={18} color="#63348C" />
                   </View>
                   <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Dirección de Entrega</Text>
@@ -839,17 +862,43 @@ export default function CheckoutScreen() {
               </View>
             ) : (
               <View>
-                <View style={{ backgroundColor: '#EEF2FF', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 25 }}>
-                  <MapPin size={20} color="#63348C" />
-                  <Text style={{ flex: 1, fontSize: 13, color: '#63348C', fontWeight: '700' }}>Retira tu pedido sin costo adicional.</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F3FF', justifyContent: 'center', alignItems: 'center' }}>
+                    <Store size={18} color="#63348C" />
+                  </View>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Sucursal disponible</Text>
                 </View>
 
-                <TouchableOpacity style={{ 
-                  borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 24, padding: 20, backgroundColor: '#FFFFFF',
+                <TouchableOpacity 
+                  onPress={() => Linking.openURL('https://www.google.com/maps?q=Veterinaria+Vet+Animal+Welfare,+Chicureo,+Colina,+Regi%C3%B3n+Metropolitana&ftid=0x9662b92ef85c9f3f:0x3842e439d9264146&entry=gps')}
+                  style={{ 
+                  borderWidth: 2, borderColor: '#63348C', borderRadius: 20, padding: 20, backgroundColor: '#FFFFFF',
+                  shadowColor: '#63348C', shadowOpacity: 0.05, shadowRadius: 15, shadowOffset: { width: 0, height: 8 },
                   marginBottom: 30
                 }}>
-                  <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Saku Providencia</Text>
-                  <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600' }}>Av. Providencia 1234</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '900', color: '#63348C' }}>Vet Animal Welfare Chicureo</Text>
+                      <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '600', marginTop: 4 }}>Alba 3 parcela 29, Chamisero, Colina</Text>
+                      
+                      <View style={{ flexDirection: 'row', gap: 16, marginTop: 12 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Clock size={14} color="#9CA3AF" />
+                          <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '600' }}>{storeHours}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <MapPin size={14} color="#9CA3AF" />
+                          <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '600' }}>Sucursal Chicureo</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={{ alignItems: 'flex-end', gap: 10 }}>
+                      <View style={{ backgroundColor: '#DCFCE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                        <Text style={{ color: '#63348C', fontSize: 10, fontWeight: '800' }}>• Stock disponible</Text>
+                      </View>
+                    </View>
+                  </View>
                 </TouchableOpacity>
               </View>
             )}
@@ -896,8 +945,8 @@ export default function CheckoutScreen() {
           {/* Payment Method Section */}
           <View style={{ paddingHorizontal: 20 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 }}>
-              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
-                <CreditCard size={18} color="#63348C" />
+              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#ECFDF5', justifyContent: 'center', alignItems: 'center' }}>
+                <Banknote size={18} color="#63348C" />
               </View>
               <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Método de Pago</Text>
             </View>
@@ -911,12 +960,12 @@ export default function CheckoutScreen() {
                 shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5
               }}
             >
-              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center' }}>
-                <Banknote size={22} color="#10B981" />
+              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 }}>
+                <Banknote size={22} color="#63348C" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Efectivo</Text>
-                <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '500' }}>Pago contra entrega</Text>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>Efectivo / Transfer</Text>
+                <Text style={{ fontSize: 13, color: '#9CA3AF', fontWeight: '500' }}>Al momento de entrega</Text>
               </View>
               <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: paymentMethod === 'cash' ? '#10B981' : '#E5E7EB', justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ color: 'white', fontSize: 12, fontWeight: '900' }}>✓</Text>
@@ -1224,7 +1273,7 @@ export default function CheckoutScreen() {
               {displayItems.map((item: any) => (
                 <View key={item.firebaseId || `${item.ID_productos}-${item.medida}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: '#FFF9F5', justifyContent: 'center', alignItems: 'center' }}>
-                    <Image source={{ uri: item.foto }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
+                    <Image source={{ uri: (item.foto || item.image || 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku') }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: '800', color: '#111827', textTransform: 'uppercase' }} numberOfLines={1}>{item.nombre}</Text>
@@ -1911,7 +1960,7 @@ export default function CheckoutScreen() {
                 {cart.map((item) => (
                   <View key={item.firebaseId || `${item.ID_productos}-${item.medida}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                     <View style={{ position: 'relative' }}>
-                      <Image source={{ uri: item.foto }} style={{ width: 56, height: 56, borderRadius: 12 }} />
+                      <Image source={{ uri: (item.foto || item.image || 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku').replace(/https:\/\/via\.placeholder\.com\/\d+/g, 'https://placehold.co/150x150/F3F4F6/9CA3AF.png?text=Saku') }} style={{ width: 56, height: 56, borderRadius: 12 }} />
                       <View style={{ position: 'absolute', top: -6, right: -6, backgroundColor: '#000', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF' }}>
                         <Text style={{ color: 'white', fontSize: 10, fontWeight: '900' }}>{item.cantidad}</Text>
                       </View>

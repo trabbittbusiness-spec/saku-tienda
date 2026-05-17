@@ -2,7 +2,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
 
 // MERCADO PAGO CONFIGURATION
-const MP_PUBLIC_KEY = process.env.EXPO_PUBLIC_MP_PUBLIC_KEY || "TEST-d63663f9-a754-432b-9bb8-070d16b07ad3";
+const MP_PUBLIC_KEY = process.env.EXPO_PUBLIC_MP_PUBLIC_KEY || "APP_USR-63c4a71c-20bc-4b78-9427-a388170d9117";
 
 export interface CardData {
   cardNumber: string;

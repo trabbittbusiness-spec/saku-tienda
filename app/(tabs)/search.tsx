@@ -10,7 +10,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
 import { useProducts } from '../../context/ProductsContext';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 
 /* 1. Datos simulados de respaldo */
@@ -269,6 +269,22 @@ const SearchScreen = React.memo(function SearchScreen() {
   const [selectedTipos, setSelectedTipos] = useState<string[]>([]);
   const [selectedPromo, setSelectedPromo] = useState<string>('Todos');
 
+  // Admin collections: categories and brands with their animal assignments
+  const [adminCategorias, setAdminCategorias] = useState<any[]>([]);
+  const [adminMarcas, setAdminMarcas] = useState<any[]>([]);
+
+  useEffect(() => {
+    const unsubCats = onSnapshot(
+      query(collection(db, 'Categorias_name'), orderBy('creadoEn', 'desc')),
+      (snap) => setAdminCategorias(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    );
+    const unsubBrands = onSnapshot(
+      query(collection(db, 'Marca_name')),
+      (snap) => setAdminMarcas(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    );
+    return () => { unsubCats(); unsubBrands(); };
+  }, []);
+
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     animal: true, marca: false, categoria: false, tipo: false, promo: false
   });
@@ -305,14 +321,82 @@ const SearchScreen = React.memo(function SearchScreen() {
 
   /* Debounce handled in SearchInput */
 
-  const availableAnimals = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.animal).filter(Boolean))), [products, isReady]);
-  const availableMarcas = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.marca).filter(Boolean))), [products, isReady]);
-  const availableCategorias = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.categoriaReal).filter(Boolean))), [products, isReady]);
-  const baseTipos = React.useMemo(() => !isReady ? [] : Array.from(new Set((products || []).map(p => p.tipo).filter(Boolean))), [products, isReady]);
-  const availableTipos = React.useMemo(() => 
-    selectedTipos.includes('Exoticos') && !baseTipos.includes('Exoticos') ? ['Exoticos', ...baseTipos] : baseTipos,
-    [baseTipos, selectedTipos]
-  );
+  const availableAnimals = React.useMemo(() => {
+    if (!isReady) return [];
+    const set = new Set((products || []).map(p => String(p.animal || '').trim()).filter(Boolean));
+    return Array.from(set).sort();
+  }, [products, isReady]);
+
+  const productsForFilters = React.useMemo(() => {
+    if (!isReady) return [];
+    if (selectedAnimals.length === 0) return products || [];
+    return (products || []).filter(p => {
+      if (!p) return false;
+      const cleanPAnimal = String(p.animal || '').trim().toLowerCase();
+      return selectedAnimals.includes('Exoticos') 
+        ? (cleanPAnimal !== 'perro' && cleanPAnimal !== 'gato') 
+        : selectedAnimals.some(sa => cleanPAnimal.includes(sa.toLowerCase()));
+    });
+  }, [products, isReady, selectedAnimals]);
+
+  // ── Categories from Admin (Categorias_name), filtered by selected animal
+  const availableCategorias = React.useMemo(() => {
+    if (!isReady) return [];
+    let cats = adminCategorias.filter(c => c.disponibilidad !== false);
+    if (selectedAnimals.length > 0) {
+      cats = cats.filter(c => {
+        const catAnimals: string[] = c.animales || (c.animal ? [c.animal] : []);
+        if (selectedAnimals.includes('Exoticos')) {
+          // For exotics: include categories that are NOT exclusively for Perro or Gato
+          const hasPerroOnly = catAnimals.every((a: string) => a.toLowerCase() === 'perro');
+          const hasGatoOnly = catAnimals.every((a: string) => a.toLowerCase() === 'gato');
+          return !hasPerroOnly && !hasGatoOnly;
+        }
+        return catAnimals.some((a: string) =>
+          selectedAnimals.some(sa => a.toLowerCase().includes(sa.toLowerCase()))
+        );
+      });
+    }
+    const names = cats.map(c => String(c.nombre || '').trim()).filter(Boolean);
+    return names.sort((a, b) => {
+      const isA = a.toLowerCase() === 'alimento';
+      const isB = b.toLowerCase() === 'alimento';
+      if (isA && !isB) return -1;
+      if (!isA && isB) return 1;
+      return a.localeCompare(b);
+    });
+  }, [adminCategorias, selectedAnimals, isReady]);
+
+  // ── Brands from Admin (Marca_name), filtered by selected animal
+  const availableMarcas = React.useMemo(() => {
+    if (!isReady) return [];
+    let brands = adminMarcas.filter(b => b.disponibilidad !== false);
+    if (selectedAnimals.length > 0) {
+      brands = brands.filter(b => {
+        const brandAnimals: string[] = b.animales || (b.Tipo_animal ? [b.Tipo_animal] : []);
+        if (brandAnimals.length === 0) return true; // no restriction = show always
+        if (selectedAnimals.includes('Exoticos')) {
+          const hasPerroOnly = brandAnimals.every((a: string) => a.toLowerCase() === 'perro');
+          const hasGatoOnly = brandAnimals.every((a: string) => a.toLowerCase() === 'gato');
+          return !hasPerroOnly && !hasGatoOnly;
+        }
+        return brandAnimals.some((a: string) =>
+          selectedAnimals.some(sa => a.toLowerCase().includes(sa.toLowerCase()))
+        );
+      });
+    }
+    return brands.map(b => String(b.nombre || b.name || '').trim()).filter(Boolean).sort();
+  }, [adminMarcas, selectedAnimals, isReady]);
+
+  const availableTipos = React.useMemo(() => {
+    if (!isReady) return [];
+    const set = new Set(productsForFilters.map(p => String(p.tipo || '').trim()).filter(Boolean));
+    const base = Array.from(set);
+    if (selectedTipos.includes('Exoticos') && !base.includes('Exoticos')) {
+      return ['Exoticos', ...base].sort();
+    }
+    return base.sort();
+  }, [productsForFilters, isReady, selectedTipos]);
 
   const filteredProducts = React.useMemo(() => {
     if (!isReady) return [];
@@ -328,14 +412,25 @@ const SearchScreen = React.memo(function SearchScreen() {
       const matchesSearch = name.toLowerCase().includes(String(searchQuery || '').toLowerCase()) || 
                            categoryName.toLowerCase().includes(String(searchQuery || '').toLowerCase());
       
+      const cleanPAnimal = pAnimal.trim();
+      const cleanPMarca = pMarca.trim();
+      const cleanPCategoriaReal = pCategoriaReal.trim();
+      const cleanPTipo = pTipo.trim();
+
       const matchesAnimal = selectedAnimals.length === 0 || 
                            (selectedAnimals.includes('Exoticos') 
-                            ? (pAnimal !== 'Perro' && pAnimal !== 'Gato') 
-                            : selectedAnimals.includes(pAnimal));
-      const matchesMarca = selectedMarcas.length === 0 || selectedMarcas.includes(pMarca);
-      const matchesCategoria = selectedCategorias.length === 0 || selectedCategorias.includes(pCategoriaReal);
+                            ? (cleanPAnimal.toLowerCase() !== 'perro' && cleanPAnimal.toLowerCase() !== 'gato') 
+                            : selectedAnimals.some(sa => cleanPAnimal.toLowerCase().includes(sa.toLowerCase())));
+
+      const matchesMarca = selectedMarcas.length === 0 || 
+                          selectedMarcas.some(sm => sm.toLowerCase() === cleanPMarca.toLowerCase());
+
+      const matchesCategoria = selectedCategorias.length === 0 || 
+                              selectedCategorias.some(sc => sc.toLowerCase() === cleanPCategoriaReal.toLowerCase());
+
       const realSelectedTipos = selectedTipos.filter(t => t !== 'Exoticos');
-      const matchesTipo = realSelectedTipos.length === 0 || realSelectedTipos.includes(pTipo);
+      const matchesTipo = realSelectedTipos.length === 0 || 
+                         realSelectedTipos.some(st => st.toLowerCase() === cleanPTipo.toLowerCase());
       const matchesPromo = selectedPromo === 'Todos' ? true : (selectedPromo === 'Sí' ? !!p.promo : !p.promo);
 
       return matchesSearch && matchesAnimal && matchesMarca && matchesCategoria && matchesTipo && matchesPromo;
@@ -580,6 +675,30 @@ const SearchScreen = React.memo(function SearchScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
+
+                {/* Categorías Relacionadas como Choice Chips */}
+                {selectedAnimals.length > 0 && availableCategorias.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 5 }}>
+                    {availableCategorias.map((cat, idx) => {
+                      const isSelected = selectedCategorias.includes(cat);
+                      return (
+                        <TouchableOpacity
+                          key={idx}
+                          onPress={() => toggleFilter(setSelectedCategorias, cat)}
+                          style={{
+                            paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+                            backgroundColor: isSelected ? '#10B981' : '#F9FAFB',
+                            borderWidth: 1, borderColor: isSelected ? '#10B981' : '#E5E7EB'
+                          }}
+                        >
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: isSelected ? '#FFFFFF' : '#4B5563' }}>
+                            {cat}
+                          </Text>
+                        </TouchableOpacity>
+                      )
+                    })}
+                  </ScrollView>
+                )}
               </View>
             </View>
           }
@@ -681,10 +800,10 @@ const SearchScreen = React.memo(function SearchScreen() {
               </View>
 
               <ScrollView style={{ padding: 25 }} showsVerticalScrollIndicator={false}>
-                <FilterAccordion title="Animal" options={availableAnimals} selected={selectedAnimals} onToggle={(v: string) => toggleFilter(setSelectedAnimals, v)} isExpanded={expandedSections.animal} onToggleExpand={() => toggleSection('animal')} />
-                <FilterAccordion title="Marca" options={availableMarcas} selected={selectedMarcas} onToggle={(v: string) => toggleFilter(setSelectedMarcas, v)} isExpanded={expandedSections.marca} onToggleExpand={() => toggleSection('marca')} />
-                <FilterAccordion title="Categoría" options={availableCategorias} selected={selectedCategorias} onToggle={(v: string) => toggleFilter(setSelectedCategorias, v)} isExpanded={expandedSections.categoria} onToggleExpand={() => toggleSection('categoria')} />
-                <FilterAccordion title="Especialidad / Tipo" options={availableTipos} selected={selectedTipos} onToggle={(v: string) => toggleFilter(setSelectedTipos, v)} isExpanded={expandedSections.tipo} onToggleExpand={() => toggleSection('tipo')} />
+                {selectedAnimals.length === 0 && <FilterAccordion title="Animal" options={availableAnimals} selected={selectedAnimals} onToggle={(v: string) => toggleFilter(setSelectedAnimals, v)} isExpanded={expandedSections.animal} onToggleExpand={() => toggleSection('animal')} />}
+                {availableMarcas.length > 0 && <FilterAccordion title="Marca" options={availableMarcas} selected={selectedMarcas} onToggle={(v: string) => toggleFilter(setSelectedMarcas, v)} isExpanded={expandedSections.marca} onToggleExpand={() => toggleSection('marca')} />}
+                {availableCategorias.length > 0 && <FilterAccordion title="Categoría" options={availableCategorias} selected={selectedCategorias} onToggle={(v: string) => toggleFilter(setSelectedCategorias, v)} isExpanded={expandedSections.categoria} onToggleExpand={() => toggleSection('categoria')} />}
+                {availableTipos.length > 0 && <FilterAccordion title="Especialidad / Tipo" options={availableTipos} selected={selectedTipos} onToggle={(v: string) => toggleFilter(setSelectedTipos, v)} isExpanded={expandedSections.tipo} onToggleExpand={() => toggleSection('tipo')} />}
                 <FilterAccordion title="Promoción" options={['Todos', 'Sí', 'No']} selected={selectedPromo} onToggle={setSelectedPromo} isExpanded={expandedSections.promo} onToggleExpand={() => toggleSection('promo')} />
                 
                 <View style={{ height: 40 }} />
@@ -737,7 +856,7 @@ const SearchScreen = React.memo(function SearchScreen() {
           <Text style={{ fontSize: 20, fontWeight: '900', color: '#111827', marginBottom: 20 }}>Filtros</Text>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-             {availableAnimals.length > 0 && (
+             {availableAnimals.length > 0 && selectedAnimals.length === 0 && (
                <FilterAccordion 
                  title="Animal" 
                  options={availableAnimals} 
@@ -809,6 +928,30 @@ const SearchScreen = React.memo(function SearchScreen() {
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
                 />
+                
+                {/* Categorías Relacionadas como Choice Chips */}
+                {selectedAnimals.length > 0 && availableCategorias.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 12 }}>
+                    {availableCategorias.map((cat, idx) => {
+                      const isSelected = selectedCategorias.includes(cat);
+                      return (
+                        <TouchableOpacity
+                          key={idx}
+                          onPress={() => toggleFilter(setSelectedCategorias, cat)}
+                          style={{
+                            paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+                            backgroundColor: isSelected ? '#10B981' : '#F9FAFB',
+                            borderWidth: 1, borderColor: isSelected ? '#10B981' : '#E5E7EB'
+                          }}
+                        >
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: isSelected ? '#FFFFFF' : '#4B5563' }}>
+                            {cat}
+                          </Text>
+                        </TouchableOpacity>
+                      )
+                    })}
+                  </ScrollView>
+                )}
               </View>
 
               <View style={{ flex: 1 }} />
