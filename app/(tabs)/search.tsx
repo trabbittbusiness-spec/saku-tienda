@@ -358,12 +358,48 @@ const SearchScreen = React.memo(function SearchScreen() {
       });
     }
     const names = cats.map(c => String(c.nombre || '').trim()).filter(Boolean);
-    return names.sort((a, b) => {
-      const isA = a.toLowerCase() === 'alimento';
-      const isB = b.toLowerCase() === 'alimento';
-      if (isA && !isB) return -1;
-      if (!isA && isB) return 1;
-      return a.localeCompare(b);
+
+    // Order defined by user: Alimento - snack - juguetes - medicamentos - accesorios - novedades - cuidados e higiene
+    const orderMap: Record<string, number> = {
+      'alimento': 0,
+      'snack': 1,
+      'snacks': 1,
+      'juguetes': 2,
+      'medicamentos': 3,
+      'accesorios': 4,
+      'novedades': 5,
+      'cuidados e higiene': 6,
+      'cuidado e higiene': 6
+    };
+
+    // Filter to only include categories that belong to the list or match closely, and normalize names
+    const filteredAndNormalized = names.reduce((acc: string[], name) => {
+      const lower = name.toLowerCase();
+      // Find matching key
+      const key = Object.keys(orderMap).find(k => lower.includes(k) || k.includes(lower));
+      if (key !== undefined) {
+        // Let's normalize display name according to user specification
+        let normalizedName = name;
+        if (lower === 'alimento') normalizedName = 'Alimento';
+        else if (lower === 'snack' || lower === 'snacks') normalizedName = 'Snack';
+        else if (lower === 'juguetes') normalizedName = 'Juguetes';
+        else if (lower === 'medicamentos') normalizedName = 'Medicamentos';
+        else if (lower === 'accesorios') normalizedName = 'Accesorios';
+        else if (lower === 'novedades') normalizedName = 'Novedades';
+        else if (lower === 'cuidados e higiene' || lower === 'cuidado e higiene') normalizedName = 'Cuidados e higiene';
+        
+        if (!acc.includes(normalizedName)) {
+          acc.push(normalizedName);
+        }
+      }
+      return acc;
+    }, []);
+
+    // Sort according to our orderMap
+    return filteredAndNormalized.sort((a, b) => {
+      const idxA = orderMap[a.toLowerCase()] !== undefined ? orderMap[a.toLowerCase()] : 99;
+      const idxB = orderMap[b.toLowerCase()] !== undefined ? orderMap[b.toLowerCase()] : 99;
+      return idxA - idxB;
     });
   }, [adminCategorias, selectedAnimals, isReady]);
 
@@ -426,7 +462,18 @@ const SearchScreen = React.memo(function SearchScreen() {
                           selectedMarcas.some(sm => sm.toLowerCase() === cleanPMarca.toLowerCase());
 
       const matchesCategoria = selectedCategorias.length === 0 || 
-                              selectedCategorias.some(sc => sc.toLowerCase() === cleanPCategoriaReal.toLowerCase());
+                              selectedCategorias.some(sc => {
+                                const scL = sc.toLowerCase().trim();
+                                const pL = cleanPCategoriaReal.toLowerCase().trim();
+                                if (scL === pL) return true;
+                                // Handle plurals/singulars like snack/snacks, cuidado/cuidados
+                                const scClean = scL.replace(/s$/g, ''); 
+                                const pClean = pL.replace(/s$/g, '');
+                                if (scClean === pClean) return true;
+                                // Handle special case like "cuidados e higiene" vs "cuidado e higiene"
+                                if (scL.includes('cuidado') && pL.includes('cuidado')) return true;
+                                return false;
+                              });
 
       const realSelectedTipos = selectedTipos.filter(t => t !== 'Exoticos');
       const matchesTipo = realSelectedTipos.length === 0 || 
