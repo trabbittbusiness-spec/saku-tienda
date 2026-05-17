@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tienda Saku",
     "slug": "tienda-saku",
-    "version": "10.90.26",
+    "version": "10.90.28",
     "orientation": "portrait",
     "icon": "./assets/images/logo_saku_cl.png",
     "scheme": "tiendasaku",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.SAKUtienda.cl",
-      "buildNumber": "60",
+      "buildNumber": "62",
       "appleTeamId": "4H4BJH5HJX",
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
@@ -30,7 +30,7 @@
     },
     "android": {
       "package": "com.SAKUtienda.cl",
-      "versionCode": 59,
+      "versionCode": 61,
       "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, useWindowDimensions, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, useWindowDimensions, ActivityIndicator, Image, Platform } from 'react-native';
 import { ArrowLeft, Camera, User, Mail, Phone, CreditCard, CheckCircle, Clock, PawPrint, LogOut } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth, db, storage } from '../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -12,6 +13,7 @@ import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 export default function AccountScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const isDesktop = width >= 768;
   
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -152,16 +154,28 @@ export default function AccountScreen() {
 
         {/* Header */}
         <View style={{ 
-          height: 80, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+          paddingTop: Platform.OS === 'web' ? 18 : insets.top + 18,
+          paddingBottom: 18,
+          backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
           flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20
         }}>
           <TouchableOpacity 
             onPress={() => router.back()}
-            style={{ position: 'absolute', left: 20, width: 44, height: 44, backgroundColor: '#F3F4F6', borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}
+            style={{ 
+              position: 'absolute', 
+              left: 20, 
+              top: Platform.OS === 'web' ? 18 : insets.top + 18, 
+              width: 44, 
+              height: 44, 
+              backgroundColor: '#F3F4F6', 
+              borderRadius: 12, 
+              justifyContent: 'center', 
+              alignItems: 'center' 
+            }}
           >
             <ArrowLeft size={20} color="#111827" />
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827' }}>Mi Cuenta</Text>
+          <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', height: 44, lineHeight: 44 }}>Mi Cuenta</Text>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 25 }}>
