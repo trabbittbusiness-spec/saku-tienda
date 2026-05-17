@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, TextInput, useWindowDimensions, ActivityIndicator, Modal, Pressable, Alert, Linking, Platform } from 'react-native';
+import * as Audio from 'expo-audio';
 import { mpService } from '../lib/mercadopago';
 
 import { ArrowLeft, Lock, MapPin, Plus, CreditCard, Banknote, ShieldCheck, ChevronRight, CheckCircle2, Store, Clock, RefreshCcw, Wifi, AlertCircle, Ticket, CalendarX, X, User } from 'lucide-react-native';
@@ -56,6 +57,37 @@ export default function CheckoutScreen() {
   const [clinicOrigin, setClinicOrigin] = useState<any>(null);
   const [calculatedShipping, setCalculatedShipping] = useState(0);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+
+  const [purchaseSound, setPurchaseSound] = useState<any>(null);
+
+  useEffect(() => {
+    const loadSound = async () => {
+      try {
+        const { sound } = await (Audio as any).Sound.createAsync(
+          require('../assets/audio/saku_compra.mp3')
+        );
+        setPurchaseSound(sound);
+      } catch (e) {
+        console.log('Error loading purchase sound:', e);
+      }
+    };
+    loadSound();
+    return () => {
+      if (purchaseSound) {
+        purchaseSound.unloadAsync().catch(() => {});
+      }
+    };
+  }, []);
+
+  const playSuccessSound = async () => {
+    try {
+      if (purchaseSound) {
+        await purchaseSound.replayAsync();
+      }
+    } catch (error) {
+      console.log('Error playing success sound:', error);
+    }
+  };
 
 
 
@@ -722,6 +754,10 @@ export default function CheckoutScreen() {
         await batch.commit();
         clearCart();
       }
+
+      // Play success audio sound
+      await playSuccessSound();
+      await new Promise(resolve => setTimeout(resolve, 350));
 
       router.replace('/?success=1');
 
